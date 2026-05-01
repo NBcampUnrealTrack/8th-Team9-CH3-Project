@@ -1,7 +1,7 @@
 #include "MainGameMode.h"
-#include "MainGameStateBase.h"
+#include "MainGameState.h"
 
 AMainGameMode::AMainGameMode()
 {
-	GameStateClass = AMainGameStateBase::StaticClass();
+	GameStateClass = AMainGameState::StaticClass();
 }
