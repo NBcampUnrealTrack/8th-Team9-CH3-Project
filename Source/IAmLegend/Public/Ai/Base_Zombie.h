@@ -1,0 +1,84 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Character.h"
+#include "Base_Zombie.generated.h"
+
+// 좀비의 현재 상태를 나타내는 열거형입니다. 블루프린트에서도 볼 수 있습니다.
+
+UENUM(BlueprintType)
+enum class EZombieState : uint8
+{
+    Idle,      // 대기
+    Attacking, // 공격 중
+    Hit,       // 맞음
+    Dead       // 죽음
+};
+
+UCLASS()
+class IAMLEGEND_API ABase_Zombie : public ACharacter
+{
+	GENERATED_BODY()
+
+public:
+	// Sets default values for this character's properties
+	ABase_Zombie();
+    // Called every frame
+    virtual void Tick(float DeltaTime) override;
+    // 언리얼 내장 데미지 시스템: 누군가 이 좀비를 때리면 이 함수가 자동으로 실행됩니다.
+    virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+
+    // [에디터 설정] 각 상황에 맞는 애니메이션 몽타주 에셋을 넣어주세요.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    class UAnimMontage* AttackMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    class UAnimMontage* HitMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    class UAnimMontage* DeathMontage;
+
+    // AI가 추적 중인 플레이어 캐릭터를 담아둘 변수입니다.
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+    class ACharacter* PlayerCharacter;
+
+    bool bIsAttacking = false; // 공격 중일 때 중복 공격을 막기 위한 변수입니다.
+
+    // [에디터 설정] 공격 속도(간격)를 조절합니다. 4.0이면 4초마다 공격합니다.
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float AttackCooldown;
+
+
+    // 시간 측정을 위한 타이머 핸들입니다.
+    FTimerHandle AttackTimerHandle;
+
+    // 데미지 처리를 위한 타이머 핸들입니다.
+    FTimerHandle DamageTimerHandle;
+
+    EZombieState CurrentState = EZombieState::Idle;
+
+    // [에디터 설정] 좀비의 체력입니다.
+    UPROPERTY(EditAnywhere, Category = "Stat")
+    float Health;
+
+    // 공격 사거리 변수화 (좀비마다 다를 수 있음)
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float AttackRange;
+
+    // 공격 애니메이션을 실행하는 함수입니다.
+    virtual void PlayAttackMontage();
+
+    // 공격 후 쿨타임이 지나면 다시 공격 가능하게 해주는 함수입니다.
+    virtual void ResetAttack();
+
+    // 체력이 0이 되었을 때의 처리를 담당합니다.
+    virtual void Die();
+
+};

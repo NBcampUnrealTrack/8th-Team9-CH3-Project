@@ -2,7 +2,7 @@
 
 # 일반적인 파일은 utf-8
 
-charset = utf-8-bom
+charset = utf-8
 
 
 
