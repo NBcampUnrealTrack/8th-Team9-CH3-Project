@@ -8,7 +8,7 @@ class AHanPlayerCharacter;
 class UCharacterMovementComponent;
 /**
  * 
- */
+ */	
 UCLASS()
 class IAMLEGEND_API UHanAnimInstance : public UAnimInstance
 {
