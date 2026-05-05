@@ -5,7 +5,6 @@
 #include "Ai/Base_Zombie.h"
 #include "PoliceZombie.generated.h"
 
-// 좀비의 현재 상태를 나타내는 열거형입니다. 블루프린트에서도 볼 수 있습니다.
 
 
 UCLASS()
