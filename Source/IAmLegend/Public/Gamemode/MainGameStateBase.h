@@ -20,12 +20,13 @@ public:
 	int32 KillScore;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stage")
 	int32 CurrentStage;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UUserWidget> UIWidgetClass;
 	
-private:
 	void StartGame();
+	
+private:
+
 	void EnterStage();
 	
 };
