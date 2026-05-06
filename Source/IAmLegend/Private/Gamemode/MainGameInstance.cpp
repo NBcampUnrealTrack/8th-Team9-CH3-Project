@@ -3,6 +3,7 @@
 UMainGameInstance::UMainGameInstance()
 {
 	bIsGameStarted = false;
+	bIsUIPopUp = true;
 }
 
 void UMainGameInstance::SetGameStarted(bool bStarted)
@@ -13,4 +14,14 @@ void UMainGameInstance::SetGameStarted(bool bStarted)
 bool UMainGameInstance::GetGameStarted() const
 {
 	return bIsGameStarted;
+}
+
+void UMainGameInstance::SetUIPopUp(bool bUIPopUp)
+{
+	bIsUIPopUp = bUIPopUp;
+}
+
+bool UMainGameInstance::GetUIPopUp() const
+{
+	return bIsUIPopUp;
 }
