@@ -38,12 +38,12 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->SetupAttachment(SpringArmComponent);
 
-	// 1. 컨트롤러의 회전(마우스)에 따라 캐릭터 몸통이 바로 돌아가는 것을 끕니다.
+	// 컨트롤러의 회전(마우스)에 따라 캐릭터 몸통이 바로 돌아가는 것을 끕니다.
 	bUseControllerRotationYaw = false;
 
-	// 2. 이동하는 방향으로 캐릭터 몸통이 부드럽게 회전하도록 설정합니다.
+	// 이동하는 방향으로 캐릭터 몸통이 부드럽게 회전하도록 설정합니다.
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-	// 회전 속도를 조절하고 싶다면 (숫자가 높을수록 빨리 돕니다)
+	// 회전 속도를 조절하고 싶다면 (숫자가 높을수록 빨리 돌았습니다.)
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 500.f, 0.f);
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
@@ -127,7 +127,7 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			PlayerCharacterInputConfig->Crouch,
 			ETriggerEvent::Started,
 			this,
-			&AHanPlayerCharacter::InputCrouchToggle  // 우리 함수로 연결
+			&AHanPlayerCharacter::InputCrouchToggle 
 		);
 	}
 }
@@ -242,13 +242,13 @@ void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
 		return;
 	}
 
-	// 1. 이미 앉아있는 상태라면 무조건 일어서기 시도
+	//  이미 앉아있는 상태라면 무조건 일어서기 시도
 	if (bIsCrouched)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Executing UnCrouch()!"));
 		UnCrouch();
 	}
-	// 2. 서 있는 상태라면 '앉을 수 있는지' 확인 후 앉기
+	// 서 있는 상태라면 '앉을 수 있는지' 확인 후 앉기
 	else
 	{
 		if (CanCrouch() == true)

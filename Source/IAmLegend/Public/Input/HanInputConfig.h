@@ -28,5 +28,5 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UInputAction> Crouch;
-	
+
 };

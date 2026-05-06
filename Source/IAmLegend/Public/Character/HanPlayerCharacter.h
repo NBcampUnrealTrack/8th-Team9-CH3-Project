@@ -49,7 +49,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
 	float SprintWalkSpeed = BaseWalkSpeed*2;
 
-	/** 앉기 시 이동 속도 (BaseWalkSpeed / 1.5 값을 기본으로 사용) */
+	// 앉기 시 이동 속도 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
 	float CrouchWalkSpeed = BaseWalkSpeed/1.5; 
 
