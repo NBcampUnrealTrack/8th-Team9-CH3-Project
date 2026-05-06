@@ -48,6 +48,14 @@ protected:
     // AI가 추적 중인 플레이어 캐릭터를 담아둘 변수입니다.
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
     class ACharacter* PlayerCharacter;
+    // 대기 소리 컴포넌트입니다.
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
+    class UAudioComponent* IdleSoundComponent;
+
+    // 사망 시 재생할 사운드 에셋
+    UPROPERTY(EditAnywhere, Category = "Audio")
+    class USoundBase* DeathSound;
+
 
     bool bIsAttacking = false; // 공격 중일 때 중복 공격을 막기 위한 변수입니다.
 
@@ -62,6 +70,8 @@ protected:
     // 데미지 처리를 위한 타이머 핸들입니다.
     FTimerHandle DamageTimerHandle;
 
+    // 소리 재개 타이머 핸들
+    FTimerHandle IdleSoundTimerHandle;
     EZombieState CurrentState = EZombieState::Idle;
 
     // [에디터 설정] 좀비의 체력입니다.
@@ -80,5 +90,11 @@ protected:
 
     // 체력이 0이 되었을 때의 처리를 담당합니다.
     virtual void Die();
+
+
+
+    // 소리 재개 함수
+    UFUNCTION()
+    void ResumeIdleSound();
 
 };

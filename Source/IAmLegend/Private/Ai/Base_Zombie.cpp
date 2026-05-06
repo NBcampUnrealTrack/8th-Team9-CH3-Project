@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Animation/AnimMontage.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -16,7 +17,15 @@ ABase_Zombie::ABase_Zombie()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+    // 1. 컴포넌트 실제 생성
+    IdleSoundComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("IdleSoundComponent"));
 
+    // 2. 루트나 메시에 부착 (보통 메시에 붙입니다)
+    if (GetMesh())
+    {
+        IdleSoundComponent->SetupAttachment(GetMesh());
+    }
+   
 }
 
 void ABase_Zombie::BeginPlay()
@@ -63,17 +72,36 @@ void ABase_Zombie::Tick(float DeltaTime)
     }
 }
 void ABase_Zombie::PlayAttackMontage() {
-    // 몽타주 에셋이 존재하고, 현재 공격 중이 아닐 때만 실행합니다.
     if (AttackMontage && !bIsAttacking) {
+        // 1. 공격 시작 시 대기 소리를 즉시 끕니다.
+        if (IdleSoundComponent) {
+            IdleSoundComponent->FadeOut(0.2f, 0.0f);
+
+            // 혹시 이미 돌아가고 있을지 모를 '소리 켜기 타이머'를 취소합니다.
+            GetWorld()->GetTimerManager().ClearTimer(IdleSoundTimerHandle);
+        }
+
         bIsAttacking = true;
         CurrentState = EZombieState::Attacking;
-        PlayAnimMontage(AttackMontage); // 공격 애니메이션 재생
+        PlayAnimMontage(AttackMontage);
 
-        // [타이머] AttackCooldown(예: 4초) 시간이 지난 뒤에 ResetAttack 함수를 딱 한 번 실행합니다.
+        // 2. 공격 쿨타임 타이머 (공격 가능 상태 복구용)
         GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, this, &ABase_Zombie::ResetAttack, AttackCooldown, false);
+
+        // 3. 쿨타임 * 2의 시간 뒤에 대기 소리를 다시 켜는 타이머 설정
+        float SoundDelay = AttackCooldown * 2.0f;
+        GetWorld()->GetTimerManager().SetTimer(IdleSoundTimerHandle, this, &ABase_Zombie::ResumeIdleSound, SoundDelay, false);
     }
 }
 
+// 대기 소리를 다시 켜주는 새로운 함수
+void ABase_Zombie::ResumeIdleSound()
+{
+    if (IdleSoundComponent)
+    {
+        IdleSoundComponent->FadeIn(0.5f);
+    }
+}
 void ABase_Zombie::ResetAttack() {
     bIsAttacking = false;
 
@@ -110,26 +138,42 @@ float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 
 void ABase_Zombie::Die()
 {
+    if (CurrentState == EZombieState::Dead) return; // 중복 실행 방지
     CurrentState = EZombieState::Dead;
 
-    // 1. 죽음 애니메이션 재생
+    // 1. 소리 제어
+    // 대기 소리 즉시 정지
+    if (IdleSoundComponent)
+    {
+        IdleSoundComponent->Stop();
+    }
+
+    // 사망 소리 재생 (헤더에 USoundBase* DeathSound; 가 선언되어 있어야 함)
+    if (DeathSound)
+    {
+        // 액터가 사라져도 소리가 끝까지 나도록 PlaySoundAtLocation 사용
+        UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+    }
+
+    // 2. 타이머 정리 (공격 중 죽었을 때 소리가 다시 켜지는 것 방지)
+    GetWorld()->GetTimerManager().ClearTimer(IdleSoundTimerHandle);
+    GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+
+    // 3. 죽음 애니메이션 재생
     if (DeathMontage)
     {
         PlayAnimMontage(DeathMontage);
     }
 
-    // 2. AI 중지: 좀비를 조종하던 두뇌(AIController)를 멈추고 연결을 끊습니다.
+    // 4. AI 중지 및 연결 해제
     AAIController* AIController = Cast<AAIController>(GetController());
     if (AIController)
     {
-        AIController->StopMovement(); // 이동 중지
-        AIController->UnPossess();    // 조종 해제
+        AIController->StopMovement();
+        AIController->UnPossess();
     }
 
-    // 3. 충돌 제거: 죽은 좀비가 벽처럼 가로막지 않도록 캡슐 충돌체를 끕니다.
+    // 5. 충돌 제거 및 시체 삭제 예약
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-    // 4. 시체 삭제: 죽은 후 3초 뒤에 게임 월드에서 완전히 사라집니다.
     SetLifeSpan(3.0f);
 }
-
