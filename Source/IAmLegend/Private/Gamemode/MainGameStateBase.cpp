@@ -19,10 +19,11 @@ void AMainGameStateBase::BeginPlay()
 		if (PC)
 		{
 			UUserWidget* UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
-			if (UIWidget)
+			UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+			if (UIWidget && GI)
 			{
 				UIWidget->AddToViewport();
-				PC->bShowMouseCursor = true;
+				PC->bShowMouseCursor = GI->GetUIPopUp();
 			}
 		}
 	}
@@ -36,7 +37,25 @@ void AMainGameStateBase::StartGame()
 	if (GI)
 	{
 		GI->SetGameStarted(true);
+		GI->SetUIPopUp(false);
 	}
 	
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
+}
+
+void AMainGameStateBase::EnterStageSelectZone()
+{
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	APlayerController* PC = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
+	if (GI && PC)
+	{
+		GI->SetUIPopUp(true);
+		PC->bShowMouseCursor = GI->GetUIPopUp();
+	}
+}
+
+void AMainGameStateBase::EnterStage(int32 StageIndex)
+{
+	UGameplayStatics::OpenLevel(GetWorld(), LevelMapNames[StageIndex]);
+	
 }
