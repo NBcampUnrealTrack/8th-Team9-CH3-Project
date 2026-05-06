@@ -1,8 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "TestUserWidget.h"
-
+#include "Gamemode/MainGameStateBase.h"
+#include "Gamemode/MainGameInstance.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 
@@ -14,15 +12,29 @@ void UTestUserWidget::NativeConstruct()
 	{
 		Btn_GameStart->OnClicked.AddDynamic(this, &UTestUserWidget::OnGameStartClicked);
 	}
-
-	if (Txt_Shelter)
+	
+	
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (GI && GI->GetGameStarted())
 	{
+		Btn_GameStart->SetVisibility(ESlateVisibility::Hidden);
+		Txt_Shelter->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		Btn_GameStart->SetVisibility(ESlateVisibility::Visible);
 		Txt_Shelter->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
 void UTestUserWidget::OnGameStartClicked()
 {
+	AMainGameStateBase* GameState = GetWorld()->GetGameState<AMainGameStateBase>();
+	if (GameState)
+	{
+		GameState->StartGame();
+	}
+	
 	Btn_GameStart->SetVisibility(ESlateVisibility::Hidden);
 	Txt_Shelter->SetVisibility(ESlateVisibility::Visible);
 }

@@ -1,5 +1,7 @@
 #include "Gamemode/MainGameStateBase.h"
 #include "TestUserWidget.h"
+#include "Gamemode/MainGameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 AMainGameStateBase::AMainGameStateBase()
 {
@@ -30,5 +32,11 @@ void AMainGameStateBase::BeginPlay()
 
 void AMainGameStateBase::StartGame()
 {
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		GI->SetGameStarted(true);
+	}
 	
+	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
 }
