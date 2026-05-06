@@ -20,12 +20,22 @@ public:
 	int32 KillScore;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stage")
 	int32 CurrentStage;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UUserWidget> UIWidgetClass;
 	
-private:
+	//게임 시작
 	void StartGame();
-	void EnterStage();
+	
+	//플레이어 스테이지 선택
+	UFUNCTION(BlueprintCallable)
+	void EnterStageSelectZone();
+	//스테이지 진입
+	void EnterStage(int32 StageIndex);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Level")
+	TArray<FName> LevelMapNames;
+private:
+
+
 	
 };
