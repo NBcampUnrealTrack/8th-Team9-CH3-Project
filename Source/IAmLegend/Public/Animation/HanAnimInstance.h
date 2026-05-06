@@ -15,6 +15,7 @@ class IAMLEGEND_API UHanAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 	
 public:
+
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
@@ -38,4 +39,8 @@ protected:
 	// 공중 상태 데이터
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	uint8 bIsFalling : 1;
+
+	// 앉기 상태 데이터
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	uint8 bIsCrouched : 1;
 };

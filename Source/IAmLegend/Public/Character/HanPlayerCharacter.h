@@ -44,10 +44,14 @@ protected:
 
 	// --- Movement Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
-	float BaseWalkSpeed = 350.f;
+	float BaseWalkSpeed = 300.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
 	float SprintWalkSpeed = BaseWalkSpeed*2;
+
+	/** 앉기 시 이동 속도 (BaseWalkSpeed / 1.5 값을 기본으로 사용) */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
+	float CrouchWalkSpeed = BaseWalkSpeed/1.5; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
 	float BaseJumpVelocity = 700.f;
@@ -67,6 +71,8 @@ public:
 	void SetViewMode(EViewMode InViewMode);
 	void InputSprintStart(const struct FInputActionValue& InValue); // 달리기 시작
 	void InputSprintEnd(const struct FInputActionValue& InValue);   // 달리기 종료
+	void InputCrouchToggle(const FInputActionValue& InValue);
+
 
 protected:
 	/// 현재 시점 모드
