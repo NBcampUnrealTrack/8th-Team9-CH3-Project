@@ -38,6 +38,7 @@ ADummyPlayerCharacter::ADummyPlayerCharacter()
 
 	WeaponClass = nullptr;
 	EquippedWeapon = nullptr;
+	WeaponSocketName = "WeaponSocket";
 	
 }
 
@@ -85,7 +86,7 @@ void ADummyPlayerCharacter::EquipWeapon()
 		if (SpawnedWeapon)
 		{
 			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
+			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, WeaponSocketName);
 			EquippedWeapon = SpawnedWeapon;
 		}
 	}
@@ -135,7 +136,8 @@ void ADummyPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 
 		if (AttackAction)
 		{
-			EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ADummyPlayerCharacter::Attack);
+			EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADummyPlayerCharacter::StartAttack);
+			EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &ADummyPlayerCharacter::StopAttack);
 		}
 
 		if (AimAction)
@@ -183,15 +185,24 @@ void ADummyPlayerCharacter::StopJump()
 	StopJumping();
 }
 
-void ADummyPlayerCharacter::Attack()
+void ADummyPlayerCharacter::StartAttack()
 {
 	if(EquippedWeapon)
 	{
-		if(!bIsAiming) EquippedWeapon->WeaponAttack();
-		else EquippedWeapon->SubAttack();
+		if(!bIsAiming) EquippedWeapon->StartWeaponAttack();
+		else EquippedWeapon->StartSubAttack();
 	}
 }
 
+void ADummyPlayerCharacter::StopAttack()
+{
+	if(EquippedWeapon)
+	{
+		if(!bIsAiming) EquippedWeapon->StopWeaponAttack();
+		else EquippedWeapon->StopSubAttack();
+	}
+}
+	
 void ADummyPlayerCharacter::StartAim()
 {
 	bIsAiming = true;

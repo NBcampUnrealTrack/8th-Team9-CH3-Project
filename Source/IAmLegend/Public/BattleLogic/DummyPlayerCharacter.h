@@ -51,6 +51,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	class AWeaponBase* EquippedWeapon;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	FName WeaponSocketName;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	class UInputMappingContext* DefaultMappingContext;
 
@@ -80,7 +83,8 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void StartJump();
 	void StopJump();
-	void Attack();
+	void StartAttack();
+	void StopAttack();
 	void StartAim();
 	void StopAim();
 

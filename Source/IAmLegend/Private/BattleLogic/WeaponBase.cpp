@@ -48,14 +48,24 @@ void AWeaponBase::WeaponInitFromData()
 	
 }
 
-void AWeaponBase::WeaponAttack()
+void AWeaponBase::StartWeaponAttack()
 {
 	Attack();
 }
 
-void AWeaponBase::SubAttack()
+void AWeaponBase::StopWeaponAttack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Weapon Attack Stopped!"));
+}
+
+void AWeaponBase::StartSubAttack()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Sub Attack!"));
+}
+
+void AWeaponBase::StopSubAttack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Sub Attack Stopped!"));
 }
 
 void AWeaponBase::DestroyWeapon()
