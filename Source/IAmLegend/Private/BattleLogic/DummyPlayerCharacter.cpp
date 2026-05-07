@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "BattleLogic/DummyPlayerCharacter.h"
@@ -26,7 +26,7 @@ ADummyPlayerCharacter::ADummyPlayerCharacter()
 	TargetFOV = DefaultFOV;
 	CurrentFOV = TargetFOV;
 	FOVInterpSpeed = 10.f;
-
+	
 	DefaultMappingContext = nullptr;
 	MoveAction = nullptr;
 	LookAction = nullptr;
