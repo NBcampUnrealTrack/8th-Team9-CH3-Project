@@ -6,6 +6,8 @@
 #include "Item/ItemDataAsset.h"
 #include "WeaponDataAsset.generated.h"
 
+class AWeaponBase;
+
 /**
  * 
  */
@@ -18,4 +20,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	float Damage = 10.f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TSubclassOf<class AWeaponBase> WeaponActorClass;
 };

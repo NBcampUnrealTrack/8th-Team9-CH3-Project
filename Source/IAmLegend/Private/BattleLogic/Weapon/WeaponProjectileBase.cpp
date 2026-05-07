@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "BattleLogic/Weapon/WeaponProjectileBase.h"
@@ -55,7 +55,7 @@ void AWeaponProjectileBase::BeginPlay()
 void AWeaponProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Projectile hit: %s"), *OtherActor->GetName());
-	// �̹� �浹�� ��� �߰� �浹 ó�� ����
+	// 이미 충돌한 경우 추가 충돌 처리 방지
 	if (bHasHit)
 	{
 		return; 
