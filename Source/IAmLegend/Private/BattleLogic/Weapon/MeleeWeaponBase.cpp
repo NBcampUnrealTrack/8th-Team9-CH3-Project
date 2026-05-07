@@ -7,6 +7,7 @@
 #include "BattleLogic/Weapon/WeaponProjectileBase.h"
 #include "BattleLogic/DummyPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Character/HanPlayerCharacter.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
@@ -131,7 +132,7 @@ void AMeleeWeaponBase::SubAttack()
 
 	// 플레이어의 시점에 따라 투사체의 초기 회전을 설정
 	FRotator SpawnRotation;
-	if (ADummyPlayerCharacter* OwnerPawn = Cast<ADummyPlayerCharacter>(GetOwner()))
+	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))  //한기담 - 여기 부분이 더미캐릭터로 되어있어서 APawn으로 수정했습니다
 	{
 		SpawnRotation = OwnerPawn->GetControlRotation();
 	}
