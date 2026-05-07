@@ -1,7 +1,5 @@
 #include "Gamemode/MainGameStateBase.h"
-#include "TestUserWidget.h"
-#include "Gamemode/MainGameInstance.h"
-#include "Kismet/GameplayStatics.h"
+
 
 AMainGameStateBase::AMainGameStateBase()
 {
@@ -12,25 +10,8 @@ AMainGameStateBase::AMainGameStateBase()
 void AMainGameStateBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	if (UIWidgetClass)
-	{
-		APlayerController* PC = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
-		if (PC)
-		{
-			UUserWidget* UIWidget = CreateWidget<UUserWidget>(GetWorld(), UIWidgetClass);
-			UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-			if (UIWidget && GI)
-			{
-				UIWidget->AddToViewport();
-				PC->bShowMouseCursor = GI->GetUIPopUp();
-			}
-		}
-	}
-		
-	
 }
-
+/*
 void AMainGameStateBase::StartGame()
 {
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
@@ -57,5 +38,24 @@ void AMainGameStateBase::EnterStageSelectZone()
 void AMainGameStateBase::EnterStage(int32 StageIndex)
 {
 	UGameplayStatics::OpenLevel(GetWorld(), LevelMapNames[StageIndex]);
+	StartStage();
 	
 }
+
+void AMainGameStateBase::StartStage()
+{
+	GetWorldTimerManager().SetTimer(StageTimerHandle, this, &AMainGameStateBase::OnStageTimeUp, StageDuration, false);
+	UE_LOG(LogTemp, Warning, TEXT("Timer Start"));
+}
+
+void AMainGameStateBase::OnStageTimeUp()
+{
+	EndStage();
+	UE_LOG(LogTemp, Warning, TEXT("Stage End"));
+}
+
+void AMainGameStateBase::EndStage()
+{
+	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
+}
+*/

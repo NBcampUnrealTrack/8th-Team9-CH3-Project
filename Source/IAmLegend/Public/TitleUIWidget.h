@@ -1,5 +1,5 @@
 // TitleUIWidget.h
-// ¿ä¾à: Å¸ÀÌÆ² È­¸é UI Ãâ·Â Å¬·¡½º
+// ìš”ì•½: íƒ€ì´í‹€ í™”ë©´ UI ì¶œë ¥ í´ë˜ìŠ¤
 
 #pragma once
 
@@ -15,7 +15,7 @@ class IAMLEGEND_API UTitleUIWidget : public UUserWidget
 protected:
 	virtual void NativeConstruct() override;
 
-	// À§Á¬ ¹ÙÀÎµù(½ÃÀÛ, Á¾·á, FadeIn)
+	// ìœ„ì ¯ ë°”ì¸ë”©(ì‹œì‘, ì¢…ë£Œ, FadeIn)
 	UPROPERTY(meta = (BindWidget))
 	class UButton* StartButton;
 
@@ -25,7 +25,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* FadeIn;
 
-	// ¾Ö´Ï¸ŞÀÌ¼Ç ¹ÙÀÎµù(½ÃÀÛ, Á¾·á, FadeIn)
+	// ì• ë‹ˆë©”ì´ì…˜ ë°”ì¸ë”©(ì‹œì‘, ì¢…ë£Œ, FadeIn)
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetAnim), Transient)
 	class UWidgetAnimation* StartTextHover;
 
@@ -36,7 +36,7 @@ protected:
 	class UWidgetAnimation* TitleFadeIn;
 
 private:
-	// ¹öÆ° Å¬¸¯ ¹× È£¹ö ÀÌº¥Æ® ÇÔ¼ö
+	// ë²„íŠ¼ í´ë¦­ ë° í˜¸ë²„ ì´ë²¤íŠ¸ í•¨ìˆ˜
 	UFUNCTION()
 	void OnStartButtonClicked();
 
@@ -55,8 +55,5 @@ private:
 	UFUNCTION()
 	void OnEndButtonUnhovered();
 
-	// µô·¹ÀÌ ÈÄ ·¹º§ ÀÌµ¿À» Ã³¸®ÇÒ ÇÔ¼ö(FadeIn ¶§¹®¿¡ ÇØÁà¾ßÇÔ)
-	void OpenShelterLevel();
-
-	FTimerHandle LevelLoadTimerHandle;
+	
 };

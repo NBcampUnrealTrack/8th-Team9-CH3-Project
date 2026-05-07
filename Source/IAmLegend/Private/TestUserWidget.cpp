@@ -1,5 +1,5 @@
 #include "TestUserWidget.h"
-#include "Gamemode/MainGameStateBase.h"
+#include "Gamemode/MainGameModeBase.h"
 #include "Gamemode/MainGameInstance.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
@@ -41,10 +41,11 @@ void UTestUserWidget::NativeConstruct()
 
 void UTestUserWidget::OnGameStartClicked()
 {
-	AMainGameStateBase* GameState = GetWorld()->GetGameState<AMainGameStateBase>();
-	if (GameState)
+	AMainGameModeBase* GM = Cast<AMainGameModeBase>(GetWorld()->GetAuthGameMode());
+
+	if (GM)
 	{
-		GameState->StartGame();
+		GM->StartGame();
 	}
 	
 	Btn_GameStart->SetVisibility(ESlateVisibility::Hidden);
@@ -53,27 +54,33 @@ void UTestUserWidget::OnGameStartClicked()
 
 void UTestUserWidget::OnHospitalStageClicked()
 {
-	AMainGameStateBase* GameState = GetWorld()->GetGameState<AMainGameStateBase>();
-	if (GameState)
+	AMainGameModeBase* GM = Cast<AMainGameModeBase>(GetWorld()->GetAuthGameMode());
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (GM && GI)
 	{
-		GameState->EnterStage(0);
+		GM->EnterStage(0);
+		GI->SetUIPopUp(false);
 	}
 }
 
 void UTestUserWidget::OnSchoolStageClicked()
 {
-	AMainGameStateBase* GameState = GetWorld()->GetGameState<AMainGameStateBase>();
-	if (GameState)
+	AMainGameModeBase* GM = Cast<AMainGameModeBase>(GetWorld()->GetAuthGameMode());
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (GM && GI)
 	{
-		GameState->EnterStage(1);
+		GM->EnterStage(1);
+		GI->SetUIPopUp(false);
 	}
 }
 
 void UTestUserWidget::OnOnPoliceStageClicked()
 {
-	AMainGameStateBase* GameState = GetWorld()->GetGameState<AMainGameStateBase>();
-	if (GameState)
+	AMainGameModeBase* GM = Cast<AMainGameModeBase>(GetWorld()->GetAuthGameMode());
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (GM && GI)
 	{
-		GameState->EnterStage(2);
+		GM->EnterStage(2);
+		GI->SetUIPopUp(false);
 	}
 }
