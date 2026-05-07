@@ -14,14 +14,28 @@ public:
 	UMainGameInstance();
 	
 	//게임 시작 여부 설정 및 확인
-	void SetGameStarted(bool bStarted);
-	bool GetGameStarted() const;
+	void SetbIsGameStarted(bool bStarted);
+	bool GetbIsGameStarted() const;
 	
 	//UI 팝업 여부 설정 및 확인 / 마우스 커서 필요한가 아닌가
 	void SetUIPopUp(bool bUIPopUp);
 	bool GetUIPopUp() const;
+	
+	//스테이지 시작 여부 설정 및 확인
+	void SetbIsStageStarted(bool bStarted);
+	bool GetbIsStageStarted() const;
+	
+	//스테이지 탈출 여부 설정 및 확인
+	void SetbIsPlayerEscaped(bool bEscaped);
+	bool GetbIsPlayerEscaped() const;
 private:
 	
+	//게임 시작 여부
 	bool bIsGameStarted;
+	//UI 팝업 여부
 	bool bIsUIPopUp;
+	//스테이지 시작 여부
+	bool bIsStageStarted;
+	//스테이지 탈출 여부
+	bool bIsPlayerEscaped;
 };

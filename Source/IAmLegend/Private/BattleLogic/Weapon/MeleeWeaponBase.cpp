@@ -7,6 +7,7 @@
 #include "BattleLogic/Weapon/WeaponProjectileBase.h"
 #include "BattleLogic/DummyPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Character/HanPlayerCharacter.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
@@ -131,7 +132,7 @@ void AMeleeWeaponBase::SubAttack()
 
 	// í”Œë ˆì´ì–´ì˜ ì‹œì ì— ë”°ë¼ íˆ¬ì‚¬ì²´ì˜ ì´ˆê¸° íšŒì „ì„ ì„¤ì •
 	FRotator SpawnRotation;
-	if (ADummyPlayerCharacter* OwnerPawn = Cast<ADummyPlayerCharacter>(GetOwner()))
+	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))  //ÇÑ±â´ã - ¿©±â ºÎºĞÀÌ ´õ¹ÌÄ³¸¯ÅÍ·Î µÇ¾îÀÖ¾î¼­ APawnÀ¸·Î ¼öÁ¤Çß½À´Ï´Ù
 	{
 		SpawnRotation = OwnerPawn->GetControlRotation();
 	}

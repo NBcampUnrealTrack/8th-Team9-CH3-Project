@@ -22,14 +22,23 @@ void AMainGameModeBase::BeginPlay()
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
 	
-	if (!GI->GetGameStarted())
+	//게임시작 전인지 확인
+	if (!GI->GetbIsGameStarted())
 	{
 		SpawnTitleUI();
 	}
 	
+	//스테이지 시작했는지 확인
+	if (GI->GetbIsStageStarted())
+	{
+		StartStage();
+	}
 	
+	
+	UE_LOG(LogTemp, Warning, TEXT("Is Player Escape: %s"), GI->GetbIsPlayerEscaped() ? TEXT("true") : TEXT("false"));
 }
 
+//타이틀 UI 출력 (사용 X)
 void AMainGameModeBase::SpawnTitleUI()
 {
 	if (!TitleUIWidgetClass) return;
@@ -46,6 +55,7 @@ void AMainGameModeBase::SpawnTitleUI()
 	}
 }
 
+//스테이지 선택 UI 출력 (임시)
 void AMainGameModeBase::SpawnStageSelectUI()
 {
 	if (!StageSelectUIWidgetClass) return;
@@ -62,12 +72,13 @@ void AMainGameModeBase::SpawnStageSelectUI()
 	}
 }
 
+//게임 시작(쉘터 진입)
 void AMainGameModeBase::StartGame()
 {
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (GI)
 	{
-		GI->SetGameStarted(true);
+		GI->SetbIsGameStarted(true);
 		GI->SetUIPopUp(false);
 	}
 	
@@ -82,6 +93,7 @@ void AMainGameModeBase::StartGame()
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
 }
 
+//스테이지 선택, 현재 사용 X BP를 통해 테스트 중
 void AMainGameModeBase::EnterStageSelectZone()
 {
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
@@ -93,26 +105,66 @@ void AMainGameModeBase::EnterStageSelectZone()
 	}
 }
 
+// 스테이지 입장 시 초기 설정, 어떤 스테이지 입장했는지 인덱스 값을 받음 
 void AMainGameModeBase::EnterStage(int32 StageIndex)
 {
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC)
+	{
+		// 입력 모드를 게임 전용으로 변경
+		FInputModeGameOnly InputMode;
+		PC->SetInputMode(InputMode);
+	}
+	
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (!GI) return;
+	
+	GI->SetbIsStageStarted(true);
+	
 	UGameplayStatics::OpenLevel(GetWorld(), LevelMapNames[StageIndex]);
-	StartStage();
 	
 }
 
+//스테이지 시작
 void AMainGameModeBase::StartStage()
 {
+	//타이머를 통해 제한 시간 설정
 	GetWorldTimerManager().SetTimer(StageTimerHandle, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
 	UE_LOG(LogTemp, Warning, TEXT("Timer Start"));
+	
+	//플레이어 탈출 여부 실패로 초기 설정
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (!GI) return;
+	GI->SetbIsPlayerEscaped(false);
 }
 
+//스테이지 제한 시간 종료
 void AMainGameModeBase::OnStageTimeUp()
 {
-	EndStage();
+	
+	EndStage(false);
 	UE_LOG(LogTemp, Warning, TEXT("Stage End"));
 }
 
-void AMainGameModeBase::EndStage()
+
+//스테이지 종료, 탈출 성공 실패를 확인
+void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 {
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (!GI) return;
+	
+	//플레이어 탈출 성공 판정
+	if (bIsPlayerEscaped)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player Escaped"));
+		GI->SetbIsPlayerEscaped(true);
+		
+		GetWorldTimerManager().ClearTimer(StageTimerHandle);
+		
+	}
+	
+	
+	//스테이지 종료
+	GI->SetbIsStageStarted(false);
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
 }
