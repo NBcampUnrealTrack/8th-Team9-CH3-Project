@@ -14,12 +14,17 @@ void AUseItemActor::ApplyPickup(ACharacter* Player)
 
 	switch (Data->EffectType)
 	{
-	case EItemType::Heal:
-		UE_LOG(LogTemp, Warning, TEXT("즉시 회복 효과 발동: %f"), Data->Value);
+	case EItemType::Escape:
+		UE_LOG(LogTemp, Warning, TEXT("캐릭터가 탈출 아이템을 주웠다!"));
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1,1.0f,FColor::Blue, 
+				FString::Printf(TEXT("캐릭터가 %s 아이템 획득! "), *Data->ItemName));
+		}
 		break;
 
-	case EItemType::Damage:
-		UE_LOG(LogTemp, Warning, TEXT("즉시 데미지 효과 발동: %f"), Data->Value);
+	case EItemType::Heal:
+		UE_LOG(LogTemp, Warning, TEXT("캐릭터가 %s 아이템 : 회복 아이템을 획득!"), *Data->ItemName);
 		break;
 	}
 	
