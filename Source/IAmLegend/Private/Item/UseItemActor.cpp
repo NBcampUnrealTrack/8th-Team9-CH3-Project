@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UseItemActor.h"
-#include "UseItemDataAsset.h"
+#include "Item/UseItemActor.h"
+#include "Item/UseItemDataAsset.h"
 
 
 void AUseItemActor::ApplyPickup(ACharacter* Player)

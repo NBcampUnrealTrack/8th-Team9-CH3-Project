@@ -1,9 +1,9 @@
-#include "BaseItemActor.h"
+#include "Item/BaseItemActor.h"
 #include "GameFramework/Character.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "ItemDataAsset.h"
-#include "InventoryComponent.h"
+#include "Item/ItemDataAsset.h"
+#include "Item/InventoryComponent.h"
 
 ABaseItemActor::ABaseItemActor()
 {
