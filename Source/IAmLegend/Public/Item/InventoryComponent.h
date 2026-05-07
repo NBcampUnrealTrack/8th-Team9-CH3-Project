@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "InventoryComponent.generated.h"
 
+class UItemDataAsset;
 
 USTRUCT(BlueprintType)
 struct FItemSlot
@@ -23,29 +24,30 @@ struct FItemSlot
 		: ItemData(InData), Quantity(InQuantity) {}
 };
 
-class UItemDataAsset;
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class IAMLEGEND_API UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+public: 
 	UInventoryComponent();
-	
-	UFUNCTION()
+    
+	UFUNCTION(BlueprintCallable)
 	bool AddItem(UItemDataAsset* NewItem);
-	
-	UFUNCTION()
+    
+	UFUNCTION(BlueprintCallable)
 	void UseItem(int32 Index);
-	
+
+	// 현재 인벤토리의 모든 아이템과 카테고리별 수량을 출력하는 함수
+	UFUNCTION(BlueprintCallable)
+	void ShowInventory();
+    
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FItemSlot> Inventory;
-		
-	
+       
 protected:
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter;
-	
+    
 	virtual void BeginPlay() override;
 };
