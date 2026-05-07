@@ -25,6 +25,7 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 	//캐릭터 무브먼트 컴포넌트 설정
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; 
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchWalkSpeed;
 	GetCharacterMovement()->JumpZVelocity = BaseJumpVelocity;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
@@ -36,6 +37,16 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
 	CameraComponent->SetupAttachment(SpringArmComponent);
+
+	// 컨트롤러의 회전(마우스)에 따라 캐릭터 몸통이 바로 돌아가는 것을 끕니다.
+	bUseControllerRotationYaw = false;
+
+	// 이동하는 방향으로 캐릭터 몸통이 부드럽게 회전하도록 설정합니다.
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	// 회전 속도를 조절하고 싶다면 (숫자가 높을수록 빨리 돌았습니다.)
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 500.f, 0.f);
+
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 }
 
 void AHanPlayerCharacter::BeginPlay()
@@ -111,6 +122,13 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			this, 
 			&ACharacter::StopJumping
 		);
+
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Crouch,
+			ETriggerEvent::Started,
+			this,
+			&AHanPlayerCharacter::InputCrouchToggle 
+		);
 	}
 }
 
@@ -161,7 +179,7 @@ void AHanPlayerCharacter::SetViewMode(EViewMode InViewMode)
 	{
 	case EViewMode::BackView:
 		bUseControllerRotationPitch = false;
-		bUseControllerRotationYaw = true;
+		bUseControllerRotationYaw = false;
 		bUseControllerRotationRoll = false;
 
 		SpringArmComponent->TargetArmLength = BaseArmLength;
@@ -205,6 +223,8 @@ void AHanPlayerCharacter::InputLook(const FInputActionValue& InValue)
 
 void AHanPlayerCharacter::InputSprintStart(const FInputActionValue& InValue)
 {
+	// 현재 앉아있는 상태(bIsCrouched)라면 함수를 종료해서 달리기를 막습니다.
+	if (bIsCrouched) return;
 	// 달리기 속도 적용
 	GetCharacterMovement()->MaxWalkSpeed = SprintWalkSpeed;
 }
@@ -213,4 +233,32 @@ void AHanPlayerCharacter::InputSprintEnd(const FInputActionValue& InValue)
 {
 	// 기본 걷기 속도 복원
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+}
+
+void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
+{
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return;
+	}
+
+	//  이미 앉아있는 상태라면 무조건 일어서기 시도
+	if (bIsCrouched)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Executing UnCrouch()!"));
+		UnCrouch();
+	}
+	// 서 있는 상태라면 '앉을 수 있는지' 확인 후 앉기
+	else
+	{
+		if (CanCrouch() == true)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Executing Crouch()!"));
+			Crouch();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("CanCrouch() returned False! Check NavAgent settings."));
+		}
+	}
 }
