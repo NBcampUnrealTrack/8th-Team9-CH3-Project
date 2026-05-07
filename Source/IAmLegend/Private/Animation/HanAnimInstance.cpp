@@ -27,6 +27,11 @@ void UHanAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		float GroundAcceleration = UKismetMathLibrary::VSizeXY(OwnerCharacterMovement->GetCurrentAcceleration());
 		bool bIsAccelerationNearlyZero = FMath::IsNearlyZero(GroundAcceleration);
 		bShouldMove = (KINDA_SMALL_NUMBER < GroundSpeed) && (bIsAccelerationNearlyZero == false);
+		
+		// 캐릭터가 현재 IsFalling인지 확인
 		bIsFalling = OwnerCharacterMovement->IsFalling();
+
+		// 캐릭터가 현재 앉아있는지(bIsCrouched) 확인해서 애니메이션 변수에 저장합니다.
+		bIsCrouched = OwnerCharacterMovement->IsCrouching();
 	}
 }
