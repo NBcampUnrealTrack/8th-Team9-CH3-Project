@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include <InputActionValue.h>
-#include "InventoryComponent.h"
+#include "Item/InventoryComponent.h"
 #include "HanPlayerCharacter.generated.h"
 
 class USpringArmComponent;
