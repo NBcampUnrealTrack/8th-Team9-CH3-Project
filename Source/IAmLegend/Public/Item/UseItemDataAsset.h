@@ -8,8 +8,8 @@
 UENUM(BlueprintType)
 enum class EItemType : uint8
 {
-	Heal,
-	Damage
+	Escape,
+	Heal
 };
 
 UCLASS()
