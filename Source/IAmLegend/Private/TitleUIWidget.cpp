@@ -1,5 +1,6 @@
-﻿// TitleUIWidget.cpp
+// TitleUIWidget.cpp
 // 요약: 타이틀 화면 UI 출력 클래스
+
 
 #include "TitleUIWidget.h"
 #include "Components/Button.h"
@@ -8,7 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
-#include "Gamemode/MainGameStateBase.h" // 게임모드 추가 -> 수정해야 할 부분
+#include "Gamemode/MainGameModeBase.h" // 게임모드 추가 -> 수정해야 할 부분
 
 void UTitleUIWidget::NativeConstruct()
 {
@@ -33,10 +34,10 @@ void UTitleUIWidget::NativeConstruct()
 void UTitleUIWidget::OnStartButtonClicked()
 {
 	// [추가] StartGame() 함수 호출 -> 수정해야 할 부분
-	AMainGameStateBase* GameMode = Cast<AMainGameStateBase>(UGameplayStatics::GetGameMode(this));
+	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode) 
 	{
-		 GameMode->StartGame();
+		GameMode->StartGame();
 	}
 
 	// FadeIn 이미지를 보이게 설정하고 애니메이션 재생
@@ -51,22 +52,7 @@ void UTitleUIWidget::OnStartButtonClicked()
 		PlayAnimation(TitleFadeIn);
 	}
 
-	// 1초 딜레이 후 OpenShelterLevel 실행
-	GetWorld()->GetTimerManager().SetTimer(LevelLoadTimerHandle, this, &UTitleUIWidget::OpenShelterLevel, 1.0f, false);
-}
 
-void UTitleUIWidget::OpenShelterLevel()
-{
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (PC)
-	{
-		// 입력 모드를 게임 전용으로 변경
-		FInputModeGameOnly InputMode;
-		PC->SetInputMode(InputMode);
-	}
-
-	// Shelter 레벨 열기
-	UGameplayStatics::OpenLevel(this, FName("Shelter"));
 }
 
 // 종료 함수

@@ -1,4 +1,4 @@
-﻿// TitleUIWidget.h
+// TitleUIWidget.h
 // 요약: 타이틀 화면 UI 출력 클래스
 
 #pragma once
@@ -55,8 +55,5 @@ private:
 	UFUNCTION()
 	void OnEndButtonUnhovered();
 
-	// 딜레이 후 레벨 이동을 처리할 함수(FadeIn 때문에 해줘야함)
-	void OpenShelterLevel();
-
-	FTimerHandle LevelLoadTimerHandle;
+	
 };
