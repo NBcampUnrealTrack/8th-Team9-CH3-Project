@@ -1,16 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "InventoryComponent.h"
+#include "Item/InventoryComponent.h"
 #include "GameFramework/Character.h"
-#include "UseItemDataAsset.h"
+#include "Character/HanPlayerCharacter.h"
+#include "Item/UseItemDataAsset.h"
 #include "WeaponDataAsset.h"
 
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
@@ -61,6 +57,45 @@ void UInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 	OwnerCharacter = Cast<ACharacter>(GetOwner());
 	
+}
+
+void UInventoryComponent::ShowInventory()
+{
+	UE_LOG(LogTemp, Warning, TEXT("=== Current Inventory Status ==="));
+
+	// 카테고리별 수량을 저장할 맵
+	TMap<EItemCategory, int32> CategoryCounts;
+
+	if (Inventory.Num() == 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Inventory is Empty."));
+		return;
+	}
+
+	for (const FItemSlot& Slot : Inventory)
+	{
+		if (Slot.ItemData)
+		{
+			// 상세 목록 출력
+			UE_LOG(LogTemp, Log, TEXT("Item: [%s] | Quantity: %d | Type: %d"), 
+				*Slot.ItemData->ItemName, 
+				Slot.Quantity, 
+				(int32)Slot.ItemData->Category);
+
+			// 카테고리별 합계 계산
+			CategoryCounts.FindOrAdd(Slot.ItemData->Category) += Slot.Quantity;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("--- Summary by Category ---"));
+    
+	// 카테고리별 최종 합계 출력
+	for (auto& It : CategoryCounts)
+	{
+		// Enum 값을 문자열로 변환하여 출력하면 더 보기 좋습니다.
+		FString CategoryName = StaticEnum<EItemCategory>()->GetNameStringByValue((int64)It.Key);
+		UE_LOG(LogTemp, Warning, TEXT("%s: %d items"), *CategoryName, It.Value);
+	}
 }
 
 
