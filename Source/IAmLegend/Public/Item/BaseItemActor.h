@@ -3,14 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractableInterface.h"
 #include "GameFramework/Actor.h"
 #include "BaseItemActor.generated.h"
 
 class USphereComponent;
 class UItemDataAsset;
+class UWidgetComponent;
 
 UCLASS()
-class IAMLEGEND_API ABaseItemActor : public AActor
+class IAMLEGEND_API ABaseItemActor : public AActor, public IInteractableInterface
 {
 	GENERATED_BODY()
 	
@@ -33,6 +35,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item")
 	TObjectPtr<UItemDataAsset> ItemData;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UWidgetComponent> InteractionWidget;
 
 	// 충돌 이벤트
 	UFUNCTION()
@@ -44,11 +49,19 @@ public:
 		bool bFromSweep,
 		const FHitResult& SweepResult
 	);
+	
+	UFUNCTION()
+	virtual void OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	// 아이템 적용 (자식에서 override)
 	UFUNCTION()
 	virtual void ApplyPickup(ACharacter* Player);
 
-	
+	//상호작용 인터페이스 부분
+	virtual void Interact(ACharacter* Player) override;
+	virtual FString InteractionText() const override;
+	virtual void OnPlayerEntered(ACharacter* Player) override;
+	virtual void OnPlayerExited(ACharacter* Player) override;
 	void InitFromData();
 };
