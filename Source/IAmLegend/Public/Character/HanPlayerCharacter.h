@@ -6,10 +6,14 @@
 #include "Item/InventoryComponent.h"
 #include "HanPlayerCharacter.generated.h"
 
+//전방 선언
 class USpringArmComponent;
 class UCameraComponent;
 class UHanInputConfig;
 class UInputMappingContext;
+class UInventoryComponent; 
+class AWeaponBase;         
+class ABaseItemActor;      
 
 //BackView
 UENUM(BlueprintType)
