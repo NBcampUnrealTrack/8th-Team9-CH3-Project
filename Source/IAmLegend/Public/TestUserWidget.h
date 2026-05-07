@@ -14,8 +14,6 @@ class IAMLEGEND_API UTestUserWidget : public UUserWidget
 	
 public:
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UButton> Btn_GameStart;
-	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> Txt_Shelter;
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	TObjectPtr<UButton> Btn_SelectSchoolStage;
@@ -26,8 +24,6 @@ public:
 	
 	virtual void NativeConstruct() override;
 	
-	UFUNCTION()
-	void OnGameStartClicked();
 	UFUNCTION()
 	void OnSchoolStageClicked();
 	UFUNCTION()

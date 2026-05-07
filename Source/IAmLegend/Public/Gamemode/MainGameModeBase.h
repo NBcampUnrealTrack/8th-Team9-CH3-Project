@@ -39,7 +39,7 @@ public:
 	//스테이지 제한시간 종료
 	void OnStageTimeUp();
 	//스테이지 종료
-	void EndStage();
+	void EndStage(bool bIsPlayerEscaped);
 	
 	//UI 생성
 	void SpawnTitleUI();

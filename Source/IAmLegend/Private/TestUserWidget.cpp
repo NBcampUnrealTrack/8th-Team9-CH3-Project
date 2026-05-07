@@ -8,29 +8,15 @@ void UTestUserWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	if (Btn_GameStart)
-	{
-		Btn_GameStart->OnClicked.AddDynamic(this, &UTestUserWidget::OnGameStartClicked);
-	}
-	
-	
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	if (GI && GI->GetGameStarted())
-	{
-		Btn_GameStart->SetVisibility(ESlateVisibility::Hidden);
-		Txt_Shelter->SetVisibility(ESlateVisibility::Visible);
-	}
-	else
-	{
-		Btn_GameStart->SetVisibility(ESlateVisibility::Visible);
-		Txt_Shelter->SetVisibility(ESlateVisibility::Hidden);
-	}
+	Txt_Shelter->SetVisibility(ESlateVisibility::Visible);
+
+
 	
 	if (Btn_SelectHospitalStage && Btn_SelectPoliceStage && Btn_SelectSchoolStage)
 	{
-		Btn_SelectHospitalStage->SetVisibility(ESlateVisibility::Hidden);
-		Btn_SelectPoliceStage->SetVisibility(ESlateVisibility::Hidden);
-		Btn_SelectSchoolStage->SetVisibility(ESlateVisibility::Hidden);
+		Btn_SelectHospitalStage->SetVisibility(ESlateVisibility::Visible);
+		Btn_SelectPoliceStage->SetVisibility(ESlateVisibility::Visible);
+		Btn_SelectSchoolStage->SetVisibility(ESlateVisibility::Visible);
 		
 		Btn_SelectHospitalStage->OnClicked.AddDynamic(this, &UTestUserWidget::OnHospitalStageClicked);
 		Btn_SelectPoliceStage->OnClicked.AddDynamic(this, &UTestUserWidget::OnOnPoliceStageClicked);
@@ -39,18 +25,6 @@ void UTestUserWidget::NativeConstruct()
 
 }
 
-void UTestUserWidget::OnGameStartClicked()
-{
-	AMainGameModeBase* GM = Cast<AMainGameModeBase>(GetWorld()->GetAuthGameMode());
-
-	if (GM)
-	{
-		GM->StartGame();
-	}
-	
-	Btn_GameStart->SetVisibility(ESlateVisibility::Hidden);
-	Txt_Shelter->SetVisibility(ESlateVisibility::Visible);
-}
 
 void UTestUserWidget::OnHospitalStageClicked()
 {
