@@ -6,11 +6,26 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Input/HanInputConfig.h"
+#include "BattleLogic/WeaponBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+
+	// 인벤토리 컴포넌트 생성
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+
+	// 체력
+	MaxHealth = 100.f;
+	Health = MaxHealth;
+	// 초기값 설정
+	DefaultFOV = 90.f;
+	AimingFOV = 60.f;
+	TargetFOV = DefaultFOV;
+	CurrentFOV = TargetFOV;
+	FOVInterpSpeed = 10.f;
+	bIsAiming = false;
 
 	//몸체(캡슐) 크기 설정
 	float CharacterHalfHeight = 90.f;
@@ -47,12 +62,17 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 500.f, 0.f);
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+
+	
 }
 
 void AHanPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// 시작 시 무기 소환
+	if (WeaponClass) EquipWeapon();
+
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	if (IsValid(PlayerController) == true)
 	{
@@ -61,6 +81,18 @@ void AHanPlayerCharacter::BeginPlay()
 		{
 			Subsystem->AddMappingContext(PlayerCharacterInputMappingContext, 0);
 		}
+	}
+}
+
+void AHanPlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	
+	// 부드러운 카메라 줌인/아웃 로직 (InterpTo)
+	if (CameraComponent)
+	{
+		CurrentFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, FOVInterpSpeed);
+		CameraComponent->SetFieldOfView(CurrentFOV);
 	}
 }
 
@@ -128,6 +160,29 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			ETriggerEvent::Started,
 			this,
 			&AHanPlayerCharacter::InputCrouchToggle 
+		);
+
+		// 공격 
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Attack, 
+			ETriggerEvent::Started, 
+			this, 
+			&AHanPlayerCharacter::Attack
+		);
+
+		// 조준 
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Aim, 
+			ETriggerEvent::Started, 
+			this, 
+			&AHanPlayerCharacter::StartAim
+		);
+
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Aim, 
+			ETriggerEvent::Completed, 
+			this, 
+			&AHanPlayerCharacter::StopAim
 		);
 	}
 }
@@ -261,4 +316,83 @@ void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
 			UE_LOG(LogTemp, Error, TEXT("CanCrouch() returned False! Check NavAgent settings."));
 		}
 	}
+}
+
+// ----- 전투 로직 함수 -----
+float AHanPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	if (Health <= 0.f) return 0.f;
+
+	float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (ActualDamage > 0.f)
+	{
+		Health = FMath::Clamp(Health - ActualDamage, 0.f, MaxHealth);
+		UE_LOG(LogTemp, Warning, TEXT("현재 체력: %f"), Health); //로그 추가
+
+		if (Health <= 0.f)
+		{
+			Die();
+		}
+	}
+	return ActualDamage;
+}
+
+void AHanPlayerCharacter::Die()
+{
+	// 나중에 여기에 사망 애니메이션을 넣을수도 있을것같습니다! - 한기담
+	Destroy();
+}
+
+void AHanPlayerCharacter::EquipWeapon()
+{
+	if (EquippedWeapon) UnEquipWeapon();
+
+	if (WeaponClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+
+		// 무기 생성
+		AWeaponBase* SpawnedWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, SpawnParams);
+		if (SpawnedWeapon)
+		{
+			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
+			EquippedWeapon = SpawnedWeapon;
+		}
+	}
+}
+
+void AHanPlayerCharacter::UnEquipWeapon()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->DestroyWeapon(); 
+		EquippedWeapon = nullptr;
+	}
+}
+
+void AHanPlayerCharacter::Attack()
+{
+	if (EquippedWeapon)
+	{
+		if (!bIsAiming) EquippedWeapon->WeaponAttack(); // 일반 공격
+		else EquippedWeapon->SubAttack(); // 조준 공격
+	}
+}
+
+
+void AHanPlayerCharacter::StartAim() 
+{ 
+	bIsAiming = true; 
+	TargetFOV = AimingFOV; 
+	UE_LOG(LogTemp, Warning, TEXT("조준 시작! 목표 FOV: %f"), TargetFOV);
+}
+
+void AHanPlayerCharacter::StopAim() 
+{ 
+	bIsAiming = false; 
+	TargetFOV = DefaultFOV; 
 }
