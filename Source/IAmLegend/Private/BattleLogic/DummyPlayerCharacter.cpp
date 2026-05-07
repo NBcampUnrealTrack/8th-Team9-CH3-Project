@@ -215,4 +215,9 @@ void ADummyPlayerCharacter::StopAim()
 	TargetFOV = DefaultFOV;
 }
 
+bool ADummyPlayerCharacter::IsAiming() const
+{
+	return bIsAiming;
+}
+
 

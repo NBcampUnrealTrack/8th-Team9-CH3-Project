@@ -20,6 +20,8 @@ class IAMLEGEND_API ADummyPlayerCharacter : public ABaseDummyCharacter
 public:
 	ADummyPlayerCharacter();
 
+	bool IsAiming() const;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	class USpringArmComponent* SpringArm;
