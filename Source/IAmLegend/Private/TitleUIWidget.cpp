@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
+#include "Gamemode/MainGameModeBase.h" // 게임모드 추가
 
 void UTitleUIWidget::NativeConstruct()
 {
@@ -31,6 +32,13 @@ void UTitleUIWidget::NativeConstruct()
 
 void UTitleUIWidget::OnStartButtonClicked()
 {
+	// [추가] 게임 모드의 GameStart() 함수 호출
+	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
+	if (GameMode) 
+	{
+		// GameMode->GameStart();
+	}
+
 	// FadeIn 이미지를 보이게 설정하고 애니메이션 재생
 	if (FadeIn)
 	{
