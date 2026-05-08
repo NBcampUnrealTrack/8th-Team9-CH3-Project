@@ -35,22 +35,19 @@ void ABaseZombie_Ai::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    // 에디터의 '디테일 창'에서 BTAsset과 BBAsset을 넣었는지 검사합니다.
-    if (BBAsset != nullptr && BTAsset != nullptr)
+    if (BBAsset && BTAsset)
     {
-        // 블랙보드를 초기화하고 사용을 시작합니다.
         if (UseBlackboard(BBAsset, BlackboardComp))
         {
-            // 비헤이비어 트리를 실행하여 AI가 움직이게 만듭니다.
             if (RunBehaviorTree(BTAsset))
             {
                 APlayerController* PC = GetWorld()->GetFirstPlayerController();
-
-                if (PC)
+                if (PC && PC->GetPawn())
                 {
                     APawn* PlayerPawn = PC->GetPawn();
 
-                    if (PlayerPawn && BlackboardComp)
+                    // [추가] 0번 플레이어라도 "Player" 태그가 있어야만 블랙보드에 등록
+                    if (PlayerPawn->ActorHasTag(TEXT("Player")))
                     {
                         BlackboardComp->SetValueAsObject(TEXT("TargetActor"), PlayerPawn);
                     }
