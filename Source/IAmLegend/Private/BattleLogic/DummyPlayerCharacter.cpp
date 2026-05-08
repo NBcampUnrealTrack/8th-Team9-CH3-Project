@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "BattleLogic/DummyPlayerCharacter.h"
@@ -26,7 +26,7 @@ ADummyPlayerCharacter::ADummyPlayerCharacter()
 	TargetFOV = DefaultFOV;
 	CurrentFOV = TargetFOV;
 	FOVInterpSpeed = 10.f;
-
+	
 	DefaultMappingContext = nullptr;
 	MoveAction = nullptr;
 	LookAction = nullptr;
@@ -38,6 +38,7 @@ ADummyPlayerCharacter::ADummyPlayerCharacter()
 
 	WeaponClass = nullptr;
 	EquippedWeapon = nullptr;
+	WeaponSocketName = "WeaponSocket";
 	
 }
 
@@ -85,7 +86,7 @@ void ADummyPlayerCharacter::EquipWeapon()
 		if (SpawnedWeapon)
 		{
 			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
+			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, WeaponSocketName);
 			EquippedWeapon = SpawnedWeapon;
 		}
 	}
@@ -135,7 +136,8 @@ void ADummyPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 
 		if (AttackAction)
 		{
-			EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ADummyPlayerCharacter::Attack);
+			EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ADummyPlayerCharacter::StartAttack);
+			EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &ADummyPlayerCharacter::StopAttack);
 		}
 
 		if (AimAction)
@@ -183,15 +185,22 @@ void ADummyPlayerCharacter::StopJump()
 	StopJumping();
 }
 
-void ADummyPlayerCharacter::Attack()
+void ADummyPlayerCharacter::StartAttack()
 {
 	if(EquippedWeapon)
 	{
-		if(!bIsAiming) EquippedWeapon->WeaponAttack();
-		else EquippedWeapon->SubAttack();
+		EquippedWeapon->StartWeaponAttack();
 	}
 }
 
+void ADummyPlayerCharacter::StopAttack()
+{
+	if(EquippedWeapon)
+	{
+		EquippedWeapon->StopWeaponAttack();
+	}
+}
+	
 void ADummyPlayerCharacter::StartAim()
 {
 	bIsAiming = true;
@@ -202,6 +211,11 @@ void ADummyPlayerCharacter::StopAim()
 {
 	bIsAiming = false;
 	TargetFOV = DefaultFOV;
+}
+
+bool ADummyPlayerCharacter::IsAiming() const
+{
+	return bIsAiming;
 }
 
 

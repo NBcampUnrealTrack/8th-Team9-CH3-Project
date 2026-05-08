@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -19,6 +19,8 @@ class IAMLEGEND_API ADummyPlayerCharacter : public ABaseDummyCharacter
 
 public:
 	ADummyPlayerCharacter();
+
+	bool IsAiming() const;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -51,6 +53,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	class AWeaponBase* EquippedWeapon;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	FName WeaponSocketName;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	class UInputMappingContext* DefaultMappingContext;
 
@@ -80,7 +85,8 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void StartJump();
 	void StopJump();
-	void Attack();
+	void StartAttack();
+	void StopAttack();
 	void StartAim();
 	void StopAim();
 

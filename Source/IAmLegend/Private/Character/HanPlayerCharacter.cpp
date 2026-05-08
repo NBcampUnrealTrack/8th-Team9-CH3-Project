@@ -1,4 +1,4 @@
-#include "Character/HanPlayerCharacter.h"
+﻿#include "Character/HanPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -8,6 +8,7 @@
 #include "Input/HanInputConfig.h"
 #include "BattleLogic/WeaponBase.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Item/BaseItemActor.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -184,6 +185,21 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			this, 
 			&AHanPlayerCharacter::StopAim
 		);
+
+		// 인벤토리, 상호작용
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Inven, 
+			ETriggerEvent::Started, 
+			this, 
+			&AHanPlayerCharacter::InventoryShow
+		);
+
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Interact, 
+			ETriggerEvent::Started, 
+			this, 
+			&AHanPlayerCharacter::InputInteract
+		);
 	}
 }
 
@@ -318,6 +334,27 @@ void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
 	}
 }
 
+void AHanPlayerCharacter::InputInteract(const FInputActionValue& InValue)
+{
+	if (TargetItem)
+	{
+		// 아이템의 Interact 호출 -> 내부적으로 ApplyPickup(this) 실행됨
+		TargetItem->Interact(this);
+
+		// 아이템을 주웠으므로 참조 제거 (Destroy될 것이지만 안전을 위해)
+		TargetItem = nullptr;
+	}
+}
+
+void AHanPlayerCharacter::InventoryShow(const FInputActionValue& InValue)
+{
+	if (InventoryComponent)
+	{
+		//BaseItemActor에 있는 ShowInventory 호출
+		InventoryComponent->ShowInventory();
+	}
+}
+
 // ----- 전투 로직 함수 -----
 float AHanPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -378,8 +415,7 @@ void AHanPlayerCharacter::Attack()
 {
 	if (EquippedWeapon)
 	{
-		if (!bIsAiming) EquippedWeapon->WeaponAttack(); // 일반 공격
-		else EquippedWeapon->SubAttack(); // 조준 공격
+		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
 }
 
@@ -395,4 +431,10 @@ void AHanPlayerCharacter::StopAim()
 { 
 	bIsAiming = false; 
 	TargetFOV = DefaultFOV; 
+}
+
+// 조준 상태 반환 함수를 추가했습니다.
+bool AHanPlayerCharacter::IsAiming() const
+{
+	return bIsAiming;
 }

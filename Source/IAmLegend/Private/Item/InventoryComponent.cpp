@@ -38,8 +38,7 @@ void UInventoryComponent::UseItem(int32 Index)
 
 	FItemSlot& Slot = Inventory[Index];
     
-	// (여기서 아이템 효과 적용 로직 실행...)
-	// 예: SelectedItem->UseItem(Player);
+	
 
 	// 사용 후 개수 차감
 	Slot.Quantity--;

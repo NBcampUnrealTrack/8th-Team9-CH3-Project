@@ -1,15 +1,19 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include <InputActionValue.h>
-#include "InventoryComponent.h"
+#include "Item/InventoryComponent.h"
 #include "HanPlayerCharacter.generated.h"
 
+//전방 선언
 class USpringArmComponent;
 class UCameraComponent;
 class UHanInputConfig;
 class UInputMappingContext;
+class UInventoryComponent; 
+class AWeaponBase;         
+class ABaseItemActor;      
 
 //BackView
 UENUM(BlueprintType)
@@ -37,10 +41,10 @@ public:
 	// 체력이 0이 되었을 때 실행할 함수
 	virtual void Die();
 
-	
-
 	// PossessedBy는 캐릭터가 컨트롤러에 의해 제어될 때 호출되는 함수이다. 
 	virtual void PossessedBy(AController* NewController) override;
+
+	
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
@@ -68,7 +72,7 @@ protected:
 	float CrouchWalkSpeed = BaseWalkSpeed/1.5; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
-	float BaseJumpVelocity = 700.f;
+	float BaseJumpVelocity = 350.f;
 
 	// --- Camera Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Camera")
@@ -88,6 +92,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;
 	
+	// 현재 상호작용 가능한 아이템 (범위 내에 들어온 아이템)	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Interaction")
+	class ABaseItemActor* TargetItem;
+
+
+
 	// --- 조준(FOV) 관련 변수 ---
 	float DefaultFOV = 90.f;
 	float AimingFOV = 60.f;
@@ -117,7 +127,16 @@ public:
 	void InputSprintStart(const struct FInputActionValue& InValue); // 달리기 시작
 	void InputSprintEnd(const struct FInputActionValue& InValue);   // 달리기 종료
 	void InputCrouchToggle(const FInputActionValue& InValue);
+	void InputInteract(const FInputActionValue& InValue); // F 키 입력 시 실행될 함수
+	
+	UFUNCTION()
+	void InventoryShow(const FInputActionValue& InValue); // 인벤토리 관련
+	
+	// 아이템 쪽에서 캐릭터의 TargetItem을 설정해주기 위한 Getter/Setter
+	void SetTargetItem(class ABaseItemActor* NewItem) { TargetItem = NewItem; }
 
+	// 조준 상태를 반환하는 함수를 추가했습니다. 
+	bool IsAiming() const;
 
 protected:
 	/// 현재 시점 모드
