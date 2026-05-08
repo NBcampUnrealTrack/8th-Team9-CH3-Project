@@ -11,6 +11,9 @@ AWeaponBase::AWeaponBase()
 
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 평소엔 충돌 없음
 	Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);       // 모든 채널 무시
+
+	// 추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.
+	Range = 0.f;
 }
 
 void AWeaponBase::BeginPlay()
@@ -18,8 +21,6 @@ void AWeaponBase::BeginPlay()
 	Super::BeginPlay();
 	WeaponInitFromData();
 
-	// 추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.
-	Range = 200.f; 
 }
 
 void AWeaponBase::OnConstruction(const FTransform& Transform)
@@ -48,14 +49,24 @@ void AWeaponBase::WeaponInitFromData()
 	
 }
 
-void AWeaponBase::WeaponAttack()
+void AWeaponBase::StartWeaponAttack()
 {
 	Attack();
 }
 
-void AWeaponBase::SubAttack()
+void AWeaponBase::StopWeaponAttack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Weapon Attack Stopped!"));
+}
+
+void AWeaponBase::StartSubAttack()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Sub Attack!"));
+}
+
+void AWeaponBase::StopSubAttack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Sub Attack Stopped!"));
 }
 
 void AWeaponBase::DestroyWeapon()
