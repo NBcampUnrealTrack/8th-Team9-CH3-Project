@@ -62,40 +62,62 @@ void UInventoryComponent::ShowInventory()
 {
 	UE_LOG(LogTemp, Warning, TEXT("=== Current Inventory Status ==="));
 
-	// 카테고리별 수량을 저장할 맵
-	TMap<EItemCategory, int32> CategoryCounts;
-
+	
 	if (Inventory.Num() == 0)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Inventory is Empty."));
+		ShowInventoryOnScreen(); // 여기서 한 번만 호출하고 끝냄
+		return; 
+	}
+
+	
+	TMap<EItemCategory, int32> CategoryCounts;
+	for (const FItemSlot& Slot : Inventory)
+	{
+		if (Slot.ItemData)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Item: [%s] | Quantity: %d | Type: %d"), 
+			   *Slot.ItemData->ItemName, Slot.Quantity, (int32)Slot.ItemData->Category);
+
+			CategoryCounts.FindOrAdd(Slot.ItemData->Category) += Slot.Quantity;
+		}
+	}
+
+
+	UE_LOG(LogTemp, Warning, TEXT("--- Summary by Category ---"));
+	for (auto& It : CategoryCounts)
+	{
+		FString CategoryName = StaticEnum<EItemCategory>()->GetNameStringByValue((int64)It.Key);
+		UE_LOG(LogTemp, Warning, TEXT("%s: %d items"), *CategoryName, It.Value);
+	}
+    
+	
+	ShowInventoryOnScreen();
+}
+
+void UInventoryComponent::ShowInventoryOnScreen()
+{
+	if (!GEngine) return;
+
+	if (Inventory.Num() == 0)
+	{
+		GEngine->AddOnScreenDebugMessage(100, 3.0f, FColor::Red, TEXT("Inventory is Empty."));
 		return;
 	}
+
+	
+	FString FullInventoryText = TEXT("=== Current Inventory ===\n");
 
 	for (const FItemSlot& Slot : Inventory)
 	{
 		if (Slot.ItemData)
 		{
-			// 상세 목록 출력
-			UE_LOG(LogTemp, Log, TEXT("Item: [%s] | Quantity: %d | Type: %d"), 
+			FullInventoryText += FString::Printf(TEXT("Item: [%s] | Quantity: %d\n"), 
 				*Slot.ItemData->ItemName, 
-				Slot.Quantity, 
-				(int32)Slot.ItemData->Category);
-
-			// 카테고리별 합계 계산
-			CategoryCounts.FindOrAdd(Slot.ItemData->Category) += Slot.Quantity;
+				Slot.Quantity);
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("--- Summary by Category ---"));
-    
-	// 카테고리별 최종 합계 출력
-	for (auto& It : CategoryCounts)
-	{
-		// Enum 값을 문자열로 변환하여 출력하면 더 보기 좋습니다.
-		FString CategoryName = StaticEnum<EItemCategory>()->GetNameStringByValue((int64)It.Key);
-		UE_LOG(LogTemp, Warning, TEXT("%s: %d items"), *CategoryName, It.Value);
-	}
+	
+	GEngine->AddOnScreenDebugMessage(100, 5.0f, FColor::Cyan, FullInventoryText);
 }
-
-
-

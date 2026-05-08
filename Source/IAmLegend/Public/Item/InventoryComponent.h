@@ -41,6 +41,9 @@ public:
 	// 현재 인벤토리의 모든 아이템과 카테고리별 수량을 출력하는 함수
 	UFUNCTION(BlueprintCallable)
 	void ShowInventory();
+	
+	UFUNCTION(BlueprintCallable)
+	void ShowInventoryOnScreen();
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FItemSlot> Inventory;
