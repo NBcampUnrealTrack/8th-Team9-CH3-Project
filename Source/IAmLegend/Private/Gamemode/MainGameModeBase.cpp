@@ -1,4 +1,6 @@
 #include "Gamemode/MainGameModeBase.h"
+
+#include "EnemySpawnVolume.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Gamemode/MainGameStateBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -136,6 +138,21 @@ void AMainGameModeBase::StartStage()
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
 	GI->SetbIsPlayerEscaped(false);
+	
+	SpawnEnemyAtStage();
+}
+
+void AMainGameModeBase::SpawnEnemyAtStage()
+{
+	//적 스폰
+	TArray<AActor*> EnemySpawnVolumes;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawnVolume::StaticClass(), EnemySpawnVolumes);
+	if (EnemySpawnVolumes.Num() <= 0) return;
+	for (int32 i=0; i<EnemySpawnVolumes.Num(); ++i)
+	{
+		AEnemySpawnVolume* EnemySpawnVolume = Cast<AEnemySpawnVolume>(EnemySpawnVolumes[i]);
+		EnemySpawnVolume->TrySpawn();
+	}
 }
 
 //스테이지 제한 시간 종료

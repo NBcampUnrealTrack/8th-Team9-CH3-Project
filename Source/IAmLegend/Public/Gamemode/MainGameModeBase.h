@@ -36,6 +36,8 @@ public:
 	void EnterStage(int32 StageIndex);
 	//스테이지 시작
 	void StartStage();
+	//스테이지에 적 스폰
+	void SpawnEnemyAtStage();
 	//스테이지 제한시간 종료
 	void OnStageTimeUp();
 	//스테이지 종료
