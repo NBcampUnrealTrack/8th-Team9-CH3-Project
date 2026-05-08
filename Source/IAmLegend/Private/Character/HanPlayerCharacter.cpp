@@ -163,13 +163,15 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			&AHanPlayerCharacter::InputCrouchToggle 
 		);
 
+		/*
 		// 공격 
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Attack, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Attack,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::Attack
 		);
+		*/
 
 		// 조준 
 		EnhancedInputComponent->BindAction(
@@ -249,21 +251,29 @@ void AHanPlayerCharacter::SetViewMode(EViewMode InViewMode)
 	switch (CurrentViewMode)
 	{
 	case EViewMode::BackView:
-		bUseControllerRotationPitch = false;
+		// 캐릭터 몸통은 카메라를 따라가지 않게 
 		bUseControllerRotationYaw = false;
-		bUseControllerRotationRoll = false;
 
+		// 스프링암 설정 
 		SpringArmComponent->TargetArmLength = BaseArmLength;
-		SpringArmComponent->SetRelativeRotation(FRotator::ZeroRotator);
 
+		// 이 옵션이 켜져 있어야 마우스를 돌릴 때 '스프링암'이 회전한다.
 		SpringArmComponent->bUsePawnControlRotation = true;
 
+		// 속도 지연
 		SpringArmComponent->bInheritPitch = true;
 		SpringArmComponent->bInheritYaw = true;
-		SpringArmComponent->bInheritRoll = false;
+		SpringArmComponent->bInheritRoll = true;
+
+		// 카메라 지연
+		SpringArmComponent->bEnableCameraLag = true;
+		SpringArmComponent->CameraLagSpeed = 7.0f;
+
+		// 회전 지연도 켜주면 마우스를 멈춰도 카메라가 부드럽게 멈춘다.
+		SpringArmComponent->bEnableCameraRotationLag = true;
+		SpringArmComponent->CameraRotationLagSpeed = 10.0f;
 
 		SpringArmComponent->bDoCollisionTest = true;
-
 		break;
 
 	case EViewMode::None:
@@ -294,9 +304,13 @@ void AHanPlayerCharacter::InputLook(const FInputActionValue& InValue)
 
 void AHanPlayerCharacter::InputSprintStart(const FInputActionValue& InValue)
 {
+	// 조준중이라면 달리기 불가능
+	if (bIsAiming) return;
 	// 현재 앉아있는 상태(bIsCrouched)라면 함수를 종료해서 달리기를 막습니다.
 	if (bIsCrouched) return;
+
 	// 달리기 속도 적용
+	bIsSprinting = true;
 	GetCharacterMovement()->MaxWalkSpeed = SprintWalkSpeed;
 }
 
@@ -304,6 +318,17 @@ void AHanPlayerCharacter::InputSprintEnd(const FInputActionValue& InValue)
 {
 	// 기본 걷기 속도 복원
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+
+	if (bIsAiming)
+	{
+		// 조준 중일 때는 느린 속도 유지
+		GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
+	}
+	else
+	{
+		// 조준 중이 아닐 때만 원래 걷기 속도로 복구
+		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
 }
 
 void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
@@ -411,6 +436,7 @@ void AHanPlayerCharacter::UnEquipWeapon()
 	}
 }
 
+/*
 void AHanPlayerCharacter::Attack()
 {
 	if (EquippedWeapon)
@@ -418,12 +444,19 @@ void AHanPlayerCharacter::Attack()
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
 }
-
+*/
 
 void AHanPlayerCharacter::StartAim() 
 { 
 	bIsAiming = true; 
 	TargetFOV = AimingFOV; 
+
+	bUseControllerRotationYaw = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
+	SpringArmComponent->SocketOffset = FVector(90.f, 25.f, 35.f); 
+
 	UE_LOG(LogTemp, Warning, TEXT("조준 시작! 목표 FOV: %f"), TargetFOV);
 }
 
@@ -431,6 +464,13 @@ void AHanPlayerCharacter::StopAim()
 { 
 	bIsAiming = false; 
 	TargetFOV = DefaultFOV; 
+
+	// 조준 풀면 다시 입력 방향대로 자유롭게 몸을 돌린다.
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
+	SpringArmComponent->SocketOffset = FVector(50.f, 50.f, 35.f);
 }
 
 // 조준 상태 반환 함수를 추가했습니다.

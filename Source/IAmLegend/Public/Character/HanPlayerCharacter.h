@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include <InputActionValue.h>
 #include "Item/InventoryComponent.h"
+#include "BattleLogic/BaseDummyCharacter.h"
 #include "HanPlayerCharacter.generated.h"
 
 //전방 선언
@@ -43,8 +44,6 @@ public:
 
 	// PossessedBy는 캐릭터가 컨트롤러에 의해 제어될 때 호출되는 함수이다. 
 	virtual void PossessedBy(AController* NewController) override;
-	UPROPERTY(BlueprintReadOnly, Category = "Chacter | Weapon")
-	bool bIsAiming = false;
 	
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -106,6 +105,8 @@ protected:
 	float CurrentFOV = 90.f;
 	float FOVInterpSpeed = 10.f;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Character | Weapon") // ABP에서 쓸려면 필요
+	bool bIsAiming = false;
 	
 
 	// --- 달리기 변수 ---

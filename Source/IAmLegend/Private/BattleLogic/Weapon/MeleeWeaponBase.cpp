@@ -149,7 +149,7 @@ void AMeleeWeaponBase::ThrowWeapon()
 
 	// 플레이어의 시점에 따라 투사체의 초기 회전을 설정
 	FRotator SpawnRotation;							 // 주석이 깨져요 ㅠㅠ
-	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))  //�ѱ�� - ���� �κ��� ����ĳ���ͷ� �Ǿ��־ APawn���� �����߽��ϴ�
+	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))  // 플레이어 캐릭터를 기준으로 회전 설정
 	{
 		SpawnRotation = OwnerPawn->GetControlRotation();
 	}
