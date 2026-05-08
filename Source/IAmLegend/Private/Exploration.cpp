@@ -1,4 +1,4 @@
-﻿// Exploration.cpp
+// Exploration.cpp
 // 요약: 문에 다가가면 오버랩으로 상호작용 가능한 버튼이 생성되어 'F키'를 누르면 StageChoiceWidget으로 넘어감
 
 
@@ -86,15 +86,15 @@ void AExploration::OnInteractKeyPressed()
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 
-	if (PC && TargetWidgetClass)
+	if (PC && StageChoiceWidgetClass)
 	{
-		UUserWidget* TargetWidget = CreateWidget<UUserWidget>(PC, TargetWidgetClass);
-		if (TargetWidget)
+		UUserWidget* StageChoiceWidget = CreateWidget<UUserWidget>(PC, StageChoiceWidgetClass);
+		if (StageChoiceWidget)
 		{
-			TargetWidget->AddToViewport();
+			StageChoiceWidget->AddToViewport();
 
 			FInputModeUIOnly InputMode;
-			InputMode.SetWidgetToFocus(TargetWidget->TakeWidget());
+			InputMode.SetWidgetToFocus(StageChoiceWidget->TakeWidget());
 			PC->SetInputMode(InputMode);
 			PC->SetShowMouseCursor(true);
 		}

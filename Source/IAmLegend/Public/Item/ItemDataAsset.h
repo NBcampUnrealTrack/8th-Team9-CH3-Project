@@ -35,4 +35,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn")
 	TSubclassOf<class ABaseItemActor> ItemActorClass;
+	
+	
+	// --- 추가: 메쉬 위치/회전 보정값 ---
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+	FVector MeshRelativeLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+	FRotator MeshRelativeRotation = FRotator::ZeroRotator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+	float MeshScale = 1.0f; 
+	;
 };
