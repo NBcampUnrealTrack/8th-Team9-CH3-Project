@@ -4,6 +4,7 @@
 #include "BattleLogic/Weapon/RangedWeaponBase.h"
 #include "WeaponDataAsset.h"
 #include "BattleLogic/DummyPlayerCharacter.h"
+#include "Character/HanPlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
@@ -143,9 +144,6 @@ void ARangedWeaponBase::Fire()
 	bIsCoolDown = true;
 	GetWorldTimerManager().SetTimer(CoolDownTimerHandle, this, &ARangedWeaponBase::FinishCooldown, CoolDownTime, false);
 
-	// 현재는 더미를 기준으로 코드를 작성하였습니다.
-	// 추후에 실제 플레이어 캐릭터 클래스로 변경해야 합니다.
-	ADummyPlayerCharacter* OwnerCharacter = Cast<ADummyPlayerCharacter>(GetOwner());
 	if (!OwnerCharacter) return;
 	
 	FVector Start;
@@ -161,7 +159,7 @@ void ARangedWeaponBase::Fire()
 	FHitResult HitResult;
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
-	QueryParams.AddIgnoredActor(GetOwner());
+	QueryParams.AddIgnoredActor(OwnerCharacter);
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ATTACK_TRACE_CHANNEL, QueryParams);
 
@@ -192,7 +190,6 @@ void ARangedWeaponBase::Fire()
 void ARangedWeaponBase::ApplyRecoil()
 {
 	// 반동 적용
-	ADummyPlayerCharacter* OwnerCharacter = Cast<ADummyPlayerCharacter>(GetOwner());
 	if (!OwnerCharacter) return;
 
 	FRotator CurrentControlRotation = OwnerCharacter->GetControlRotation();

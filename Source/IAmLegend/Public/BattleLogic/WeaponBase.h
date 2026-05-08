@@ -29,6 +29,12 @@ protected:
 	UPROPERTY()
 	TArray<AActor*> HitActors;	// 공격 시 이미 타격한 액터들을 저장
 
+	// 현재는 더미를 기준으로 코드를 작성하였습니다.
+	// 추후에 실제 플레이어 캐릭터 클래스로 변경해야 합니다.
+	// 다른 무기 클래스에도 HanPlayerCharacter.h를 미리 include 해두었습니다.
+	// WeaponBase.h와 WeaponBase.cpp에서 OwnerCharacter를 사용하는 부분만 실제 플레이어 캐릭터 클래스로 변경하면 됩니다.
+	class ADummyPlayerCharacter* OwnerCharacter;
+
 public:
 	AWeaponBase();
 
