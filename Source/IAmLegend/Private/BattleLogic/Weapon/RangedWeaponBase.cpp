@@ -91,18 +91,6 @@ void ARangedWeaponBase::StopWeaponAttack()
 	GetWorldTimerManager().ClearTimer(FireRateTimerHandle);
 }
 
-void ARangedWeaponBase::StartSubAttack()
-{
-	Super::StartSubAttack();
-	StartWeaponAttack();
-}
-
-void ARangedWeaponBase::StopSubAttack()
-{
-	Super::StopSubAttack();
-	StopWeaponAttack();
-}
-
 void ARangedWeaponBase::Reload()
 {
 	GetWorldTimerManager().ClearTimer(FireRateTimerHandle);

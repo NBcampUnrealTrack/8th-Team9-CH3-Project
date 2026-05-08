@@ -69,8 +69,6 @@ public:
 	
 	virtual void StartWeaponAttack() override;		// 기본 공격 (발사)
 	virtual void StopWeaponAttack() override;		// 기본 공격 종료 (발사 중지)
-	virtual void StartSubAttack() override;		// 서브 공격 (조준 사격)
-	virtual void StopSubAttack() override;		// 서브 공격 종료 (조준 사격 중지)
 	virtual void WeaponInitFromData() override;	// 데이터 에셋에서 초기화
 
 	void Reload();			// 재장전

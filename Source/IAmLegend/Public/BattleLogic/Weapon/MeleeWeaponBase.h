@@ -46,8 +46,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void StartWeaponAttack() override;		// 기본 공격 시작
 	virtual void StopWeaponAttack() override;		// 기본 공격 종료
-	virtual void StartSubAttack() override;			// 서브 공격 (투척)
-	virtual void StopSubAttack() override;			// 서브 공격 종료
+	virtual void ThrowWeapon();						// 무기 투척 (ProjectileClass를 사용하여 투사체 생성)
 	
 	virtual void WeaponInitFromData() override;
 
