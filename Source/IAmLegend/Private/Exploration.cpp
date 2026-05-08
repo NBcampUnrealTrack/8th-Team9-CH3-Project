@@ -86,9 +86,9 @@ void AExploration::OnInteractKeyPressed()
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 
-	if (PC && StageChoiceWidgetClass)
+	if (PC && TargetWidgetClass)
 	{
-		UUserWidget* StageChoiceWidget = CreateWidget<UUserWidget>(PC, StageChoiceWidgetClass);
+		UUserWidget* StageChoiceWidget = CreateWidget<UUserWidget>(PC, TargetWidgetClass);
 		if (StageChoiceWidget)
 		{
 			StageChoiceWidget->AddToViewport();
