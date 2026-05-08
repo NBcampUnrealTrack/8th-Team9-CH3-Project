@@ -4,7 +4,6 @@
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 #include "WeaponDataAsset.h"
 #include "BattleLogic/Weapon/WeaponProjectileBase.h"
-#include "BattleLogic/DummyPlayerCharacter.h"
 #include "Character/HanPlayerCharacter.h"
 
 AThrowableWeaponBase::AThrowableWeaponBase()

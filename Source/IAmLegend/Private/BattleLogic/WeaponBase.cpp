@@ -3,7 +3,7 @@
 
 #include "BattleLogic/WeaponBase.h"
 #include "WeaponDataAsset.h"
-#include "BattleLogic/DummyPlayerCharacter.h"
+#include "Character/HanPlayerCharacter.h"
 
 AWeaponBase::AWeaponBase()
 {
@@ -24,7 +24,7 @@ void AWeaponBase::BeginPlay()
 
 	// BeginPlay에서 소유자 캐릭터를 미리 캐스팅하여 저장합니다.
 	// 현재는 더미를 기준으로 코드를 작성하였습니다.
-	OwnerCharacter = Cast<ADummyPlayerCharacter>(GetOwner());
+	OwnerCharacter = Cast<AHanPlayerCharacter>(GetOwner());
 
 	if (!OwnerCharacter)
 	{
