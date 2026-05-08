@@ -51,6 +51,8 @@ public:
 
 	void ExcuteAttack();						// 실제 공격 처리 (타이머로 호출)
 	void EndAttack(); // 공격 종료 시 호출
+	void AttackTrace();						// 공격 범위에 대한 충돌 검사 수행
+	void ProcessHitResults(const TArray<FHitResult>& HitResults); // 공격 결과 처리 (타격한 액터에 데미지 적용 등)
 	void FinishCooldown();					// 공격 쿨다운 종료 시 호출
 	
 };

@@ -41,58 +41,7 @@ void AMeleeWeaponBase::Tick(float DeltaTime)
 
 	if (bIsAttacking)
 	{
-		// 날의 시작과 끝 위치
-		FVector Start = Mesh->GetSocketLocation(FName("Root"));
-		FVector End = Mesh->GetSocketLocation(FName("Tip"));
-
-		TArray<FHitResult> HitResults;
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(OwnerCharacter); // 플레이어는 충돌에서 제외
-		Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
-
-		float WeaponThickness = 10.0f; // 칼날의 가상 두께
-		/*bool bHit = GetWorld()->SweepMultiByChannel(
-			HitResults,
-			Start,
-			End,
-			FQuat::Identity,
-			ATTACK_TRACE_CHANNEL,
-			FCollisionShape::MakeSphere(WeaponThickness),
-			Params
-		);*/
-
-		// 디버그 용
-		bool bHit = UKismetSystemLibrary::SphereTraceMulti(
-			GetWorld(),
-			Start,                          // 시작 위치
-			End,                            // 끝 위치
-			WeaponThickness,                // 구체 반지름
-			UEngineTypes::ConvertToTraceType(ATTACK_TRACE_CHANNEL), // 채널
-			false,                          // 복합 콜리전 사용 여부
-			{ OwnerCharacter, this },			// 충돌에서 제외할 액터 배열
-			EDrawDebugTrace::ForDuration,   // 디버그 형태 (None, ForOneFrame, ForDuration)
-			HitResults,                     // 결과 배열
-			true,                           // 자기 자신 무시 여부
-			FLinearColor::Red,              // 추적 선 색상
-			FLinearColor::Green,            // 히트 시 색상
-			1.0f                            // 디버그 선 유지 시간 (초)
-		);
-
-		if(bHit && HitResults.Num() > 0)
-		{
-			for (const FHitResult& Hit : HitResults)
-			{
-				AActor* HitActor = Hit.GetActor();
-
-				if (HitActor && !HitActors.Contains(HitActor))
-				{
-					// 타격한 액터에 데미지를 적용
-					UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
-					UGameplayStatics::ApplyDamage(HitActor, Damage, OwnerCharacter->GetInstigatorController(), OwnerCharacter, nullptr);
-					HitActors.Add(HitActor); // 이미 타격한 액터를 추가하여 중복 타격 방지
-				}
-			}
-		}
+		AttackTrace(); // 공격 판정 수행
 	}
 }
 
@@ -159,6 +108,64 @@ void AMeleeWeaponBase::ExcuteAttack()
 		AttackDuration,
 		false
 	);
+}
+
+void AMeleeWeaponBase::AttackTrace()
+{
+	// 공격 범위에 대한 충돌 검사 수행 (현재는 Tick에서 처리하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
+	// 날의 시작과 끝 위치
+	FVector Start = Mesh->GetSocketLocation(FName("Root"));
+	FVector End = Mesh->GetSocketLocation(FName("Tip"));
+
+	TArray<FHitResult> HitResults;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerCharacter); // 플레이어는 충돌에서 제외
+	Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
+
+	float WeaponThickness = 10.0f; // 칼날의 가상 두께
+	/*bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		Start,
+		End,
+		FQuat::Identity,
+		ATTACK_TRACE_CHANNEL,
+		FCollisionShape::MakeSphere(WeaponThickness),
+		Params
+	);*/
+
+	// 디버그 용
+	bool bHit = UKismetSystemLibrary::SphereTraceMulti(
+		GetWorld(),
+		Start,                          // 시작 위치
+		End,                            // 끝 위치
+		WeaponThickness,                // 구체 반지름
+		UEngineTypes::ConvertToTraceType(ATTACK_TRACE_CHANNEL), // 채널
+		false,                          // 복합 콜리전 사용 여부
+		{ OwnerCharacter, this },			// 충돌에서 제외할 액터 배열
+		EDrawDebugTrace::ForDuration,   // 디버그 형태 (None, ForOneFrame, ForDuration)
+		HitResults,                     // 결과 배열
+		true,                           // 자기 자신 무시 여부
+		FLinearColor::Red,              // 추적 선 색상
+		FLinearColor::Green,            // 히트 시 색상
+		1.0f                            // 디버그 선 유지 시간 (초)
+	);
+
+	ProcessHitResults(HitResults); // 타격 결과 처리 (데미지 적용 등)
+}
+
+void AMeleeWeaponBase::ProcessHitResults(const TArray<FHitResult>& HitResults)
+{
+	for (const FHitResult& Hit : HitResults)
+	{
+		AActor* HitActor = Hit.GetActor();
+		if (HitActor && !HitActors.Contains(HitActor))
+		{
+			// 타격한 액터에 데미지를 적용
+			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
+			UGameplayStatics::ApplyDamage(HitActor, Damage, OwnerCharacter->GetInstigatorController(), OwnerCharacter, nullptr);
+			HitActors.Add(HitActor); // 이미 타격한 액터를 추가하여 중복 타격 방지
+		}
+	}
 }
 
 void AMeleeWeaponBase::FinishCooldown()

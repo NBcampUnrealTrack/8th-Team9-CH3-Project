@@ -78,6 +78,9 @@ public:
 	void FinishCooldown();	// 발사 쿨다운 종료 시 호출
 	void ApplySpread(bool bIsAiming);		// 탄 퍼짐 증가
 	void RecoverSpread();	// 탄 퍼짐 회복
+	bool AttackTrace(FVector& StartLocation, FVector& EndLocation, FHitResult& HitResult);	// 탄 발사 시 트레이스 계산 및 타격 판정
+	void CalculateTrace(FVector& Start, FVector& End);	// 탄 퍼짐 계산 (발사 시마다 호출)
+	void ProcessHit(const FHitResult& HitResult);						// 타격 판정 처리 (발사 시마다 호출)
 
 	virtual void Fire();		// 발사 시 탄이 날아가는 경로를 계산하고 타격 판정 처리
 	bool CanFire() const;		// 발사 가능한지 여부 체크 (탄약, 재장전 상태 등)

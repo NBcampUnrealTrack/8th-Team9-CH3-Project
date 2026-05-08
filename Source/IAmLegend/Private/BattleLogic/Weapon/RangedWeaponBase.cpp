@@ -146,37 +146,22 @@ void ARangedWeaponBase::Fire()
 
 	if (!OwnerCharacter) return;
 	
-	FVector Start;
-	FRotator Rotation;
-	OwnerCharacter->GetActorEyesViewPoint(Start, Rotation);
+	// 탄 발사 시 트레이스 계산
+	FVector Start, End;
+	CalculateTrace(Start, End);
 
-	// 탄 퍼짐 계산
-	FVector Spread = FMath::VRandCone(Rotation.Vector(), FMath::DegreesToRadians(CurrentSpreadAngle));
-
-	// Range는 AWeaponBase에서 상속받은 사거리입니다. 현재는 블루프린트 내에서 값을 수정해서 사용하고 있습니다.
-	FVector End = Start + Spread * Range; 
-
+	// 트레이스 결과 처리
 	FHitResult HitResult;
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-	QueryParams.AddIgnoredActor(OwnerCharacter);
+	bool bHit = AttackTrace(Start, End, HitResult);
 
-	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ATTACK_TRACE_CHANNEL, QueryParams);
-
+	// 트레이스에 맞은 액터가 있으면 처리
 	if (bHit)
 	{
-		AActor* HitActor = HitResult.GetActor();
-		if (HitActor)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
-			UGameplayStatics::ApplyDamage(HitActor, Damage, OwnerCharacter->GetInstigatorController(), this, nullptr);
-		}
+		ProcessHit(HitResult);
 	}
 
 	// 발사 후 반동과 탄 퍼짐 증가 적용
 	ApplyRecoil();
-
-	// 캐릭터에 조준 여부를 반환하는 함수가 필요합니다.
 	ApplySpread(OwnerCharacter->IsAiming());
 
 	// 탄 퍼짐 회복 타이머 시작
@@ -232,5 +217,37 @@ void ARangedWeaponBase::RecoverSpread()
 	{
 		CurrentSpreadAngle = BaseSpreadAngle;
 		GetWorldTimerManager().ClearTimer(SpreadRecoveryTimerHandle);
+	}
+}
+
+void ARangedWeaponBase::CalculateTrace(FVector& Start, FVector& End)
+{
+	if (!OwnerCharacter) return;
+	FRotator Rotation;
+	OwnerCharacter->GetActorEyesViewPoint(Start, Rotation);
+
+	// 탄 퍼짐 계산
+	FVector Spread = FMath::VRandCone(Rotation.Vector(), FMath::DegreesToRadians(CurrentSpreadAngle));
+
+	// Range는 AWeaponBase에서 상속받은 사거리입니다. 현재는 블루프린트 내에서 값을 수정해서 사용하고 있습니다.
+	End = Start + Spread * Range;
+}
+
+bool ARangedWeaponBase::AttackTrace(FVector& StartLocation, FVector& EndLocation, FHitResult& HitResult)
+{
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+	QueryParams.AddIgnoredActor(OwnerCharacter);
+
+	return GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ATTACK_TRACE_CHANNEL, QueryParams);
+}
+
+void ARangedWeaponBase::ProcessHit(const FHitResult& HitResult)
+{
+	AActor* HitActor = HitResult.GetActor();
+	if (HitActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
+		UGameplayStatics::ApplyDamage(HitActor, Damage, OwnerCharacter->GetInstigatorController(), this, nullptr);
 	}
 }
