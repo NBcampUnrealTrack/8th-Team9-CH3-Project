@@ -168,7 +168,14 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			PlayerCharacterInputConfig->Attack, 
 			ETriggerEvent::Started, 
 			this, 
-			&AHanPlayerCharacter::Attack
+			&AHanPlayerCharacter::StartAttack
+		);
+
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Attack, 
+			ETriggerEvent::Completed, 
+			this, 
+			&AHanPlayerCharacter::StopAttack
 		);
 
 		// 조준 
@@ -435,11 +442,19 @@ void AHanPlayerCharacter::UnEquipWeapon()
 	}
 }
 
-void AHanPlayerCharacter::Attack()
+void AHanPlayerCharacter::StartAttack()
 {
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->StartWeaponAttack(); // 일반 공격
+		EquippedWeapon->StartWeaponAttack();
+	}
+}
+
+void AHanPlayerCharacter::StopAttack()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->StopWeaponAttack();
 	}
 }
 
@@ -464,7 +479,6 @@ void AHanPlayerCharacter::StopAim()
 { 
 	bIsAiming = false; 
 	TargetFOV = DefaultFOV; 
-<<<<<<< HEAD
 
 	// 조준 풀면 다시 입력 방향대로 자유롭게 몸을 돌린다.
 	bUseControllerRotationYaw = false;
@@ -473,12 +487,3 @@ void AHanPlayerCharacter::StopAim()
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
 	SpringArmComponent->SocketOffset = FVector(50.f, 50.f, 35.f);
 }
-=======
-}
-
-// 조준 상태 반환 함수를 추가했습니다.
-bool AHanPlayerCharacter::IsAiming() const
-{
-	return bIsAiming;
-}
->>>>>>> c87d99365e8f36ad6d07d84c6b101b8dc5500f84

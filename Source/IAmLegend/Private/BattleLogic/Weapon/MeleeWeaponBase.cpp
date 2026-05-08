@@ -100,7 +100,10 @@ void AMeleeWeaponBase::StartWeaponAttack()
 
 	// 현재는 더미를 기준으로 코드를 작성하였습니다.
 	// 추후에 실제 플레이어 캐릭터 클래스로 변경해야 합니다.
-	ADummyPlayerCharacter* OwnerCharacter = Cast<ADummyPlayerCharacter>(GetOwner());
+	// 한기담 - Casting 하실때 더미 캐릭터로 사용하시는것 같아서 HanPlayerChacter에 BaseDummyCharacter를 상속받았습니다.
+	// 한기담 - 이 부분을 ADummyPlayerCharacter에서 ABaseDummyCharacter로 바꿧습니다. 
+	// 한기담 - 앞으로 캐스팅 하실때 ABaseDummyCharacter를 사용하시면 HanPlayerChacter에도 영향을 받을겁니다.
+	ABaseDummyCharacter* OwnerCharacter = Cast<ABaseDummyCharacter>(GetOwner());
 	if (!OwnerCharacter) return;
 
 	if (OwnerCharacter->IsAiming())
@@ -148,12 +151,8 @@ void AMeleeWeaponBase::ThrowWeapon()
 	FVector SpawnLocation = Mesh->GetSocketLocation(FName("Tip"));
 
 	// 플레이어의 시점에 따라 투사체의 초기 회전을 설정
-<<<<<<< HEAD
-	FRotator SpawnRotation;
-=======
 	FRotator SpawnRotation;							 // 주석이 깨져요 ㅠㅠ
->>>>>>> c87d99365e8f36ad6d07d84c6b101b8dc5500f84
-	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))  //�ѱ�� - ���� �κ��� ����ĳ���ͷ� �Ǿ��־ APawn���� �����߽��ϴ�
+	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))  // 플레이어 캐릭터를 기준으로 회전 설정
 	{
 		SpawnRotation = OwnerPawn->GetControlRotation();
 	}

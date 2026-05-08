@@ -15,6 +15,8 @@ public:
 	// Sets default values for this character's properties
 	ABaseDummyCharacter();
 
+	// 한기담 - HanPlayerCharacter에서 BaseDummyCharacter를 상속 받아서 같이 쓰겠습니다.
+	virtual bool IsAiming() const { return false; }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
