@@ -32,8 +32,10 @@ void AEscapingPoint::OnCollisionOverlap(
 	bool bFromSweep, 
 	const FHitResult& SweepResult)
 {
+
+	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 	//플레이어 탈출 성공
-	if (OtherActor && OtherActor->ActorHasTag("Player"))
+	if (OtherActor && OtherActor == PlayerPawn)
 	{
 		AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 		if (GameMode) 
