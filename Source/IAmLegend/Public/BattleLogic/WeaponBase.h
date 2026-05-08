@@ -29,10 +29,6 @@ protected:
 	UPROPERTY()
 	TArray<AActor*> HitActors;	// 공격 시 이미 타격한 액터들을 저장
 
-	// TODO :투척 시 생성할 투사체
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Throwable")
-	TSubclassOf<class AWeaponProjectileBase> ProjectileClass;
-
 public:
 	AWeaponBase();
 
@@ -40,9 +36,11 @@ public:
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-	virtual void WeaponAttack();	// 기본 공격
+	virtual void StartWeaponAttack();	// 기본 공격
+	virtual void StopWeaponAttack();	// 공격 종료 (예: 근접 무기 휘두르기 끝, 원거리 무기 발사 후 등)
 
-	virtual void SubAttack();		// 서브 공격 (근접 무기: 투척, 원거리 무기: 조준 사격 등)
+	virtual void StartSubAttack();		// 서브 공격 (근접 무기: 투척, 원거리 무기: 조준 사격 등)
+	virtual void StopSubAttack();		// 서브 공격 종료
 
 	virtual void WeaponInitFromData();
 
