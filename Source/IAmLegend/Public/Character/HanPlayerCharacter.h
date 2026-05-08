@@ -115,7 +115,8 @@ protected:
 	// --- 무기 관련 함수 ---
 	void EquipWeapon();
 	void UnEquipWeapon();
-	void Attack();
+	void StartAttack();
+	void StopAttack();
 
 	// 조준 함수 
 	void StartAim();

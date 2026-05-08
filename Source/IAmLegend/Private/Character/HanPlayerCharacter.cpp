@@ -163,15 +163,20 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			&AHanPlayerCharacter::InputCrouchToggle 
 		);
 
-		/*
 		// 공격 
 		EnhancedInputComponent->BindAction(
 			PlayerCharacterInputConfig->Attack,
 			ETriggerEvent::Started,
 			this,
-			&AHanPlayerCharacter::Attack
+			&AHanPlayerCharacter::StartAttack
 		);
-		*/
+
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Attack,
+			ETriggerEvent::Completed,
+			this,
+			&AHanPlayerCharacter::StopAttack
+		);
 
 		// 조준 
 		EnhancedInputComponent->BindAction(
@@ -436,15 +441,21 @@ void AHanPlayerCharacter::UnEquipWeapon()
 	}
 }
 
-/*
-void AHanPlayerCharacter::Attack()
+void AHanPlayerCharacter::StartAttack()
 {
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
 }
-*/
+
+void AHanPlayerCharacter::StopAttack()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->StopWeaponAttack(); // 공격 종료
+	}
+}
 
 void AHanPlayerCharacter::StartAim() 
 { 
