@@ -4,6 +4,7 @@
 #include "StageChoiceWidget.h"
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameMode/MainGameModeBase.h"
 
 void UStageChoiceWidget::NativeConstruct()
 {
@@ -24,8 +25,12 @@ void UStageChoiceWidget::OnHospitalClicked()
 		PC->SetInputMode(InputMode);
 		PC->SetShowMouseCursor(false);
 	}
-
-	UGameplayStatics::OpenLevel(this, FName("HospitalStage"));
+	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
+	if (GameMode) 
+	{
+		GameMode->EnterStage(0);
+	}
+	
 }
 
 void UStageChoiceWidget::OnSchoolClicked()
@@ -38,7 +43,11 @@ void UStageChoiceWidget::OnSchoolClicked()
 		PC->SetShowMouseCursor(false);
 	}
 
-	UGameplayStatics::OpenLevel(this, FName("SchoolStage"));
+	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
+	if (GameMode) 
+	{
+		GameMode->EnterStage(1);
+	}
 }
 
 void UStageChoiceWidget::OnPoliceClicked()
@@ -51,7 +60,11 @@ void UStageChoiceWidget::OnPoliceClicked()
 		PC->SetShowMouseCursor(false);
 	}
 
-	UGameplayStatics::OpenLevel(this, FName("PoliceStage"));
+	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
+	if (GameMode) 
+	{
+		GameMode->EnterStage(2);
+	}
 }
 
 void UStageChoiceWidget::OnBackClicked()
