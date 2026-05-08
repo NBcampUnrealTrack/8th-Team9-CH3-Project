@@ -39,9 +39,6 @@ public:
 	virtual void StartWeaponAttack();	// 기본 공격
 	virtual void StopWeaponAttack();	// 공격 종료 (예: 근접 무기 휘두르기 끝, 원거리 무기 발사 후 등)
 
-	virtual void StartSubAttack();		// 서브 공격 (근접 무기: 투척, 원거리 무기: 조준 사격 등)
-	virtual void StopSubAttack();		// 서브 공격 종료
-
 	virtual void WeaponInitFromData();
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
