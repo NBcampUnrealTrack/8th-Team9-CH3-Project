@@ -7,6 +7,7 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "Perception/AIPerceptionComponent.h" 
 #include "Perception/AISenseConfig_Sight.h" 
+#include "AI/Base_Zombie.h"
 #include "BaseZombie_Ai.generated.h"
 class UBlackboardComponent;
 class UBehaviorTreeComponent;
