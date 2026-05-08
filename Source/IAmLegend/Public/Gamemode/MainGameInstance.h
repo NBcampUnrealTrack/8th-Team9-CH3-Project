@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Item/InventoryComponent.h"
 #include "MainGameInstance.generated.h"
 
 
@@ -28,6 +29,11 @@ public:
 	//스테이지 탈출 여부 설정 및 확인
 	void SetbIsPlayerEscaped(bool bEscaped);
 	bool GetbIsPlayerEscaped() const;
+
+	//인벤토리 관련 데이터 아이템 데이터가 이제 여기로 들어옴
+	// 실제 아이템 데이터는 여기에 저장됩니다.
+	UPROPERTY()
+	TArray<FItemSlot> GlobalInventory;
 private:
 	
 	//게임 시작 여부
