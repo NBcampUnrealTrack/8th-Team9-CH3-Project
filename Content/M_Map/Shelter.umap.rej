@@ -1,0 +1,7 @@
+diff a/Content/M_Map/Shelter.umap b/Content/M_Map/Shelter.umap	(rejected hunks)
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:99a109511c89cd053d5daeeaf5c9444ad1f8e65a9e91e2a3bfe8ff8a2a0c26aa
+-size 254
++oid sha256:e9aecbc715418fd2981d963de78bce2f460852ac9ce14e3202953c05fbeb7e86
++size 77304
