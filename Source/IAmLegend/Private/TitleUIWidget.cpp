@@ -9,7 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
-#include "Gamemode/MainGameModeBase.h" // 게임모드 추가 -> 수정해야 할 부분
+#include "Gamemode/MainGameModeBase.h" // 게임모드 추가
 
 void UTitleUIWidget::NativeConstruct()
 {
@@ -33,7 +33,7 @@ void UTitleUIWidget::NativeConstruct()
 
 void UTitleUIWidget::OnStartButtonClicked()
 {
-	// [추가] StartGame() 함수 호출 -> 수정해야 할 부분
+	// [추가] StartGame() 함수 호출
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode) 
 	{
