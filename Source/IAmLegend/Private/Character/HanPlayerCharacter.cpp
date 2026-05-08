@@ -1,4 +1,4 @@
-#include "Character/HanPlayerCharacter.h"
+﻿#include "Character/HanPlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -415,8 +415,7 @@ void AHanPlayerCharacter::Attack()
 {
 	if (EquippedWeapon)
 	{
-//		if (!bIsAiming) EquippedWeapon->WeaponAttack(); // 일반 공격
-//		else EquippedWeapon->SubAttack(); // 조준 공격
+		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
 }
 
@@ -432,4 +431,10 @@ void AHanPlayerCharacter::StopAim()
 { 
 	bIsAiming = false; 
 	TargetFOV = DefaultFOV; 
+}
+
+// 조준 상태 반환 함수를 추가했습니다.
+bool AHanPlayerCharacter::IsAiming() const
+{
+	return bIsAiming;
 }

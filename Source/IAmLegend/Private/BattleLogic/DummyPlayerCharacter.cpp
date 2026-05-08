@@ -189,8 +189,7 @@ void ADummyPlayerCharacter::StartAttack()
 {
 	if(EquippedWeapon)
 	{
-		if(!bIsAiming) EquippedWeapon->StartWeaponAttack();
-		else EquippedWeapon->StartSubAttack();
+		EquippedWeapon->StartWeaponAttack();
 	}
 }
 
@@ -198,8 +197,7 @@ void ADummyPlayerCharacter::StopAttack()
 {
 	if(EquippedWeapon)
 	{
-		if(!bIsAiming) EquippedWeapon->StopWeaponAttack();
-		else EquippedWeapon->StopSubAttack();
+		EquippedWeapon->StopWeaponAttack();
 	}
 }
 	

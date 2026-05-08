@@ -59,16 +59,6 @@ void AWeaponBase::StopWeaponAttack()
 	UE_LOG(LogTemp, Warning, TEXT("Weapon Attack Stopped!"));
 }
 
-void AWeaponBase::StartSubAttack()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Sub Attack!"));
-}
-
-void AWeaponBase::StopSubAttack()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Sub Attack Stopped!"));
-}
-
 void AWeaponBase::DestroyWeapon()
 {
 	// 무기를 소유한 액터에서 분리
