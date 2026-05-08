@@ -29,6 +29,8 @@ protected:
 	UPROPERTY()
 	TArray<AActor*> HitActors;	// 공격 시 이미 타격한 액터들을 저장
 
+	class AHanPlayerCharacter* OwnerCharacter;
+
 public:
 	AWeaponBase();
 

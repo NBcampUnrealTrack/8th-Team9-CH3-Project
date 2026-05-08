@@ -9,7 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
-#include "Gamemode/MainGameModeBase.h" // 게임모드 추가 -> 수정해야 할 부분
+#include "Gamemode/MainGameModeBase.h" // 게임모드 추가
 
 void UTitleUIWidget::NativeConstruct()
 {
@@ -33,13 +33,6 @@ void UTitleUIWidget::NativeConstruct()
 
 void UTitleUIWidget::OnStartButtonClicked()
 {
-	// [추가] StartGame() 함수 호출 -> 수정해야 할 부분
-	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
-	if (GameMode) 
-	{
-		GameMode->StartGame();
-	}
-
 	// FadeIn 이미지를 보이게 설정하고 애니메이션 재생
 	if (FadeIn)
 	{
@@ -52,7 +45,16 @@ void UTitleUIWidget::OnStartButtonClicked()
 		PlayAnimation(TitleFadeIn);
 	}
 
-
+	// [추가] StartGame() 함수 호출 + FadeIn 재생 시간만큼 대기 후 진행
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this]()
+		{
+			AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
+			if (GameMode)
+			{
+				GameMode->StartGame();
+			}
+		}), 1.0f, false); // 애니메이션 길이에 맞게 1.0f 세팅
 }
 
 // 종료 함수

@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include <InputActionValue.h>
 #include "Item/InventoryComponent.h"
+#include "BattleLogic/BaseDummyCharacter.h"
 #include "HanPlayerCharacter.generated.h"
 
 //전방 선언
@@ -43,7 +44,6 @@ public:
 
 	// PossessedBy는 캐릭터가 컨트롤러에 의해 제어될 때 호출되는 함수이다. 
 	virtual void PossessedBy(AController* NewController) override;
-
 	
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -69,14 +69,14 @@ protected:
 
 	// 앉기 시 이동 속도 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
-	float CrouchWalkSpeed = BaseWalkSpeed/1.5; 
+	float CrouchWalkSpeed = BaseWalkSpeed/2; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
-	float BaseJumpVelocity = 350.f;
+	float BaseJumpVelocity = 500.f;
 
 	// --- Camera Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Camera")
-	float BaseArmLength = 400.f;
+	float BaseArmLength = 220.f;
 	
 	// --- 전투 관련 데이터 (Health) ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Battle")
@@ -104,12 +104,19 @@ protected:
 	float TargetFOV = 90.f;
 	float CurrentFOV = 90.f;
 	float FOVInterpSpeed = 10.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character | Weapon") // ABP에서 쓸려면 필요
 	bool bIsAiming = false;
+	
+
+	// --- 달리기 변수 ---
+	bool bIsSprinting = false;
 
 	// --- 무기 관련 함수 ---
 	void EquipWeapon();
 	void UnEquipWeapon();
-	void Attack();
+	void StartAttack();
+	void StopAttack();
 
 	// 조준 함수 
 	void StartAim();

@@ -2,6 +2,7 @@
 #include "GameFramework/Character.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Item/UseItemDataAsset.h"
+#include "Gamemode/MainGameInstance.h"
 #include "WeaponDataAsset.h"
 
 // Sets default values for this component's properties
@@ -12,12 +13,26 @@ UInventoryComponent::UInventoryComponent()
 	// ...
 }
 
+
+TArray<FItemSlot>& UInventoryComponent::GetActualInventory()
+{
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetWorld()->GetGameInstance());
+	if (GI)
+	{
+		return GI->GlobalInventory;
+	}
+	
+	static TArray<FItemSlot> EmptyInv;
+	return EmptyInv;
+}
+
 bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
 {
 	if (!NewItem) return false;
 
+	TArray<FItemSlot>& Inv = GetActualInventory();
 	// 이미 인벤토리에 같은 아이템이 있는지 찾기
-	for (FItemSlot& Slot : Inventory)
+	for (FItemSlot& Slot : Inv)
 	{
 		if (Slot.ItemData == NewItem)
 		{
@@ -28,15 +43,16 @@ bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
 	}
 
 	// 없다면 새로 추가
-	Inventory.Add(FItemSlot(NewItem, 1));
+	Inv.Add(FItemSlot(NewItem, 1));
 	return true;
 }
 
 void UInventoryComponent::UseItem(int32 Index)
 {
-	if (!Inventory.IsValidIndex(Index)) return;
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	if (!Inv.IsValidIndex(Index)) return;
 
-	FItemSlot& Slot = Inventory[Index];
+	FItemSlot& Slot = Inv[Index];
     
 	
 
@@ -45,7 +61,7 @@ void UInventoryComponent::UseItem(int32 Index)
 
 	if (Slot.Quantity <= 0)
 	{
-		Inventory.RemoveAt(Index); // 다 쓰면 슬롯 삭제
+		Inv.RemoveAt(Index); // 다 쓰면 슬롯 삭제
 	}
 }
 
@@ -60,42 +76,66 @@ void UInventoryComponent::BeginPlay()
 
 void UInventoryComponent::ShowInventory()
 {
-	UE_LOG(LogTemp, Warning, TEXT("=== Current Inventory Status ==="));
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	UE_LOG(LogTemp , Warning, TEXT("=== Current Inventory Status ==="));
 
-	// 카테고리별 수량을 저장할 맵
-	TMap<EItemCategory, int32> CategoryCounts;
-
-	if (Inventory.Num() == 0)
+	
+	if (Inv.Num() == 0)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Inventory is Empty."));
-		return;
+		ShowInventoryOnScreen(); // 여기서 한 번만 호출하고 끝냄
+		return; 
 	}
 
-	for (const FItemSlot& Slot : Inventory)
+	
+	TMap<EItemCategory, int32> CategoryCounts;
+	for (const FItemSlot& Slot : Inv)
 	{
 		if (Slot.ItemData)
 		{
-			// 상세 목록 출력
 			UE_LOG(LogTemp, Log, TEXT("Item: [%s] | Quantity: %d | Type: %d"), 
-				*Slot.ItemData->ItemName, 
-				Slot.Quantity, 
-				(int32)Slot.ItemData->Category);
+			   *Slot.ItemData->ItemName, Slot.Quantity, (int32)Slot.ItemData->Category);
 
-			// 카테고리별 합계 계산
 			CategoryCounts.FindOrAdd(Slot.ItemData->Category) += Slot.Quantity;
 		}
 	}
 
+
 	UE_LOG(LogTemp, Warning, TEXT("--- Summary by Category ---"));
-    
-	// 카테고리별 최종 합계 출력
 	for (auto& It : CategoryCounts)
 	{
-		// Enum 값을 문자열로 변환하여 출력하면 더 보기 좋습니다.
 		FString CategoryName = StaticEnum<EItemCategory>()->GetNameStringByValue((int64)It.Key);
 		UE_LOG(LogTemp, Warning, TEXT("%s: %d items"), *CategoryName, It.Value);
 	}
+    
+	
+	ShowInventoryOnScreen();
 }
 
+void UInventoryComponent::ShowInventoryOnScreen()
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	if (!GEngine) return;
 
+	if (Inv.Num() == 0)
+	{
+		GEngine->AddOnScreenDebugMessage(100, 3.0f, FColor::Red, TEXT("Inventory is Empty."));
+		return;
+	}
 
+	
+	FString FullInventoryText = TEXT("=== Current Inventory ===\n");
+
+	for (const FItemSlot& Slot : Inv)
+	{
+		if (Slot.ItemData)
+		{
+			FullInventoryText += FString::Printf(TEXT("Item: [%s] | Quantity: %d\n"), 
+				*Slot.ItemData->ItemName, 
+				Slot.Quantity);
+		}
+	}
+
+	
+	GEngine->AddOnScreenDebugMessage(100, 5.0f, FColor::Cyan, FullInventoryText);
+}
