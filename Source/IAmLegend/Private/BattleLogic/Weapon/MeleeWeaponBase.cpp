@@ -15,7 +15,11 @@ void AMeleeWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
 	SwingSpeed = 1.f; // 기본 휘두르는 속도, 추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.
-	AttackDuration = 0.5f; // 기본 공격 지속 시간, 추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.
+	AttackDuration = 1.f; // 기본 공격 지속 시간, 추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.
+	AttackCooldown = .5f; // 기본 공격 간격, 추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.
+	bIsAttacking = false; // 초기에는 공격 중이 아님
+	bIsPressingAttack = false; // 초기에는 공격 버튼이 눌려있지 않음
+	bIsCooldown = false; // 초기에는 쿨다운 중이 아님
 }
 
 void AMeleeWeaponBase::OnConstruction(const FTransform& Transform)
@@ -86,46 +90,49 @@ void AMeleeWeaponBase::Tick(float DeltaTime)
 	}
 }
 
-void AMeleeWeaponBase::WeaponAttack()
+void AMeleeWeaponBase::StartWeaponAttack()
 {
-	if (bIsAttacking) return; // 이미 공격 중이라면 중복 공격 방지
+	bIsPressingAttack = true; // 공격 버튼이 눌려있는 상태로 설정
 
-	Super::WeaponAttack();
+	if (bIsAttacking || bIsCooldown) return; // 이미 공격 중이거나 쿨다운 중이라면 중복 공격 방지
 
-	// 현재는 타이머 기반으로 동작하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.
-	// 공격이 시작될 때 타이머를 초기화
-	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+	Super::StartWeaponAttack();
 
-	bIsAttacking = true;		// 공격 중 상태로 설정
-	SetActorTickEnabled(true);	// 틱을 활성화해 타격 판정 시작
-
-	// 공격 판정이 끝나는 시점을 관리하기 위해 타이머 설정
-	GetWorldTimerManager().SetTimer(
-		AttackTimerHandle,
-		this,
-		&AMeleeWeaponBase::EndAttack,
-		AttackDuration,
-		false
-	);
-
+	ExcuteAttack(); // 실제 공격 처리 (현재는 타이머로 호출하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
 }
 
 void AMeleeWeaponBase::EndAttack()
 {
 	bIsAttacking = false;		// 공격 종료 상태로 설정
+	bIsCooldown = true;			// 쿨다운 상태로 설정
 	SetActorTickEnabled(false);	// 틱을 비활성화해 타격 판정 중지
 	HitActors.Empty();			// 타격한 액터 목록 초기화	
+
+	// 쿨타임이 끝나는 시점을 관리하기 위해 타이머 설정
+	GetWorldTimerManager().SetTimer(
+		AttackIntervalTimerHandle,
+		this,
+		&AMeleeWeaponBase::FinishCooldown,
+		AttackCooldown,
+		false
+	);
 
 	UE_LOG(LogTemp, Warning, TEXT("Melee Attack Ended!"));
 }
 
+void AMeleeWeaponBase::StopWeaponAttack()
+{
+	Super::StopWeaponAttack();
+	bIsPressingAttack = false; // 공격 버튼이 눌려있지 않은 상태로 설정
+}
+
 // 투척 공격
-void AMeleeWeaponBase::SubAttack()
+void AMeleeWeaponBase::StartSubAttack()
 {
 	// 투척 공격은 ProjectileClass가 설정되어 있지 않거나 공격 중이면 불가능
 	if (!ProjectileClass || !GetOwner() || bIsAttacking) return;
 
-	Super::SubAttack();
+	Super::StartSubAttack();
 
 	// 칼날의 끝 위치에서 투사체를 생성
 	FVector SpawnLocation = Mesh->GetSocketLocation(FName("Tip"));
@@ -155,6 +162,40 @@ void AMeleeWeaponBase::SubAttack()
 	); 
 
 	Destroy();
+}
+
+void AMeleeWeaponBase::StopSubAttack()
+{
+	Super::StopSubAttack();
+}
+
+void AMeleeWeaponBase::ExcuteAttack()
+{
+	// 현재는 타이머 기반으로 동작하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.
+	// 공격이 시작될 때 타이머를 초기화
+	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+	GetWorldTimerManager().ClearTimer(AttackIntervalTimerHandle);
+
+	bIsAttacking = true;		// 공격 중 상태로 설정
+	SetActorTickEnabled(true);	// 틱을 활성화해 타격 판정 시작
+
+	// 공격 판정이 끝나는 시점을 관리하기 위해 타이머 설정
+	GetWorldTimerManager().SetTimer(
+		AttackTimerHandle,
+		this,
+		&AMeleeWeaponBase::EndAttack,
+		AttackDuration,
+		false
+	);
+}
+
+void AMeleeWeaponBase::FinishCooldown()
+{
+	bIsCooldown = false; // 쿨다운 종료
+	if (bIsPressingAttack) // 공격 버튼이 여전히 눌려있다면 자동으로 다음 공격 시작
+	{
+		StartWeaponAttack();
+	}
 }
 
 
