@@ -10,6 +10,8 @@
 #include "Animation/AnimMontage.h"
 #include "Components/AudioComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/SphereComponent.h"
+#include "Character/HanPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -25,6 +27,20 @@ ABase_Zombie::ABase_Zombie()
 	{
 		IdleSoundComponent->SetupAttachment(GetMesh());
 	}
+	AttackSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AttackSphere"));
+
+	// 2. 메시의 손 소켓에 부착 (소켓 이름은 리타겟팅한 스켈레톤의 손 이름을 확인하세요)
+	// 보통 "hand_r"이나 "WeaponSocket" 등을 사용합니다.
+	AttackSphere->SetupAttachment(GetMesh(), FName("RightHand"));
+
+	// 3. 반지름 조절 (좀비 주먹 크기 정도로 설정)
+	AttackSphere->SetSphereRadius(90.0f);
+	AttackSphere->SetHiddenInGame(true);
+
+	// 4. 처음부터 켜져 있으면 좀비 옆에만 가도 플레이어가 죽으니, 기본은 꺼둡니다.
+	AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AttackSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	AttackSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); // 플레이어만 감지
 
 }
 
@@ -51,6 +67,10 @@ void ABase_Zombie::BeginPlay()
 
 		// 공중 제어력(Air Control) 제거 (혹시 모를 넉백 시 공중 이동 방지)
 		Movement->AirControl = 0.0f;
+	}
+	if (AttackSphere)
+	{
+		AttackSphere->OnComponentBeginOverlap.AddDynamic(this, &ABase_Zombie::OnAttackOverlapBegin);
 	}
 }
 
@@ -208,4 +228,60 @@ void ABase_Zombie::Die()
 	// 5. 충돌 제거 및 시체 삭제 예약
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetLifeSpan(3.0f);
+}
+
+void ABase_Zombie::OnAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+	bool bFromSweep, const FHitResult& SweepResult)
+{
+	// 1. 공격 중인지 먼저 확인
+	if (!bIsAttacking) return;
+
+	// 2. 현재 게임 시간 가져오기
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+
+	// 3. [핵심] 현재 시간과 마지막 공격 시간의 차이가 2초보다 작으면 즉시 리턴!
+	if (CurrentTime - LastDamageTime < DamageLockDuration)
+	{
+		return;
+	}
+
+	if (OtherActor && OtherActor != this)
+	{
+		AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(OtherActor);
+		if (Player)
+		{
+			// 4. 데미지 주기 직전에 현재 시간을 마지막 공격 시간으로 저장 (잠금 시작)
+			LastDamageTime = CurrentTime;
+
+			UGameplayStatics::ApplyDamage(Player, AttackDamage, GetController(), this, nullptr);
+
+			// 로그로 확인 (잠금이 걸렸으므로 이제 0번만 찍혀야 함)
+			UE_LOG(LogTemp, Warning, TEXT("좀비의 타격 성공!"));
+
+			DisableAttackCollision();
+		}
+	}
+}
+
+// 애니메이션 노티파이에 의해 호출될 함수 (블루프린트에서 호출 가능하게 UFUNCTION 설정 필요)
+void ABase_Zombie::EnableAttackCollision()
+{
+	if (AttackSphere)
+	{
+		bIsAttacking = true;
+		// 공격할 때마다 인스턴스 번호를 올립니다.
+		CurrentAttackInstance++;
+
+		AttackSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		// UpdateOverlaps는 여전히 주석 처리 유지하세요!
+	}
+}
+void ABase_Zombie::DisableAttackCollision()
+{
+	if (AttackSphere)
+	{
+
+		AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }

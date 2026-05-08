@@ -91,12 +91,33 @@ protected:
 
     // 체력이 0이 되었을 때의 처리를 담당합니다.
     virtual void Die();
-
+    UFUNCTION()
+    virtual void OnAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+    UFUNCTION(BlueprintCallable)
+    virtual void EnableAttackCollision();
+    UFUNCTION(BlueprintCallable)
+    virtual void DisableAttackCollision();
 
 
     // 소리 재개 함수
     UFUNCTION()
     void ResumeIdleSound();
 
+    // 공격 판정을 위한 구체 충돌체
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zombie | Combat")
+    class USphereComponent* AttackSphere;
 
+    // 플레이어에게 줄 데미지 양
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Zombie | Combat")
+    float AttackDamage = 10.f;
+
+    bool bHasAppliedDamageThisAttack = false; // 이번 휘두름에 때렸는지 체크
+    int32 CurrentAttackInstance = 0; // 이번 공격이 몇 번째 휘두름인지 기록
+    int32 LastAppliedDamageInstance = -1; // 마지막으로 데미지를 준 휘두름 번호
+
+    // 마지막으로 데미지를 입힌 시점의 게임 시간을 저장
+    float LastDamageTime = 0.0f;
+
+    // 잠금 시간 (예: 2초 동안은 추가 데미지 무시)
+    const float DamageLockDuration = 2.0f;
 };
