@@ -4,6 +4,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Item/ItemDataAsset.h"
 #include "Components/WidgetComponent.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Character/HanPlayerCharacter.h"
 #include "Item/InventoryComponent.h"
 
 ABaseItemActor::ABaseItemActor()
@@ -37,6 +39,13 @@ ABaseItemActor::ABaseItemActor()
 	Collider->OnComponentBeginOverlap.AddDynamic(this, &ABaseItemActor::OnOverlap);
 	// EndOverlap도 연결해줘야 나갈 때 꺼집니다!
 	Collider->OnComponentEndOverlap.AddDynamic(this, &ABaseItemActor::OnEndOverlap); 
+	
+	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Item/WBP_interaction.WBP_interaction_C"));
+    
+	if (WidgetClassFinder.Succeeded())
+	{
+		InteractionWidget->SetWidgetClass(WidgetClassFinder.Class);
+	}
 }
 
 void ABaseItemActor::BeginPlay()
@@ -61,6 +70,11 @@ void ABaseItemActor::InitFromData()
 	if (Mesh && ItemData->ItemMesh)
 	{
 		Mesh->SetStaticMesh(ItemData->ItemMesh);
+
+		// 추가: 데이터 에셋에 설정된 위치/회전/크기 적용
+		Mesh->SetRelativeLocation(ItemData->MeshRelativeLocation);
+		Mesh->SetRelativeRotation(ItemData->MeshRelativeRotation);
+		Mesh->SetRelativeScale3D(FVector(ItemData->MeshScale));
 	}
 }
 
@@ -135,7 +149,14 @@ void ABaseItemActor::OnPlayerEntered(ACharacter* Player)
 	if (InteractionWidget)
 	{
 		InteractionWidget->SetVisibility(true);
-		
+	}
+
+	AHanPlayerCharacter* HanChar = Cast<AHanPlayerCharacter>(Player);
+	if (HanChar)
+	{
+		// 캐릭터에게 내가 타겟임을 알림
+		HanChar->SetTargetItem(this);
+		UE_LOG(LogTemp, Log, TEXT("현재 상호작용 대상 설정 완료: %s"), *GetName());
 	}
 }
 
@@ -145,5 +166,15 @@ void ABaseItemActor::OnPlayerExited(ACharacter* Player)
 	if (InteractionWidget)
 	{
 		InteractionWidget->SetVisibility(false);
+	}
+
+	AHanPlayerCharacter* HanChar = Cast<AHanPlayerCharacter>(Player);
+    
+	
+	if (HanChar)
+	{
+		
+		HanChar->SetTargetItem(nullptr); 
+		UE_LOG(LogTemp, Log, TEXT("상호작용 대상 해제"));
 	}
 }
