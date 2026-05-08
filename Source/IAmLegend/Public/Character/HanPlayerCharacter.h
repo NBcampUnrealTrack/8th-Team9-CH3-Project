@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -134,6 +134,10 @@ public:
 	
 	// 아이템 쪽에서 캐릭터의 TargetItem을 설정해주기 위한 Getter/Setter
 	void SetTargetItem(class ABaseItemActor* NewItem) { TargetItem = NewItem; }
+
+	// 조준 상태를 반환하는 함수를 추가했습니다. 
+	bool IsAiming() const;
+
 protected:
 	/// 현재 시점 모드
 	EViewMode CurrentViewMode = EViewMode::None;
