@@ -9,6 +9,7 @@
 #include "Engine/DamageEvents.h"
 #include "Animation/AnimMontage.h"
 #include "Components/AudioComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -19,7 +20,6 @@ ABase_Zombie::ABase_Zombie()
 
 	// 1. 컴포넌트 실제 생성
 	IdleSoundComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("IdleSoundComponent"));
-
 	// 2. 루트나 메시에 부착 (보통 메시에 붙입니다)
 	if (GetMesh())
 	{
@@ -44,7 +44,7 @@ void ABase_Zombie::BeginPlay()
 		Movement->bCanWalkOffLedges = false;
 		// 장애물 회피(RVO Avoidance) 활성화
 		Movement->bUseRVOAvoidance = true;
-
+		DefaultMaxWalkSpeed = Movement->MaxWalkSpeed;
 		//  회피 관련 세부 설정 (선택 사항)
 		Movement->AvoidanceConsiderationRadius = 100.0f; // 회피를 고려할 반경
 
@@ -83,10 +83,22 @@ void ABase_Zombie::PlayAttackMontage() {
 
 		bIsAttacking = true;
 		CurrentState = EZombieState::Attacking;
+
+		// 1. 이동 멈추기 및 속도 0으로 설정
 		AAIController* AIC = Cast<AAIController>(GetController());
 		if (AIC)
 		{
 			AIC->StopMovement();
+		}
+		if (AIC && AIC->GetBlackboardComponent())
+		{
+			// 현재 상태를 블랙보드의 "CurrentState" 키에 전달 (Enum 값 전달)
+			AIC->GetBlackboardComponent()->SetValueAsEnum(TEXT("CurrentState"), (uint8)EZombieState::Attacking);
+		}
+		// CharacterMovement의 최대 속도를 0으로 만들어 물리적 이동을 차단합니다.
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->MaxWalkSpeed = 0.0f;
 		}
 
 		PlayAnimMontage(AttackMontage);
@@ -111,10 +123,24 @@ void ABase_Zombie::ResumeIdleSound()
 void ABase_Zombie::ResetAttack() {
 	bIsAttacking = false;
 
-	// [수정] 죽지 않았다면 상태를 다시 Idle로 돌려놔야 비헤이비어 트리가 다음 행동을 시킵니다.
+	// 1. 속도 복구
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
+	}
+
+	// 2. C++ 상태 먼저 변경 (중요!)
 	if (CurrentState != EZombieState::Dead)
 	{
 		CurrentState = EZombieState::Idle;
+	}
+
+	// 3. 변경된 상태를 블랙보드에 반영
+	AAIController* AIC = Cast<AAIController>(GetController());
+	if (AIC && AIC->GetBlackboardComponent())
+	{
+		// 이제 C++의 CurrentState와 블랙보드의 값이 완벽히 일치합니다.
+		AIC->GetBlackboardComponent()->SetValueAsEnum(TEXT("CurrentState"), (uint8)CurrentState);
 	}
 }
 

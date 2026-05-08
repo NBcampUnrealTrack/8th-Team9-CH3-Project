@@ -11,10 +11,10 @@
 UENUM(BlueprintType)
 enum class EZombieState : uint8
 {
-    Idle,      // 대기
-    Attacking, // 공격 중
-    Hit,       // 맞음
-    Dead       // 죽음
+    Idle,
+    Attacking,
+    Hit,
+    Dead
 };
 
 UCLASS()
@@ -63,6 +63,7 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Combat")
     float AttackCooldown;
 
+    float DefaultMaxWalkSpeed;
 
     // 시간 측정을 위한 타이머 핸들입니다.
     FTimerHandle AttackTimerHandle;

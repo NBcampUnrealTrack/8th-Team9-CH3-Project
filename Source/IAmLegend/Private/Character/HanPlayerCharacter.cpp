@@ -415,8 +415,8 @@ void AHanPlayerCharacter::Attack()
 {
 	if (EquippedWeapon)
 	{
-		if (!bIsAiming) EquippedWeapon->WeaponAttack(); // 일반 공격
-		else EquippedWeapon->SubAttack(); // 조준 공격
+//		if (!bIsAiming) EquippedWeapon->WeaponAttack(); // 일반 공격
+//		else EquippedWeapon->SubAttack(); // 조준 공격
 	}
 }
 
