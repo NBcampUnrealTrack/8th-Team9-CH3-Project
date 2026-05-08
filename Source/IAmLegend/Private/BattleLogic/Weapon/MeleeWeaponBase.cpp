@@ -98,7 +98,19 @@ void AMeleeWeaponBase::StartWeaponAttack()
 
 	Super::StartWeaponAttack();
 
-	ExcuteAttack(); // 실제 공격 처리 (현재는 타이머로 호출하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
+	// 현재는 더미를 기준으로 코드를 작성하였습니다.
+	// 추후에 실제 플레이어 캐릭터 클래스로 변경해야 합니다.
+	ADummyPlayerCharacter* OwnerCharacter = Cast<ADummyPlayerCharacter>(GetOwner());
+	if (!OwnerCharacter) return;
+
+	if (OwnerCharacter->IsAiming())
+	{
+		ThrowWeapon(); // 조준 상태에서는 무기 투척
+	}
+	else
+	{
+		ExcuteAttack(); // 실제 공격 처리 (현재는 타이머로 호출하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
+	}
 }
 
 void AMeleeWeaponBase::EndAttack()
@@ -127,18 +139,16 @@ void AMeleeWeaponBase::StopWeaponAttack()
 }
 
 // 투척 공격
-void AMeleeWeaponBase::StartSubAttack()
+void AMeleeWeaponBase::ThrowWeapon()
 {
 	// 투척 공격은 ProjectileClass가 설정되어 있지 않거나 공격 중이면 불가능
 	if (!ProjectileClass || !GetOwner() || bIsAttacking) return;
-
-	Super::StartSubAttack();
 
 	// 칼날의 끝 위치에서 투사체를 생성
 	FVector SpawnLocation = Mesh->GetSocketLocation(FName("Tip"));
 
 	// 플레이어의 시점에 따라 투사체의 초기 회전을 설정
-	FRotator SpawnRotation;
+	FRotator SpawnRotation;							 // 주석이 깨져요 ㅠㅠ
 	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))  //�ѱ�� - ���� �κ��� ����ĳ���ͷ� �Ǿ��־ APawn���� �����߽��ϴ�
 	{
 		SpawnRotation = OwnerPawn->GetControlRotation();
@@ -164,10 +174,6 @@ void AMeleeWeaponBase::StartSubAttack()
 	Destroy();
 }
 
-void AMeleeWeaponBase::StopSubAttack()
-{
-	Super::StopSubAttack();
-}
 
 void AMeleeWeaponBase::ExcuteAttack()
 {
