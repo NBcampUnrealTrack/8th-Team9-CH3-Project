@@ -163,20 +163,15 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			&AHanPlayerCharacter::InputCrouchToggle 
 		);
 
+		/*
 		// 공격 
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Attack, 
-			ETriggerEvent::Started, 
-			this, 
-			&AHanPlayerCharacter::StartAttack
+			PlayerCharacterInputConfig->Attack,
+			ETriggerEvent::Started,
+			this,
+			&AHanPlayerCharacter::Attack
 		);
-
-		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Attack, 
-			ETriggerEvent::Completed, 
-			this, 
-			&AHanPlayerCharacter::StopAttack
-		);
+		*/
 
 		// 조준 
 		EnhancedInputComponent->BindAction(
@@ -441,22 +436,15 @@ void AHanPlayerCharacter::UnEquipWeapon()
 	}
 }
 
-void AHanPlayerCharacter::StartAttack()
+/*
+void AHanPlayerCharacter::Attack()
 {
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->StartWeaponAttack();
+		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
 }
-
-void AHanPlayerCharacter::StopAttack()
-{
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->StopWeaponAttack();
-	}
-}
-
+*/
 
 void AHanPlayerCharacter::StartAim() 
 { 
@@ -485,4 +473,8 @@ void AHanPlayerCharacter::StopAim()
 	SpringArmComponent->SocketOffset = FVector(50.f, 50.f, 35.f);
 }
 
-
+// 조준 상태 반환 함수를 추가했습니다.
+bool AHanPlayerCharacter::IsAiming() const
+{
+	return bIsAiming;
+}

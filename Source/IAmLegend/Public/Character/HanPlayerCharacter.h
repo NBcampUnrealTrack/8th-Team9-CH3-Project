@@ -26,7 +26,7 @@ enum class EViewMode : uint8
 };
 
 UCLASS()
-class IAMLEGEND_API AHanPlayerCharacter : public ABaseDummyCharacter
+class IAMLEGEND_API AHanPlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
@@ -44,10 +44,7 @@ public:
 
 	// PossessedBy는 캐릭터가 컨트롤러에 의해 제어될 때 호출되는 함수이다. 
 	virtual void PossessedBy(AController* NewController) override;
-	UPROPERTY(BlueprintReadOnly, Category = "Chacter | Weapon")
 	
-	bool bIsAiming = false;
-
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
@@ -81,6 +78,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Camera")
 	float BaseArmLength = 220.f;
 	
+	// --- 전투 관련 데이터 (Health) ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Battle")
+	float Health;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Battle")
+	float MaxHealth = 100.f;
+
 	// --- 무기 관련 변수 ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
 	TSubclassOf<class AWeaponBase> WeaponClass;
@@ -101,6 +105,8 @@ protected:
 	float CurrentFOV = 90.f;
 	float FOVInterpSpeed = 10.f;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Character | Weapon") // ABP에서 쓸려면 필요
+	bool bIsAiming = false;
 	
 
 	// --- 달리기 변수 ---
@@ -109,8 +115,7 @@ protected:
 	// --- 무기 관련 함수 ---
 	void EquipWeapon();
 	void UnEquipWeapon();
-	void StartAttack();
-	void StopAttack();
+	void Attack();
 
 	// 조준 함수 
 	void StartAim();
@@ -136,8 +141,8 @@ public:
 	// 아이템 쪽에서 캐릭터의 TargetItem을 설정해주기 위한 Getter/Setter
 	void SetTargetItem(class ABaseItemActor* NewItem) { TargetItem = NewItem; }
 
-	// 부모인 BaseDummyCharacter이 public으로 선언이 되어 있어서 저도 public으로 선언 했습니다.
-	virtual bool IsAiming() const override { return bIsAiming; }
+	// 조준 상태를 반환하는 함수를 추가했습니다. 
+	bool IsAiming() const;
 
 protected:
 	/// 현재 시점 모드
