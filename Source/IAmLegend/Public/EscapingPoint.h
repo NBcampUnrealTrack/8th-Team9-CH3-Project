@@ -6,6 +6,7 @@
 #include "EscapingPoint.generated.h"
 
 class UBoxComponent;
+class UParticleSystemComponent;
 UCLASS()
 class IAMLEGEND_API AEscapingPoint : public AActor
 {
@@ -19,6 +20,8 @@ public:
 	USceneComponent* Scene;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Escape|Component")
 	UBoxComponent* Collision;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UParticleSystemComponent* SmokeParticle;
 	
 	//플레이어 오버랩 확인
 	UFUNCTION()
@@ -29,11 +32,22 @@ public:
 		int32 OtherBodyIndex,
 		bool bFromSweep,
 		const FHitResult& SweepResult);
-
-protected:
+	UFUNCTION()
+	void OnCollisionEndOverlap(
+		UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex);
 	
-	virtual void BeginPlay() override;
-
-public:	
-
+private:	
+	//탈출 타이머
+	FTimerHandle EscapeTimer;
+	//로그 타이머
+	FTimerHandle LogTimer;
+	void RunLogTimer();
+	
+	float EscapeDuration;
+	
+	//플레이어 탈출 성공 시 호출
+	void PlayerEscaped();
 };
