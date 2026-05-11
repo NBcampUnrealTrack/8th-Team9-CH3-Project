@@ -6,6 +6,8 @@
 #include "BattleLogic/WeaponBase.h"
 #include "ThrowableWeaponBase.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponThrown);
+
 /**
  * 
  */
@@ -18,6 +20,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Throwable")
 	TSubclassOf<class AWeaponProjectileBase> ProjectileClass; // 투척 시 생성할 투사체 클래스
 public:
+	UPROPERTY(BlueprintAssignable, Category = "Weapon|Event")
+	FOnWeaponThrown OnWeaponThrown;
+
 	AThrowableWeaponBase();
 	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform& Transform) override;

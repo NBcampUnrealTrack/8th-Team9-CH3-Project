@@ -4,7 +4,7 @@
 #include "BattleLogic/Weapon/MeleeWeaponBase.h"
 #include "WeaponDataAsset.h"
 #include "Kismet/GameplayStatics.h"
-#include "BattleLogic/Weapon/WeaponProjectileBase.h"
+#include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 
