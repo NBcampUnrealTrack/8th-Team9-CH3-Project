@@ -41,7 +41,7 @@ void AEscapingPoint::OnCollisionOverlap(
 	//플레이어 탈출 성공
 	if (OtherActor && OtherActor == PlayerPawn)
 	{
-		
+		//탈출 대기 시간 타이머 작동 & 로그 타이머 작동
 		GetWorldTimerManager().SetTimer(EscapeTimer, this, &AEscapingPoint::PlayerEscaped, EscapeDuration, false);
 		GetWorldTimerManager().SetTimer(LogTimer, this, &AEscapingPoint::RunLogTimer, 0.1f, true);
 		
@@ -58,6 +58,7 @@ void AEscapingPoint::OnCollisionEndOverlap(
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 	if (OtherActor && OtherActor == PlayerPawn)
 	{
+		//탈출 타이머 초기화
 		GetWorldTimerManager().ClearTimer(EscapeTimer);
 		UE_LOG(LogTemp, Warning, TEXT("탈출 지점에서 벗어났습니다."));
 	}
@@ -70,6 +71,7 @@ void AEscapingPoint::PlayerEscaped()
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode) 
 	{
+		//탈출 성공
 		GameMode->EndStage(true);
 	}
 }
@@ -79,11 +81,13 @@ void AEscapingPoint::RunLogTimer()
 {
 	if (GetWorldTimerManager().IsTimerActive(EscapeTimer))
 	{
+		//탈출까지 남은 시간 로그 출력
 		float Remaining = GetWorldTimerManager().GetTimerRemaining(EscapeTimer);
 		UE_LOG(LogTemp, Warning, TEXT("Remaining Time: %f"), Remaining);
 	}
 	else
 	{
+		//탈출 타이머가 초기화되면 로그 타이머도 같이 초기화
 		GetWorldTimerManager().ClearTimer(LogTimer);
 	}
 }

@@ -18,13 +18,20 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
+	//----탈출 지점 설정----
+	//랜덤한 탈출 지점 좌표들
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Properties")
 	TArray<AActor*> EscapeSpawnPoints;
-	
+	//탈출 지점 액터
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Properties")
 	TSubclassOf<AActor> EscapingPointActor;
-	
+	//
 	UFUNCTION()
-	void SpawnAtRandomPoint();
+	void SpawnEscapingPointAtRandomPoint();
 
+	
+	//----적 스폰----
+	//스테이지에 적 스폰
+	UFUNCTION()
+	void SpawnEnemyAtStage();
 };
