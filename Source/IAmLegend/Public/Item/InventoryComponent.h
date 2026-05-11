@@ -7,6 +7,7 @@
 #include "InventoryComponent.generated.h"
 
 class UItemDataAsset;
+class UInventoryWidget;
 
 USTRUCT(BlueprintType)
 struct FItemSlot
@@ -44,6 +45,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ShowInventoryOnScreen();
+	
+	UFUNCTION()
+	void DisplayUI();
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FItemSlot> Inventory;
@@ -51,10 +55,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	TArray<FItemSlot>& GetActualInventory();
 	
+	
        
 protected:
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter;
+	
+	UPROPERTY()
+	TObjectPtr<UInventoryWidget> InventoryWidget;
     
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+	
 	virtual void BeginPlay() override;
 };

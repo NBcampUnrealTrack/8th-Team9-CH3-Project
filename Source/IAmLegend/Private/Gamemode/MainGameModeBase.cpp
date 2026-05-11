@@ -1,6 +1,6 @@
 #include "Gamemode/MainGameModeBase.h"
 
-#include "EnemySpawnVolume.h"
+#include "Spawn/EnemySpawnVolume.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Gamemode/MainGameStateBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,12 +23,7 @@ void AMainGameModeBase::BeginPlay()
 	
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
-	
-	//게임시작 전인지 확인
-	if (!GI->GetbIsGameStarted())
-	{
-		SpawnTitleUI();
-	}
+
 	
 	//스테이지 시작했는지 확인
 	if (GI->GetbIsStageStarted())
@@ -40,39 +35,6 @@ void AMainGameModeBase::BeginPlay()
 	UE_LOG(LogTemp, Warning, TEXT("Is Player Escape: %s"), GI->GetbIsPlayerEscaped() ? TEXT("true") : TEXT("false"));
 }
 
-//타이틀 UI 출력 (사용 X)
-void AMainGameModeBase::SpawnTitleUI()
-{
-	if (!TitleUIWidgetClass) return;
-
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (!PC) return;
-
-	UUserWidget* UIWidget = CreateWidget<UUserWidget>(PC, TitleUIWidgetClass); 
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	if (UIWidget && GI)
-	{
-		UIWidget->AddToViewport();
-		PC->bShowMouseCursor = GI->GetUIPopUp();
-	}
-}
-
-//스테이지 선택 UI 출력 (임시)
-void AMainGameModeBase::SpawnStageSelectUI()
-{
-	if (!StageSelectUIWidgetClass) return;
-	
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (!PC) return;
-	
-	UUserWidget* UIWidget = CreateWidget<UUserWidget>(PC, StageSelectUIWidgetClass); 
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	if (UIWidget && GI)
-	{
-		UIWidget->AddToViewport();
-		PC->bShowMouseCursor = GI->GetUIPopUp();
-	}
-}
 
 //게임 시작(쉘터 진입)
 void AMainGameModeBase::StartGame()
@@ -81,7 +43,6 @@ void AMainGameModeBase::StartGame()
 	if (GI)
 	{
 		GI->SetbIsGameStarted(true);
-		GI->SetUIPopUp(false);
 	}
 	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
@@ -95,17 +56,6 @@ void AMainGameModeBase::StartGame()
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
 }
 
-//스테이지 선택, 현재 사용 X BP를 통해 테스트 중
-void AMainGameModeBase::EnterStageSelectZone()
-{
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	APlayerController* PC = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
-	if (GI && PC)
-	{
-		GI->SetUIPopUp(true);
-		PC->bShowMouseCursor = GI->GetUIPopUp();
-	}
-}
 
 // 스테이지 입장 시 초기 설정, 어떤 스테이지 입장했는지 인덱스 값을 받음 
 void AMainGameModeBase::EnterStage(int32 StageIndex)
@@ -131,7 +81,7 @@ void AMainGameModeBase::EnterStage(int32 StageIndex)
 void AMainGameModeBase::StartStage()
 {
 	//타이머를 통해 제한 시간 설정
-	GetWorldTimerManager().SetTimer(StageTimerHandle, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
+	GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
 	UE_LOG(LogTemp, Warning, TEXT("Timer Start"));
 	
 	//플레이어 탈출 여부 실패로 초기 설정
@@ -176,7 +126,7 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 		UE_LOG(LogTemp, Warning, TEXT("Player Escaped"));
 		GI->SetbIsPlayerEscaped(true);
 		
-		GetWorldTimerManager().ClearTimer(StageTimerHandle);
+		GetWorldTimerManager().ClearTimer(StageTimer);
 		
 	}
 	

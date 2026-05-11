@@ -36,6 +36,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn")
 	TSubclassOf<class ABaseItemActor> ItemActorClass;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+	TObjectPtr<UTexture2D> ItemIcon;
+	
 	
 	// --- 추가: 메쉬 위치/회전 보정값 ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")

@@ -88,14 +88,36 @@ void AHanPlayerCharacter::BeginPlay()
 void AHanPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	// 부드러운 카메라 줌인/아웃 로직 (InterpTo)
 	if (CameraComponent)
 	{
 		CurrentFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, FOVInterpSpeed);
 		CameraComponent->SetFieldOfView(CurrentFOV);
 	}
+
+	// 현재 속도 및 상태 체크
+	float CurrentSpeedSq = GetVelocity().SizeSquared();
+	bool bIsMoving = CurrentSpeedSq > 100.f;
+	// 달리기는 속도가 300 이상일 때라고 가정 
+	bool bIsRunning = CurrentSpeedSq > 110000.f; 
+
+	// 회전 모드 스위칭
+	// 조준 중이거나 '걷는 중'일 때만 카메라 방향을 본다
+	bool bShouldLookCamera = (bIsMoving && !bIsRunning) || bIsAiming;
+
+	if (bShouldLookCamera != bLastRotationState)
+	{
+		// 걷기: 카메라 방향을 보며 꽃게걸음
+		GetCharacterMovement()->bUseControllerDesiredRotation = bShouldLookCamera;
+
+		// 달리기: 가는 방향으로 몸을 돌려 전력 질주
+		GetCharacterMovement()->bOrientRotationToMovement = !bShouldLookCamera && bIsRunning;
+
+		bLastRotationState = bShouldLookCamera;
+	}
 }
+
 
 void AHanPlayerCharacter::PossessedBy(AController* NewController)
 {
@@ -272,7 +294,7 @@ void AHanPlayerCharacter::SetViewMode(EViewMode InViewMode)
 
 		// 카메라 지연
 		SpringArmComponent->bEnableCameraLag = true;
-		SpringArmComponent->CameraLagSpeed = 7.0f;
+		SpringArmComponent->CameraLagSpeed = 15.0f;
 
 		// 회전 지연도 켜주면 마우스를 멈춰도 카메라가 부드럽게 멈춘다.
 		SpringArmComponent->bEnableCameraRotationLag = true;
@@ -293,17 +315,14 @@ void AHanPlayerCharacter::InputLook(const FInputActionValue& InValue)
 {
 	FVector2D LookVector = InValue.Get<FVector2D>();
 
-	// 현재 뷰 모드에 따라 시점 입력 처리
-	switch (CurrentViewMode)
+	// 0.5를 곱해서 마우스 감도를 절반으로 - 테스트용
+	// 숫자가 작을수록 마우스를 많이 움직여야 화면이 돌아가기에 약간 묵직한 느낌
+	float Sensitivity = 0.5f;
+
+	if (CurrentViewMode == EViewMode::BackView)
 	{
-	case EViewMode::BackView:
-		AddControllerYawInput(LookVector.X);
-		AddControllerPitchInput(LookVector.Y);
-		break;
-	case EViewMode::None:
-	case EViewMode::End:
-	default:
-		break;
+		AddControllerYawInput(LookVector.X * Sensitivity);
+		AddControllerPitchInput(LookVector.Y * Sensitivity);
 	}
 }
 
@@ -466,7 +485,7 @@ void AHanPlayerCharacter::StartAim()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 
 	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
-	SpringArmComponent->SocketOffset = FVector(90.f, 25.f, 35.f); 
+	SpringArmComponent->SocketOffset = FVector(20.f, 60.f, 0.f); 
 
 	UE_LOG(LogTemp, Warning, TEXT("조준 시작! 목표 FOV: %f"), TargetFOV);
 }
@@ -478,10 +497,10 @@ void AHanPlayerCharacter::StopAim()
 
 	// 조준 풀면 다시 입력 방향대로 자유롭게 몸을 돌린다.
 	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	//GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
-	SpringArmComponent->SocketOffset = FVector(50.f, 50.f, 35.f);
+	SpringArmComponent->SocketOffset = FVector(0.f, 60.f, 0.f);
 }
 
 // 조준 상태 반환 함수를 추가했습니다.
