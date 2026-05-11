@@ -47,6 +47,10 @@ public:
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FItemSlot> Inventory;
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	TArray<FItemSlot>& GetActualInventory();
+	
        
 protected:
 	UPROPERTY()

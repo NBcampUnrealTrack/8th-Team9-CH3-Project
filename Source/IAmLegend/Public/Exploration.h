@@ -30,9 +30,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UWidgetComponent* InteractWidgetComp;
 
-	// 띄울 스테이지 UI 위젯 클래스 지정용
+	// 띄울 스테이지 UI 위젯 클래스 지정용(범용성을 위해 TargetWidgetClass로 변경)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<class UUserWidget> StageChoiceWidgetClass;
+	TSubclassOf<class UUserWidget> TargetWidgetClass;
 
 private:
 	UFUNCTION()

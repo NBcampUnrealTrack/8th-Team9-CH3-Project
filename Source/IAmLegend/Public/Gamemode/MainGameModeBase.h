@@ -28,27 +28,23 @@ public:
 	
 	//게임 시작
 	void StartGame();
-	
-	//플레이어 스테이지 선택
-	UFUNCTION(BlueprintCallable)
-	void EnterStageSelectZone();
 	//스테이지 진입
 	void EnterStage(int32 StageIndex);
+	//스테이지 종료
+	void EndStage(bool bIsPlayerEscaped);
+
+
+
+private:
 	//스테이지 시작
 	void StartStage();
 	//스테이지에 적 스폰
 	void SpawnEnemyAtStage();
 	//스테이지 제한시간 종료
 	void OnStageTimeUp();
-	//스테이지 종료
-	void EndStage(bool bIsPlayerEscaped);
-	
-	//UI 생성
-	void SpawnTitleUI();
-	void SpawnStageSelectUI();
+
 	
 	//타이머 핸들
-	FTimerHandle StageTimerHandle;
+	FTimerHandle StageTimer;
 	
-
 };
