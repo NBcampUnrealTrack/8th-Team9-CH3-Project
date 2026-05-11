@@ -22,8 +22,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UStaticMeshComponent* ProjectileMesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UProjectileMovementComponent* ProjectileMovement;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
+	float CollisionRadius;
+
+	UPROPERTY(EditAnywhere, Category = "Collision")
+	float CollisionHalfHeight;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float InitialSpeed;
@@ -33,9 +39,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool bRotationFollowsVelocity;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	bool bShouldBounce;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
 	float Damage;
@@ -48,8 +51,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 
 public:	
