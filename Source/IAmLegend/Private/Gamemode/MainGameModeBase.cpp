@@ -1,6 +1,6 @@
 #include "Gamemode/MainGameModeBase.h"
 
-#include "EnemySpawnVolume.h"
+#include "Spawn/EnemySpawnVolume.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Gamemode/MainGameStateBase.h"
 #include "Kismet/GameplayStatics.h"

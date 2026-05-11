@@ -16,6 +16,7 @@ public:
 	
 	AEscapingPoint();
 	
+	//컴포넌트 및 파티클
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Escape|Component")
 	USceneComponent* Scene;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Escape|Component")
@@ -23,7 +24,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UParticleSystemComponent* SmokeParticle;
 	
-	//플레이어 오버랩 확인
+	//탈출 대기 시간
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Escape|Time")
+	float EscapeDuration;
+	
+	//플레이어 오버랩 및 오버랩 종료 확인
 	UFUNCTION()
 	void OnCollisionOverlap(
 		UPrimitiveComponent* OverlappedComp,
@@ -46,7 +51,7 @@ private:
 	FTimerHandle LogTimer;
 	void RunLogTimer();
 	
-	float EscapeDuration;
+	
 	
 	//플레이어 탈출 성공 시 호출
 	void PlayerEscaped();
