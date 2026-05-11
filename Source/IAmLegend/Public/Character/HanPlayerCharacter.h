@@ -65,18 +65,18 @@ protected:
 	float BaseWalkSpeed = 300.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
-	float SprintWalkSpeed = BaseWalkSpeed*2;
+	float SprintWalkSpeed = BaseWalkSpeed*1.75;
 
 	// 앉기 시 이동 속도 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
-	float CrouchWalkSpeed = BaseWalkSpeed/2; 
+	float CrouchWalkSpeed = BaseWalkSpeed/1.5; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
 	float BaseJumpVelocity = 500.f;
 
 	// --- Camera Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Camera")
-	float BaseArmLength = 220.f;
+	float BaseArmLength = 120.f;
 	
 	// --- 전투 관련 데이터 (Health) ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Battle")
@@ -96,7 +96,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Interaction")
 	class ABaseItemActor* TargetItem;
 
-
+	//카메라
+	bool bLastRotationState = false; // 이전 프레임의 상태를 기억
 
 	// --- 조준(FOV) 관련 변수 ---
 	float DefaultFOV = 90.f;
@@ -115,7 +116,9 @@ protected:
 	// --- 무기 관련 함수 ---
 	void EquipWeapon();
 	void UnEquipWeapon();
-	void Attack();
+	void StartAttack();
+	void StopAttack();
+
 
 	// 조준 함수 
 	void StartAim();
