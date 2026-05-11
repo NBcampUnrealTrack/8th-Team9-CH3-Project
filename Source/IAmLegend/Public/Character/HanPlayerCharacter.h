@@ -114,8 +114,6 @@ protected:
 	bool bIsSprinting = false;
 
 	// --- 무기 관련 함수 ---
-	void EquipWeapon();
-	void UnEquipWeapon();
 	void StartAttack();
 	void StopAttack();
 
@@ -146,6 +144,10 @@ public:
 
 	// 조준 상태를 반환하는 함수를 추가했습니다. 
 	bool IsAiming() const;
+
+	// 무기 관련 입력 함수를 퍼블릭으로 이동했습니다.
+	void EquipWeapon();
+	void UnEquipWeapon();
 
 protected:
 	/// 현재 시점 모드

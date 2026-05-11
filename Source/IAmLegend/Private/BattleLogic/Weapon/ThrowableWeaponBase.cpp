@@ -3,7 +3,7 @@
 
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 #include "WeaponDataAsset.h"
-#include "BattleLogic/Weapon/WeaponProjectileBase.h"
+#include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
 
 AThrowableWeaponBase::AThrowableWeaponBase()
@@ -76,5 +76,5 @@ void AThrowableWeaponBase::ThrowWeapon()
 		SpawnParams
 	);
 
-	Destroy();
+	OwnerCharacter->UnEquipWeapon(); // 투척 후 무기 해제
 }
