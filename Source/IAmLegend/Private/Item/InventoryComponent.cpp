@@ -2,6 +2,9 @@
 #include "GameFramework/Character.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Item/UseItemDataAsset.h"
+#include "Blueprint/UserWidget.h"
+#include "Item/InventoryWidget.h"
+#include "Item/InventorySlotWidget.h"
 #include "Gamemode/MainGameInstance.h"
 #include "WeaponDataAsset.h"
 
@@ -110,6 +113,7 @@ void UInventoryComponent::ShowInventory()
     
 	
 	ShowInventoryOnScreen();
+	DisplayUI();
 }
 
 void UInventoryComponent::ShowInventoryOnScreen()
@@ -138,4 +142,38 @@ void UInventoryComponent::ShowInventoryOnScreen()
 
 	
 	GEngine->AddOnScreenDebugMessage(100, 5.0f, FColor::Cyan, FullInventoryText);
+}
+
+void UInventoryComponent::DisplayUI()
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC) return;
+
+	// 1. 위젯이 없는 경우 생성 시도
+	if (!InventoryWidget)
+	{
+		// InventoryWidgetClass가 에디터에서 선택되었는지 확인 필수!
+		if (InventoryWidgetClass) 
+		{
+			InventoryWidget = CreateWidget<UInventoryWidget>(PC, InventoryWidgetClass);
+            
+			if (InventoryWidget)
+			{
+				InventoryWidget->AddToViewport();
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("InventoryWidgetClass가 할당되지 않았습니다!"));
+			return; // 클래스가 없으면 아래 코드를 실행하면 안 됨
+		}
+	}
+
+	// 2. 최종적으로 위젯이 유효한지 확인 후 함수 호출
+	if (InventoryWidget)
+	{
+		InventoryWidget->RefreshInventory(Inv);
+	}
 }
