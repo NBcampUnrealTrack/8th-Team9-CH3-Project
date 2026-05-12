@@ -1,25 +1,32 @@
 #include "EscapingPoint.h"
 #include "Components/BoxComponent.h"
+#include "Components/PointLightComponent.h"
 #include "GameMode/MainGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 
 AEscapingPoint::AEscapingPoint()
 {
-	Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
-	SetRootComponent(Scene);
 
 	Collision = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision"));
 	Collision->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
-	Collision->SetupAttachment(Scene);
+	SetRootComponent(Collision);
 
 	//플레이어 콜리젼 접촉 시 설정
 	Collision->OnComponentBeginOverlap.AddDynamic(this, &AEscapingPoint::OnCollisionOverlap);
 	Collision->OnComponentEndOverlap.AddDynamic(this, &AEscapingPoint::OnCollisionEndOverlap);
 	
+	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>("StaticMesh");
+	StaticMesh->SetupAttachment(Collision);
+	
+	//초록색 빛 설정
+	GreenLight = CreateDefaultSubobject<UPointLightComponent>("GreenLight");
+	GreenLight->SetupAttachment(Collision);
+	GreenLight->SetLightColor(FLinearColor(0.0f, 1.0f, 0.0f));
+	
 	//탈출 지점 파티클 설정
 	SmokeParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("SmokeParticle"));
-	SmokeParticle->SetupAttachment(Scene);
+	SmokeParticle->SetupAttachment(RootComponent);
 	SmokeParticle->SetAutoActivate(true);
 	
 	//탈출 대기 시간 설정
