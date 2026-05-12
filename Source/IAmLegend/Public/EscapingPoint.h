@@ -18,11 +18,9 @@ public:
 	
 	//컴포넌트 및 파티클
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Escape|Component")
-	USceneComponent* Scene;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Escape|Component")
-	UBoxComponent* Collision;
+	TObjectPtr<UBoxComponent> Collision;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UParticleSystemComponent* SmokeParticle;
+	TObjectPtr<UParticleSystemComponent> SmokeParticle;
 	
 	//탈출 대기 시간
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Escape|Time")
