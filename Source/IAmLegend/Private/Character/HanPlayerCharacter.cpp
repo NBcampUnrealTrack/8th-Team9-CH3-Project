@@ -483,11 +483,16 @@ void AHanPlayerCharacter::StartAim()
 
 	bUseControllerRotationYaw = true;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
-
 	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
-	SpringArmComponent->SocketOffset = FVector(20.f, 60.f, 0.f); 
-
-	UE_LOG(LogTemp, Warning, TEXT("조준 시작! 목표 FOV: %f"), TargetFOV);
+	
+	SpringArmComponent->SocketOffset = FVector(10.f, 50.f, 0.f);
+	
+	// 임시로 만들어봄 - 근접 무기일경우 카메라 확대는 안하도록
+	if (WeaponClass && WeaponClass->GetName().Contains(TEXT("MeleeWeaponBase")))
+	{
+		TargetFOV = DefaultFOV; // 줌 안 함
+	}
+	
 }
 
 void AHanPlayerCharacter::StopAim() 
@@ -500,11 +505,38 @@ void AHanPlayerCharacter::StopAim()
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
-	SpringArmComponent->SocketOffset = FVector(0.f, 60.f, 0.f);
+	SpringArmComponent->SocketOffset = FVector(0.f, 50.f, 0.f);
 }
 
 // 조준 상태 반환 함수를 추가했습니다.
 bool AHanPlayerCharacter::IsAiming() const
 {
 	return bIsAiming;
+}
+
+// 테스트용 어택 함수 - 공격 몽타주 실행용
+void AHanPlayerCharacter::Attack()
+{
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (!AnimInst) return;
+
+	AHanPlayerCharacter* MyOwner = Cast<AHanPlayerCharacter>(GetOwner());
+	
+	if (AnimInst->IsAnyMontagePlaying()) { return; }
+
+	// 조준 중일 때 찌르기 공격 가능
+	if (bIsAiming)
+	{
+		if (AnimInst && !AnimInst->Montage_IsPlaying(KnifeAttack_2))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("단검 조준 공격 몽타주 실행"));
+			PlayAnimMontage(KnifeAttack_2);
+		}
+	}
+	// 그게 아니라면 기본 공격
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("단검 기본 공격 몽타주 실행"));
+		PlayAnimMontage(KnifeAttack_1);
+	}
 }
