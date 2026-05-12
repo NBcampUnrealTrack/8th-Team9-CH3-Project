@@ -7,6 +7,7 @@
 
 class UBoxComponent;
 class UParticleSystemComponent;
+class UPointLightComponent;
 UCLASS()
 class IAMLEGEND_API AEscapingPoint : public AActor
 {
@@ -17,9 +18,13 @@ public:
 	AEscapingPoint();
 	
 	//컴포넌트 및 파티클
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Escape|Component")
+	UPROPERTY(VisibleAnywhere, Category="Escape|Component")
 	TObjectPtr<UBoxComponent> Collision;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(VisibleAnywhere, Category="Escape|Component")
+	TObjectPtr<UStaticMeshComponent> StaticMesh;
+	UPROPERTY(VisibleAnywhere, Category = "Escape|Component")
+	TObjectPtr<UPointLightComponent> GreenLight;
+	UPROPERTY(VisibleAnywhere, Category = "Escape|Component")
 	TObjectPtr<UParticleSystemComponent> SmokeParticle;
 	
 	//탈출 대기 시간
