@@ -1,10 +1,10 @@
 #include "Gamemode/MainGameModeBase.h"
 
-#include "EnemySpawnVolume.h"
+#include "Spawn/EnemySpawnVolume.h"
+#include "Spawn/SpawnManager.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Gamemode/MainGameStateBase.h"
 #include "Kismet/GameplayStatics.h"
-#include "TestUserWidget.h"
 #include "Gamemode/MainGameInstance.h"
 
 AMainGameModeBase::AMainGameModeBase()
@@ -89,19 +89,11 @@ void AMainGameModeBase::StartStage()
 	if (!GI) return;
 	GI->SetbIsPlayerEscaped(false);
 	
-	SpawnEnemyAtStage();
-}
-
-void AMainGameModeBase::SpawnEnemyAtStage()
-{
-	//적 스폰
-	TArray<AActor*> EnemySpawnVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawnVolume::StaticClass(), EnemySpawnVolumes);
-	if (EnemySpawnVolumes.Num() <= 0) return;
-	for (int32 i=0; i<EnemySpawnVolumes.Num(); ++i)
+	//스폰 매니저에서 적 스폰
+	ASpawnManager* SpawnManager = Cast<ASpawnManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASpawnManager::StaticClass()));
+	if (SpawnManager)
 	{
-		AEnemySpawnVolume* EnemySpawnVolume = Cast<AEnemySpawnVolume>(EnemySpawnVolumes[i]);
-		EnemySpawnVolume->TrySpawn();
+		SpawnManager->SpawnEnemyAtStage();
 	}
 }
 

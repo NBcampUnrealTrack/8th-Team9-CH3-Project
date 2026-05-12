@@ -20,11 +20,6 @@ public:
 	//맵 저장
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Level")
 	TArray<FName> LevelMapNames;
-	//UI
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<UUserWidget> TitleUIWidgetClass;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	TSubclassOf<UUserWidget> StageSelectUIWidgetClass;
 	
 	//게임 시작
 	void StartGame();
