@@ -76,7 +76,7 @@ protected:
 
 	// --- Camera Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Camera")
-	float BaseArmLength = 120.f;
+	float BaseArmLength = 150.f;
 	
 	// --- 전투 관련 데이터 (Health) ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Battle")
@@ -96,6 +96,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Interaction")
 	class ABaseItemActor* TargetItem;
 
+	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 퀵 턴 (구현 실패)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	class UAnimMontage* Running_Turn_181_Montage;
+
+	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 단검 베기 (기본 좌클)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	class UAnimMontage* KnifeAttack_1;
+
+	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 단검 찌르기 (우클 상태에서 좌클)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	class UAnimMontage* KnifeAttack_2;
+
 	//카메라
 	bool bLastRotationState = false; // 이전 프레임의 상태를 기억
 
@@ -109,7 +121,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Character | Weapon") // ABP에서 쓸려면 필요
 	bool bIsAiming = false;
 	
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	// --- 달리기 변수 ---
 	bool bIsSprinting = false;
 
@@ -117,7 +129,9 @@ protected:
 	void StartAttack();
 	void StopAttack();
 
-
+	// 테스트용 어택 함수
+	UFUNCTION(BlueprintCallable)
+	void Attack();
 	// 조준 함수 
 	void StartAim();
 	void StopAim();
