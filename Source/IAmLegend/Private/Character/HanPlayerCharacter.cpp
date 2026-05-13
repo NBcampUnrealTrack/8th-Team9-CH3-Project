@@ -487,12 +487,13 @@ void AHanPlayerCharacter::StartAim()
 	
 	SpringArmComponent->SocketOffset = FVector(10.f, 50.f, 0.f);
 	
+	/*
 	// 임시로 만들어봄 - 근접 무기일경우 카메라 확대는 안하도록
 	if (WeaponClass && WeaponClass->GetName().Contains(TEXT("MeleeWeaponBase")))
 	{
 		TargetFOV = DefaultFOV; // 줌 안 함
 	}
-	
+	*/
 }
 
 void AHanPlayerCharacter::StopAim() 
