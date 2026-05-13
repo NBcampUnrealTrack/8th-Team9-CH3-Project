@@ -30,6 +30,8 @@ ARangedWeaponBase::ARangedWeaponBase()
 
 	MeleeAttackCooldown = 1.0f;
 	MeleeAttackDuration = 0.5f;
+	MeleeAttackBoxExtent = FVector(1.f, 40.f, 90.f);
+	MeleeAttackRange = 100.f;
 
 	// BeginPlay에서 초기화하는 값들
 	FireInterval = 60.f / FireRate;
