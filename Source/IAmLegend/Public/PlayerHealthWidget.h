@@ -28,4 +28,8 @@ public:
 	// 캐릭터가 데미지를 입을 때 체력을 갱신해 줄 함수
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void UpdateHP(float CurrentHP, float MaxHP);
+
+	// 플레이어 피격 효과
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "UI")
+	void PlayBloodEffect();
 };
