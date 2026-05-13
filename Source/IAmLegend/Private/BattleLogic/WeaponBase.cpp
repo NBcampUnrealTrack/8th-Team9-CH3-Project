@@ -82,3 +82,8 @@ void AWeaponBase::DestroyWeapon()
 	Destroy();
 }
 
+EWeaponType AWeaponBase::GetWeaponType() const
+{
+	return WeaponType;
+}
+

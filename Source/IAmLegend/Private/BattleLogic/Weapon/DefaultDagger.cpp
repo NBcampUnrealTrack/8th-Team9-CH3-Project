@@ -12,6 +12,7 @@
 ADefaultDagger::ADefaultDagger()
 {
 	// 초기값 설정
+	WeaponType = EWeaponType::Dagger; // 무기 타입 설정
 	StabDamage = 20.f; // 찌르기 공격의 추가 데미지
 	StabCooldown = 1.0f; // 찌르기 공격의 쿨다운 시간
 	StabDuration = 0.3f; // 찌르기 공격의 지속 시간
