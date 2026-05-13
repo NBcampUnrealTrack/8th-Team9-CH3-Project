@@ -86,7 +86,7 @@ public:
 
 	// 발사 관련 함수
 	void Reload();			// 재장전
-	void FinishReload();	// 재장전 완료 시 호출
+	virtual void FinishReload();	// 재장전 완료 시 호출
 	void HandleFire();		// 실제 발사 처리 (발사 속도에 따라 타이머로 호출)
 	void ApplyRecoil();		// 반동 적용
 	void FinishCooldown();	// 발사 쿨다운 종료 시 호출
