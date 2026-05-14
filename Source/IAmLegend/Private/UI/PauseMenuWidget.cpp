@@ -1,6 +1,4 @@
 // PauseMenuWidget.cpp
-
-
 #include "UI/PauseMenuWidget.h"
 #include "GameMode/MainGameInstance.h"
 #include "Components/Button.h"
@@ -12,29 +10,29 @@ void UPauseMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	// Resume ¹öÆ° ¿¬°á
+	// Resume ë²„íŠ¼ ì—°ê²°
 	if (ResumeButton)
 	{
-		// Áßº¹ ¿¡·¯ ¹æÁö¸¦ À§ÇØ RemoveDynamic Ãß°¡
+		// ì¤‘ë³µ ì—ëŸ¬ ë°©ì§€ë¥¼ ìœ„í•´ RemoveDynamic ì¶”ê°€
 		ResumeButton->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnResumeClicked);
 		ResumeButton->OnClicked.AddDynamic(this, &UPauseMenuWidget::OnResumeClicked);
 	}
 
-	// Quit ¹öÆ° ¿¬°á
+	// Quit ë²„íŠ¼ ì—°ê²°
 	if (QuitButton)
 	{
 		QuitButton->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnQuitClicked);
 		QuitButton->OnClicked.AddDynamic(this, &UPauseMenuWidget::OnQuitClicked);
 	}
 
-	// Options ¹öÆ° ¿¬°á
+	// Options ë²„íŠ¼ ì—°ê²°
 	if (OptionsButton)
 	{
 		OptionsButton->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnOptionsClicked);
 		OptionsButton->OnClicked.AddDynamic(this, &UPauseMenuWidget::OnOptionsClicked);
 	}
 
-	// Credit ¹öÆ° ¿¬°á
+	// Credit ë²„íŠ¼ ì—°ê²°
 	if (CreditButton)
 	{
 		CreditButton->OnClicked.RemoveDynamic(this, &UPauseMenuWidget::OnCreditClicked);
@@ -44,7 +42,7 @@ void UPauseMenuWidget::NativeConstruct()
 
 void UPauseMenuWidget::OnResumeClicked()
 {
-	// HUD¸¦ Ã£¾Æ ÀÏ½Ã Á¤Áö Åä±Û ÇÔ¼ö¸¦ ´Ù½Ã ½ÇÇà
+	// HUDë¥¼ ì°¾ì•„ ì¼ì‹œ ì •ì§€ í† ê¸€ í•¨ìˆ˜ë¥¼ ë‹¤ì‹œ ì‹¤í–‰
 	APlayerController* PC = GetOwningPlayer();
 	if (PC)
 	{
@@ -58,10 +56,10 @@ void UPauseMenuWidget::OnResumeClicked()
 
 void UPauseMenuWidget::OnQuitClicked()
 {
-	// ÀÏ½Ã Á¤Áö ÇØÁ¦
+	// ì¼ì‹œ ì •ì§€ í•´ì œ
 	UGameplayStatics::SetGamePaused(GetWorld(), false);
 
-	// °ÔÀÓ ÀÎ½ºÅÏ½º »óÅÂ ÃÊ±âÈ­
+	// ê²Œì„ ì¸ìŠ¤í„´ìŠ¤ ìƒíƒœ ì´ˆê¸°í™”
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (GI)
 	{
@@ -69,7 +67,7 @@ void UPauseMenuWidget::OnQuitClicked()
 		GI->SetbIsStageStarted(false);
 	}
 
-	//  MaintitleLevel ¸ÊÀ¸·Î ÀÌµ¿
+	//  MaintitleLevel ë§µìœ¼ë¡œ ì´ë™
 	UGameplayStatics::OpenLevel(GetWorld(), FName("MainTitleLevel"));
 }
 
