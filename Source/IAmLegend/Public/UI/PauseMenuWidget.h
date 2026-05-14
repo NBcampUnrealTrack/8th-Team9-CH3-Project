@@ -24,7 +24,7 @@ protected:
 	class UButton* OptionsButton;
 
 	UPROPERTY(meta = (BindWidget))
-	class UBtton* CreditButton;
+	class UButton* CreditButton;
 
 private:
 	UFUNCTION()
