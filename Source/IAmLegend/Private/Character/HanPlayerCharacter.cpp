@@ -20,13 +20,6 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 	// 체력
 	MaxHealth = 100.f;
 	Health = MaxHealth;
-	// 초기값 설정
-	DefaultFOV = 90.f;
-	AimingFOV = 60.f;
-	TargetFOV = DefaultFOV;
-	CurrentFOV = TargetFOV;
-	FOVInterpSpeed = 10.f;
-	bIsAiming = false;
 
 	//몸체(캡슐) 크기 설정
 	float CharacterHalfHeight = 90.f;
@@ -235,6 +228,17 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 void AHanPlayerCharacter::InputMove(const FInputActionValue& InValue)
 {
 	FVector2D MovementVector = InValue.Get<FVector2D>();
+
+	// 이동중 공격시 움직임을 멈춤
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst && AnimInst->IsAnyMontagePlaying())
+	{
+		// 장전 모션 몽타주들을 ReloadSlot에 넣었습니다. 장전 몽타주 실행중에는 이동이 가능하게.
+		if (!AnimInst->IsSlotActive(FName("ReloadSlot"))) 
+		{
+			return; 
+		}
+	}
 
 	switch (CurrentViewMode)
 	{
@@ -478,6 +482,10 @@ void AHanPlayerCharacter::StopAttack()
 
 void AHanPlayerCharacter::StartAim() 
 { 
+	// 장전중일때는 조준 입력 무시
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst && AnimInst->IsSlotActive(FName("ReloadSlot"))){ return; }
+
 	bIsAiming = true; 
 	TargetFOV = AimingFOV; 
 
@@ -485,15 +493,11 @@ void AHanPlayerCharacter::StartAim()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
 	
-	SpringArmComponent->SocketOffset = FVector(10.f, 50.f, 0.f);
-	
-	/*
-	// 임시로 만들어봄 - 근접 무기일경우 카메라 확대는 안하도록
-	if (WeaponClass && WeaponClass->GetName().Contains(TEXT("MeleeWeaponBase")))
+	// 임시로 만들어봄 - 단검일경우 카메라 확대는 안하도록
+	if (WeaponClass && WeaponClass->GetName().Contains(TEXT("Dagger")))
 	{
 		TargetFOV = DefaultFOV; // 줌 안 함
 	}
-	*/
 }
 
 void AHanPlayerCharacter::StopAim() 
@@ -506,7 +510,6 @@ void AHanPlayerCharacter::StopAim()
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
-	SpringArmComponent->SocketOffset = FVector(0.f, 50.f, 0.f);
 }
 
 // 조준 상태 반환 함수를 추가했습니다.
@@ -522,22 +525,50 @@ void AHanPlayerCharacter::Attack()
 	if (!AnimInst) return;
 
 	AHanPlayerCharacter* MyOwner = Cast<AHanPlayerCharacter>(GetOwner());
-	
 	if (AnimInst->IsAnyMontagePlaying()) { return; }
 
-	// 조준 중일 때 찌르기 공격 가능
-	if (bIsAiming)
+	// 무기를 진짜 들고 있는지(Is Valid) 확인합니다.
+	if (EquippedWeapon == nullptr)
 	{
-		if (AnimInst && !AnimInst->Montage_IsPlaying(KnifeAttack_2))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("단검 조준 공격 몽타주 실행"));
-			PlayAnimMontage(KnifeAttack_2);
-		}
+		UE_LOG(LogTemp, Warning, TEXT("들고 있는 무기가 없어서 공격할 수 없습니다."));
+		return;
 	}
-	// 그게 아니라면 기본 공격
-	else
+
+	// WeapoonBase 클래스 안에 있는 GetWeaponType() 함수를 호출
+	EWeaponType CurrentWeaponType = EquippedWeapon->GetWeaponType();
+
+	// 1. 현재 무기 타입이 '권총(Pistol)' 일 때
+	if (CurrentWeaponType == EWeaponType::Pistol)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("단검 기본 공격 몽타주 실행"));
-		PlayAnimMontage(KnifeAttack_1);
+		if (bIsAiming)
+		{
+			PlayAnimMontage(PistolAttack_2);
+			UE_LOG(LogTemp, Warning, TEXT("권총 사격 공격(우클릭) 몽타주 실행"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("권총 기본 공격(좌클릭) 몽타주 실행"));
+			PlayAnimMontage(PistolAttack_1);
+		}
+
+	}
+	// 2. 현재 무기 타입이 '단검(Dagger)' 일 때
+	else if (CurrentWeaponType == EWeaponType::Dagger)
+	{
+			// 단검 조준 중일 때 찌르기 공격 가능
+			if (bIsAiming)
+			{
+				if (AnimInst && !AnimInst->Montage_IsPlaying(KnifeAttack_2))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("단검 조준 공격(우클릭) 몽타주 실행"));
+					PlayAnimMontage(KnifeAttack_2);
+				}
+			}
+			// 그게 아니라면 기본 공격
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("단검 기본 공격(좌클릭) 몽타주 실행"));
+				PlayAnimMontage(KnifeAttack_1);
+			}
 	}
 }
