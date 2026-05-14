@@ -6,6 +6,7 @@
 #include "GameMode/MainGameInstance.h"
 #include "UI/StageHUDWidget.h"
 #include "UI/PauseMenuWidget.h"
+#include "UI/GameOverWidget.h"
 #include "PlayerHealthWidget.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -131,6 +132,54 @@ void AMainHUD::TogglePauseMenu()
 			UGameplayStatics::SetGamePaused(GetWorld(), true);
 			PC->bShowMouseCursor = true;
 			PC->SetInputMode(FInputModeGameAndUI());
+		}
+	}
+}
+
+// 크레딧 함수
+void AMainHUD::ShowCreditHUD()
+{
+	if (CreditHUDClass)
+	{
+		UUserWidget* CreditWidget = CreateWidget<UUserWidget>(GetWorld(), CreditHUDClass);
+		if (CreditWidget)
+		{
+			CreditWidget->AddToViewport(100);
+		}
+	}
+}
+
+// 옵션 함수
+void AMainHUD::ShowOptionHUD()
+{
+	if (OptionHUDClass)
+	{
+		UUserWidget* OptionWidget = CreateWidget<UUserWidget>(GetWorld(), OptionHUDClass);
+		if (OptionWidget)
+		{
+			OptionWidget->AddToViewport(100);
+		}
+	}
+}
+
+// 게임 오버 함수
+void AMainHUD::ShowGameOverHUD()
+{
+	if (GameOverClass)
+	{
+		UUserWidget* GameOverWidget = CreateWidget<UUserWidget>(GetWorld(), GameOverClass);
+		if (GameOverWidget)
+		{
+			GameOverWidget->AddToViewport();
+
+			// 마우스 커서를 보이게 하고 게임 입력을 UI로 전환
+			APlayerController* PC = GetOwningPlayerController();
+			if (PC)
+			{
+				PC->bShowMouseCursor = true;
+				PC->SetInputMode(FInputModeUIOnly());
+				UGameplayStatics::SetGamePaused(GetWorld(), true); // 게임 일시 정지
+			}
 		}
 	}
 }

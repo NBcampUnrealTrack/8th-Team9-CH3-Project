@@ -73,10 +73,26 @@ void UPauseMenuWidget::OnQuitClicked()
 
 void UPauseMenuWidget::OnOptionsClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Options Button"));
+	APlayerController* PC = GetOwningPlayer();
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			HUD->ShowOptionHUD();
+		}
+	}
 }
 
 void UPauseMenuWidget::OnCreditClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Credit Button"));
+	APlayerController* PC = GetOwningPlayer();
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			HUD->ShowCreditHUD();
+		}
+	}
 }
