@@ -10,10 +10,18 @@ void UInventorySlotWidget::SetSlotData(const FItemSlot& SlotData)
 {
 	if (SlotData.ItemData)
 	{
-		ItemIcon->SetBrushFromTexture(SlotData.ItemData->ItemIcon);
+		ItemIcon->SetBrushFromTexture(
+			SlotData.ItemData->ItemIcon
+		);
 
 		Quantity->SetText(
 			FText::AsNumber(SlotData.Quantity)
 		);
+	}
+	else
+	{
+		ItemIcon->SetBrushFromTexture(nullptr);
+
+		Quantity->SetText(FText::GetEmpty());
 	}
 }
