@@ -1,4 +1,5 @@
-﻿#include "UI/MainHUD.h"
+#include "UI/MainHUD.h"
+
 
 #include "TitleUIWidget.h"
 #include "Blueprint/UserWidget.h"
@@ -85,6 +86,22 @@ void AMainHUD::ShowPlayerHealthHUD()
 			PlayerHealthWidget->AddToViewport();
 		}
 	}
+}
+
+void AMainHUD::ShowExtractionHUD()
+{
+	if (ExtractionHUDClass)
+	{
+		ExtractionHUDWidget = CreateWidget<UUserWidget>(GetWorld(), ExtractionHUDClass);
+		if (ExtractionHUDWidget)
+		{
+			ExtractionHUDWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideExtractionHUD()
+{
 }
 
 void AMainHUD::TogglePauseMenu()

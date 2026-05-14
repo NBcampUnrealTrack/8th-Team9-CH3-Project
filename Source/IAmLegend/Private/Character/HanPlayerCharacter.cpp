@@ -9,6 +9,7 @@
 #include "BattleLogic/WeaponBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Item/BaseItemActor.h"
+#include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -498,6 +499,12 @@ void AHanPlayerCharacter::StartAim()
 	{
 		TargetFOV = DefaultFOV; // 줌 안 함
 	}
+	
+	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
+	if(AThrowableWeaponBase* ThrowableWeapon = Cast<AThrowableWeaponBase>(EquippedWeapon))
+	{
+		ThrowableWeapon->EnableTrajectory(true); // 투척 무기라면 조준할 때 궤적 표시
+	}
 }
 
 void AHanPlayerCharacter::StopAim() 
@@ -510,6 +517,12 @@ void AHanPlayerCharacter::StopAim()
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
+
+	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
+	if (AThrowableWeaponBase* ThrowableWeapon = Cast<AThrowableWeaponBase>(EquippedWeapon))
+	{
+		ThrowableWeapon->EnableTrajectory(false); // 투척 무기라면 조준을 풀 때 궤적 표시 끄기
+	}
 }
 
 // 조준 상태 반환 함수를 추가했습니다.
