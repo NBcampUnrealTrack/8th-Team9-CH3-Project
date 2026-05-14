@@ -1,5 +1,6 @@
 // PauseMenuWidget.cpp
 
+#include "GameMode/MainGameInstance.h"
 #include "UI/PauseMenuWidget.h"
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
@@ -56,7 +57,18 @@ void UPauseMenuWidget::OnResumeClicked()
 
 void UPauseMenuWidget::OnQuitClicked()
 {
-	// 타이틀 맵으로 돌아가거나 게임 종료
+	// 일시 정지 해제
+	UGameplayStatics::SetGamePaused(GetWorld(), false);
+
+	// 게임 인스턴스 상태 초기화
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		GI->SetbIsGameStarted(false);
+		GI->SetbIsStageStarted(false);
+	}
+
+	//  MaintitleLevel 맵으로 이동
 	UGameplayStatics::OpenLevel(GetWorld(), FName("MainTitleLevel"));
 }
 
