@@ -36,6 +36,14 @@ public:
 	void ShowExtractionHUD();
 	void HideExtractionHUD();
 
+	// 크레딧 UI 관리
+	void ShowCreditHUD();
+
+	// 옵션 UI 관리
+	void ShowOptionHUD();
+
+	// GameOver UI 관리
+	void ShowGameOverHUD();
 	
 protected:
 	//사용할 Widget 클래스 설정
@@ -49,6 +57,12 @@ protected:
 	TSubclassOf<UPlayerHealthWidget> PlayerHealthClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UUserWidget> ExtractionHUDClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UUserWidget> CreditHUDClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UUserWidget> OptionHUDClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UUserWidget> GameOverClass;
 	
 private:
 	
