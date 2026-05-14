@@ -5,6 +5,7 @@
 #include "GameMode/MainGameInstance.h"
 #include "UI/StageHUDWidget.h"
 #include "UI/PauseMenuWidget.h"
+#include "PlayerHealthWidget.h"
 #include "Kismet/GameplayStatics.h" // [추가_민성] 현재 레벨 이름을 가져오기 위해 임시로 추가
 
 void AMainHUD::BeginPlay()
@@ -26,6 +27,20 @@ void AMainHUD::BeginPlay()
 		if (GI && !GI->GetbIsGameStarted())
 		{
 			ShowTitleHUD();
+		}
+	}
+	else
+	{
+		// MainTitleLevel이 아닌 다른 레벨에서 체력 UI 출력
+		ShowPlayerHealthHUD();
+
+		// 마우스 커서를 끄고 게임 입력 모드로 전환
+		APlayerController* PC = GetOwningPlayerController();
+		if (PC)
+		{
+			PC->bShowMouseCursor = false;
+			FInputModeGameOnly InputMode;
+			PC->SetInputMode(InputMode);
 		}
 	}
 }
@@ -71,6 +86,18 @@ void AMainHUD::HideStageHUD()
 	if (StageHUDWidget)
 	{
 		StageHUDWidget->RemoveFromParent();
+	}
+}
+
+void AMainHUD::ShowPlayerHealthHUD()
+{
+	if (PlayerHealthClass && !PlayerHealthWidget)
+	{
+		PlayerHealthWidget = CreateWidget<UPlayerHealthWidget>(GetWorld(), PlayerHealthClass);
+		if (PlayerHealthWidget)
+		{
+			PlayerHealthWidget->AddToViewport();
+		}
 	}
 }
 

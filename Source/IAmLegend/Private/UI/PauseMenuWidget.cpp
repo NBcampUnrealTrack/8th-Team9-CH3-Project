@@ -1,7 +1,6 @@
 // PauseMenuWidget.cpp
-
-#include "GameMode/MainGameInstance.h"
 #include "UI/PauseMenuWidget.h"
+#include "GameMode/MainGameInstance.h"
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
