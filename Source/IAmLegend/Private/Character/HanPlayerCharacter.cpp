@@ -482,7 +482,6 @@ void AHanPlayerCharacter::StartAttack()
 	{
 		if (EquippedWeapon->GetWeaponType() != EWeaponType::Rifle)
 		{
-			// [보완] 1타와 2타 몽타주 모두 검사하도록 짝을 맞춰주는 게 안전합니다!
 			if ((CurrentAttack_1_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_1_Montage)) ||
 				(CurrentAttack_2_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_2_Montage)))
 			{
@@ -492,7 +491,7 @@ void AHanPlayerCharacter::StartAttack()
 	}
 	else return;
 	
-	// [정석 브레이크] bIsAiming이 false(지향 사격)일 때만 자리에 탁 멈추게 합니다.
+	// bIsAiming이 false일 때만 자리에 탁 멈추게 합니다.
 	if (bIsAiming == false)
 	{
 		if (GetCharacterMovement())
@@ -500,10 +499,6 @@ void AHanPlayerCharacter::StartAttack()
 			GetCharacterMovement()->StopMovementImmediately();
 		}
 	}
-
-	// ❌ [삭제] '공격하는 순간 움직임 금지' 코드는 중복 연산이므로 과감히 지워버리세요!
-	// 이것 때문에 물리 컴포넌트가 굳어서 Montage_Stop 신호가 다 씹혔던 것입니다.
-	// =========================================================================
 
 	// 조준 상태(bIsAiming)에 따라 기본 공격, 우클 공격 실행
 	if (bIsAiming)
