@@ -224,23 +224,20 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			this, 
 			&AHanPlayerCharacter::InputInteract
 		);
+
+		// 장전
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Reload,
+			ETriggerEvent::Started,              
+			this,
+			&AHanPlayerCharacter::InputReload   
+		);
 	}
 }
 
 void AHanPlayerCharacter::InputMove(const FInputActionValue& InValue)
 {
 	FVector2D MovementVector = InValue.Get<FVector2D>();
-
-	// 이동중 공격시 움직임을 멈춤
-	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (AnimInst && AnimInst->IsAnyMontagePlaying())
-	{
-		// 장전 모션 몽타주들을 ReloadSlot에 넣었습니다. 장전 몽타주 실행중에는 이동이 가능하게.
-		if (!AnimInst->IsSlotActive(FName("ReloadSlot"))) 
-		{
-			return; 
-		}
-	}
 
 	switch (CurrentViewMode)
 	{
@@ -470,6 +467,11 @@ void AHanPlayerCharacter::EquipWeapon()
 			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
 			EquippedWeapon = SpawnedWeapon;
+
+			//한기담 - 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
+			CurrentAttack_1_Montage = SpawnedWeapon->Attack_1_Montage;
+			CurrentAttack_2_Montage = SpawnedWeapon->Attack_2_Montage;
+			CurrentReloadMontage = SpawnedWeapon->Reload_Montage;
 		}
 	}
 }
@@ -489,6 +491,44 @@ void AHanPlayerCharacter::StartAttack()
 	{
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
+
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (!AnimInst) return;
+	
+	// 1. 소총이 아닐 때만 단발 연타 꼬임 방지
+	if (EquippedWeapon)
+	{
+		if (EquippedWeapon->GetWeaponType() != EWeaponType::Rifle)
+		{
+			if ((CurrentAttack_1_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_1_Montage)) ||
+				(CurrentAttack_2_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_2_Montage)))
+			{
+				return;
+			}
+		}
+	}
+	else return;
+	
+	// bIsAiming이 false일 때만 자리에 탁 멈추게 합니다.
+	if (bIsAiming == false)
+	{
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->StopMovementImmediately();
+		}
+	}
+
+	// 조준 상태(bIsAiming)에 따라 기본 공격, 우클 공격 실행
+	if (bIsAiming)
+	{
+		if (CurrentAttack_2_Montage) PlayAnimMontage(CurrentAttack_2_Montage);
+		UE_LOG(LogTemp, Warning, TEXT("우클릭 조준 사격 공격 몽타주 재생")); 
+	}
+	else
+	{
+		if (CurrentAttack_1_Montage) PlayAnimMontage(CurrentAttack_1_Montage);
+		UE_LOG(LogTemp, Warning, TEXT("좌클릭 일반 공격 몽타주 재생"));
+	}
 }
 
 void AHanPlayerCharacter::StopAttack()
@@ -496,6 +536,22 @@ void AHanPlayerCharacter::StopAttack()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->StopWeaponAttack(); // 공격 종료
+	}
+
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (!AnimInst) return;
+
+	// 한기담 - 마우스를 떼는 순간, 사격 몽타주를 멈춘다. 
+	if (EquippedWeapon)
+	{
+		// 현재 무기가 '소총(Rifle)'일 때만 마우스 뗄 때 애니메이션 정지.
+		if (EquippedWeapon->GetWeaponType() == EWeaponType::Rifle)
+		{
+			// CurrentAttack_2_Montage가 사격 공격이다.
+			if (CurrentAttack_2_Montage) AnimInst->Montage_Stop(0.1f, CurrentAttack_2_Montage);
+		}
+		// 나중에 연사형 무기가 더 추가되면 
+		// 여기에 || EquippedWeapon->GetWeaponType() == EWeaponType::SMG 같은거 추가.
 	}
 }
 
@@ -549,57 +605,15 @@ bool AHanPlayerCharacter::IsAiming() const
 	return bIsAiming;
 }
 
-// 테스트용 어택 함수 - 공격 몽타주 실행용
-void AHanPlayerCharacter::Attack()
+void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
 {
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (!AnimInst) return;
+	if (!AnimInst || AnimInst->IsAnyMontagePlaying()) return; // 공격중 장전 입력 불가능
 
-	AHanPlayerCharacter* MyOwner = Cast<AHanPlayerCharacter>(GetOwner());
-	if (AnimInst->IsAnyMontagePlaying()) { return; }
-
-	// 무기를 진짜 들고 있는지(Is Valid) 확인합니다.
-	if (EquippedWeapon == nullptr)
+	// 근접 무기일 경우 nullptr 이므로 R을 눌러도 장전 불가능
+	if (CurrentReloadMontage)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("들고 있는 무기가 없어서 공격할 수 없습니다."));
-		return;
-	}
-
-	// WeapoonBase 클래스 안에 있는 GetWeaponType() 함수를 호출
-	EWeaponType CurrentWeaponType = EquippedWeapon->GetWeaponType();
-
-	// 1. 현재 무기 타입이 '권총(Pistol)' 일 때
-	if (CurrentWeaponType == EWeaponType::Pistol)
-	{
-		if (bIsAiming)
-		{
-			PlayAnimMontage(PistolAttack_2);
-			UE_LOG(LogTemp, Warning, TEXT("권총 사격 공격(우클릭) 몽타주 실행"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("권총 기본 공격(좌클릭) 몽타주 실행"));
-			PlayAnimMontage(PistolAttack_1);
-		}
-
-	}
-	// 2. 현재 무기 타입이 '단검(Dagger)' 일 때
-	else if (CurrentWeaponType == EWeaponType::Dagger)
-	{
-			// 단검 조준 중일 때 찌르기 공격 가능
-			if (bIsAiming)
-			{
-				if (AnimInst && !AnimInst->Montage_IsPlaying(KnifeAttack_2))
-				{
-					UE_LOG(LogTemp, Warning, TEXT("단검 조준 공격(우클릭) 몽타주 실행"));
-					PlayAnimMontage(KnifeAttack_2);
-				}
-			}
-			// 그게 아니라면 기본 공격
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("단검 기본 공격(좌클릭) 몽타주 실행"));
-				PlayAnimMontage(KnifeAttack_1);
-			}
+		PlayAnimMontage(CurrentReloadMontage);
+		UE_LOG(LogTemp, Warning, TEXT("재장전 몽타주 실행"));
 	}
 }

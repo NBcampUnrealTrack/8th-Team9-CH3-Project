@@ -61,4 +61,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void DestroyWeapon();			// 무기 파괴 (예: 투척 후)
 	
+	// 애니메이션 몽타주
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon | Animation")
+	class UAnimMontage* Attack_1_Montage = nullptr; // 일반 공격 (좌클릭)
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon | Animation")
+	class UAnimMontage* Attack_2_Montage = nullptr; // 조준 공격 (우클릭 도중 좌클릭)
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon | Animation")
+	class UAnimMontage* Reload_Montage = nullptr;   // 재장전 몽타주
 };
