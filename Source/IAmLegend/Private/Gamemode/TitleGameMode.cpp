@@ -2,13 +2,13 @@
 
 
 #include "Gamemode/TitleGameMode.h"
-#include "MainHUD.h"
+#include "UI/MainHUD.h"
 
 ATitleGameMode::ATitleGameMode()
 {
-	// HUD´Â MainHUD ±×´ë·Î »ç¿ë.
+	// HUDëŠ” MainHUD ê·¸ëŒ€ë¡œ ì‚¬ìš©.
 	HUDClass = AMainHUD::StaticClass();
 
-	// Ä³¸¯ÅÍ ¼ÒÈ¯ ±İÁö
+	// ìºë¦­í„° ì†Œí™˜ ê¸ˆì§€
 	DefaultPawnClass = nullptr;
 }

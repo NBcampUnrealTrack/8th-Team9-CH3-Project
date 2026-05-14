@@ -1,6 +1,6 @@
 #include "Gamemode/MainGameModeBase.h"
 
-#include "MainHUD.h"
+#include "UI/MainHUD.h"
 #include "Spawn/SpawnManager.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Gamemode/MainGameStateBase.h"
@@ -153,4 +153,9 @@ float AMainGameModeBase::GetRemainingStageTime() const
 void AMainGameModeBase::killedEnemy()
 {
 	++PlayerKillCount;
+}
+
+int32 AMainGameModeBase::GetPlayerKillCount() const
+{
+	return PlayerKillCount;
 }
