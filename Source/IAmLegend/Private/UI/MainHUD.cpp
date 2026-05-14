@@ -4,16 +4,29 @@
 #include "Blueprint/UserWidget.h"
 #include "GameMode/MainGameInstance.h"
 #include "UI/StageHUDWidget.h"
-
+#include "UI/PauseMenuWidget.h"
+#include "Kismet/GameplayStatics.h" // [추가_민성] 현재 레벨 이름을 가져오기 위해 임시로 추가
 
 void AMainHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	/*
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (GI && !GI->GetbIsGameStarted())
 	{
 		ShowTitleHUD();
+	}*/
+	// 현재 열려있는 맵의 이름을 가져오기
+	FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(this);
+
+	// 맵 이름이 "MainTitleLevel"일 때만 타이틀 UI 출력
+	if (CurrentLevelName == "MainTitleLevel")
+	{
+		UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+		if (GI && !GI->GetbIsGameStarted())
+		{
+			ShowTitleHUD();
+		}
 	}
 }
 
@@ -27,7 +40,7 @@ void AMainHUD::ShowTitleHUD()
 			TitleHUDWidget->AddToViewport();
 		}
 	}
-	
+
 	APlayerController* PC = GetOwningPlayerController();
 	if (PC)
 	{
@@ -58,5 +71,41 @@ void AMainHUD::HideStageHUD()
 	if (StageHUDWidget)
 	{
 		StageHUDWidget->RemoveFromParent();
+	}
+}
+
+// 일시정지 메뉴 로직
+void AMainHUD::TogglePauseMenu()
+{
+	// 타이틀 UI 예외 처리
+	if (UGameplayStatics::GetCurrentLevelName(this) == "MainTitleLevel") return;
+
+	APlayerController* PC = GetOwningPlayerController();
+	if (!PC) return;
+
+	// 위젯 생성
+	if (!PauseMenuWidget && PauseMenuClass)
+	{
+		PauseMenuWidget = CreateWidget<UPauseMenuWidget>(GetWorld(), PauseMenuClass);
+	}
+
+	if (PauseMenuWidget)
+	{
+		if (PauseMenuWidget->IsInViewport())
+		{
+			// 해제 로직
+			PauseMenuWidget->RemoveFromParent();
+			UGameplayStatics::SetGamePaused(GetWorld(), false); // 시간 재개
+			PC->bShowMouseCursor = false;
+			PC->SetInputMode(FInputModeGameOnly());
+		}
+		else
+		{
+			// 실행 로직
+			PauseMenuWidget->AddToViewport();
+			UGameplayStatics::SetGamePaused(GetWorld(), true); // 시간 정지 (타이머 자동 정지)
+			PC->bShowMouseCursor = true;
+			PC->SetInputMode(FInputModeGameAndUI());
+		}
 	}
 }

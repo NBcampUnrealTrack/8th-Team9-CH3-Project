@@ -4,6 +4,7 @@
 #include "GameFramework/HUD.h"
 #include "MainHUD.generated.h"
 
+class UPauseMenuWidget; // 전방 선언 (일시정지 메뉴)
 
 UCLASS()
 class IAMLEGEND_API AMainHUD : public AHUD
@@ -19,6 +20,9 @@ public:
 	//스테이지 UI 관리
 	void ShowStageHUD();
 	void HideStageHUD();
+	// 일시정지 메뉴 UI 관리
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void TogglePauseMenu();
 	
 protected:
 	//사용할 Widget 클래스 설정
@@ -26,6 +30,8 @@ protected:
 	TSubclassOf<UUserWidget> TitleHUDClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UUserWidget> StageHUDClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UPauseMenuWidget> PauseMenuClass;
 	
 private:
 	
@@ -34,4 +40,6 @@ private:
 	UUserWidget* TitleHUDWidget;
 	UPROPERTY()
 	UUserWidget* StageHUDWidget;
+	UPROPERTY()
+	UPauseMenuWidget* PauseMenuWidget;
 };
