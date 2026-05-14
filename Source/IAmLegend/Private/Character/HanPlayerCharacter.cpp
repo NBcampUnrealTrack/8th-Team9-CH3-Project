@@ -238,17 +238,6 @@ void AHanPlayerCharacter::InputMove(const FInputActionValue& InValue)
 {
 	FVector2D MovementVector = InValue.Get<FVector2D>();
 
-	// 이동중 공격시 움직임을 멈춤
-	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (AnimInst && AnimInst->IsAnyMontagePlaying())
-	{
-		// 장전 모션 몽타주들을 ReloadSlot에 넣었습니다. 장전 몽타주 실행중에는 이동이 가능하게끔
-		if (!AnimInst->IsSlotActive(FName("ReloadSlot"))) 
-		{
-			return; 
-		}
-	}
-
 	switch (CurrentViewMode)
 	{
 	case EViewMode::BackView:
@@ -487,30 +476,45 @@ void AHanPlayerCharacter::StartAttack()
 
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (!AnimInst) return;
-
-	// 공격 몽타주가 이미 도는 중이면 추가 입력을 방지한다.
-	if ((CurrentAttack_1_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_1_Montage)) ||
-		(CurrentAttack_2_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_2_Montage)))
+	
+	// 1. 소총이 아닐 때만 단발 연타 꼬임 방지
+	if (EquippedWeapon)
 	{
-		return;
+		if (EquippedWeapon->GetWeaponType() != EWeaponType::Rifle)
+		{
+			// [보완] 1타와 2타 몽타주 모두 검사하도록 짝을 맞춰주는 게 안전합니다!
+			if ((CurrentAttack_1_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_1_Montage)) ||
+				(CurrentAttack_2_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_2_Montage)))
+			{
+				return;
+			}
+		}
+	}
+	else return;
+	
+	// [정석 브레이크] bIsAiming이 false(지향 사격)일 때만 자리에 탁 멈추게 합니다.
+	if (bIsAiming == false)
+	{
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->StopMovementImmediately();
+		}
 	}
 
-	// 공격하는 순간 움직임 금지
-	if (GetCharacterMovement())
-	{
-		GetCharacterMovement()->StopMovementImmediately();
-	}
+	// ❌ [삭제] '공격하는 순간 움직임 금지' 코드는 중복 연산이므로 과감히 지워버리세요!
+	// 이것 때문에 물리 컴포넌트가 굳어서 Montage_Stop 신호가 다 씹혔던 것입니다.
+	// =========================================================================
 
 	// 조준 상태(bIsAiming)에 따라 기본 공격, 우클 공격 실행
 	if (bIsAiming)
 	{
 		if (CurrentAttack_2_Montage) PlayAnimMontage(CurrentAttack_2_Montage);
-		UE_LOG(LogTemp, Warning, TEXT("좌클릭 공격 몽타주 재생"));
+		UE_LOG(LogTemp, Warning, TEXT("우클릭 조준 사격 공격 몽타주 재생")); 
 	}
 	else
 	{
 		if (CurrentAttack_1_Montage) PlayAnimMontage(CurrentAttack_1_Montage);
-		UE_LOG(LogTemp, Warning, TEXT("우클릭 공격 몽타주 재생"));
+		UE_LOG(LogTemp, Warning, TEXT("좌클릭 일반 공격 몽타주 재생"));
 	}
 }
 
@@ -519,6 +523,22 @@ void AHanPlayerCharacter::StopAttack()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->StopWeaponAttack(); // 공격 종료
+	}
+
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (!AnimInst) return;
+
+	// 한기담 - 마우스를 떼는 순간, 사격 몽타주를 멈춘다. 
+	if (EquippedWeapon)
+	{
+		// 현재 무기가 '소총(Rifle)'일 때만 마우스 뗄 때 애니메이션 정지.
+		if (EquippedWeapon->GetWeaponType() == EWeaponType::Rifle)
+		{
+			// CurrentAttack_2_Montage가 사격 공격이다.
+			if (CurrentAttack_2_Montage) AnimInst->Montage_Stop(0.1f, CurrentAttack_2_Montage);
+		}
+		// 나중에 연사형 무기가 더 추가되면 
+		// 여기에 || EquippedWeapon->GetWeaponType() == EWeaponType::SMG 같은거 추가.
 	}
 }
 
