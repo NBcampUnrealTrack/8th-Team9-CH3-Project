@@ -20,10 +20,22 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* QuitButton;
 
+	UPROPERTY(meta = (BindWidget))
+	class UButton* OptionsButton;
+
+	UPROPERTY(meta = (BindWidget))
+	class UBtton* CreditButton;
+
 private:
 	UFUNCTION()
 	void OnResumeClicked();
 
 	UFUNCTION()
 	void OnQuitClicked();
+
+	UFUNCTION()
+	void OnOptionsClicked();
+
+	UFUNCTION()
+	void OnCreditClicked();
 };
