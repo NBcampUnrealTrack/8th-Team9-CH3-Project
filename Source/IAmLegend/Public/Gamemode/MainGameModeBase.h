@@ -25,7 +25,8 @@ public:
 	void EndStage(bool bIsPlayerEscaped);
 	//스테이지 남은 시간
 	float GetRemainingStageTime() const;
-	
+	//적 처치 수
+	int32 GetPlayerKillCount() const;
 	
 	//적 처치
 	void killedEnemy();
