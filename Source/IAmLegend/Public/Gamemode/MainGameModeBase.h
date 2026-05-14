@@ -29,6 +29,7 @@ public:
 	
 	//적 처치
 	void killedEnemy();
+	int32 GetPlayerKillCount() const;
 
 private:
 	//스테이지 시작

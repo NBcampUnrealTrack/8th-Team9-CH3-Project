@@ -154,3 +154,8 @@ void AMainGameModeBase::killedEnemy()
 {
 	++PlayerKillCount;
 }
+
+int32 AMainGameModeBase::GetPlayerKillCount() const
+{
+	return PlayerKillCount;
+}

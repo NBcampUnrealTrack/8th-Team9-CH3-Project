@@ -19,6 +19,9 @@ public:
 	//스테이지 UI 관리
 	void ShowStageHUD();
 	void HideStageHUD();
+	//탈출 타이머 UI 관리
+	void ShowEscapeTimerHUD();
+	void HideEscapeTimerHUD();
 	
 protected:
 	//사용할 Widget 클래스 설정
@@ -26,6 +29,8 @@ protected:
 	TSubclassOf<UUserWidget> TitleHUDClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UUserWidget> StageHUDClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UUserWidget> EscapeTimerHUDClass;
 	
 private:
 	
@@ -34,4 +39,6 @@ private:
 	UUserWidget* TitleHUDWidget;
 	UPROPERTY()
 	UUserWidget* StageHUDWidget;
+	UPROPERTY()
+	UUserWidget* EscapeTimerHUDWidget;
 };

@@ -4,6 +4,7 @@
 #include "GameMode/MainGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "UI/MainHUD.h"
 
 AEscapingPoint::AEscapingPoint()
 {
@@ -51,8 +52,19 @@ void AEscapingPoint::OnCollisionOverlap(
 		//탈출 대기 시간 타이머 작동 & 로그 타이머 작동
 		GetWorldTimerManager().SetTimer(EscapeTimer, this, &AEscapingPoint::PlayerEscaped, EscapeDuration, false);
 		GetWorldTimerManager().SetTimer(LogTimer, this, &AEscapingPoint::RunLogTimer, 0.1f, true);
-		
 	}
+	
+	//탈출 대기 시간 UI 출력
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			HUD->ShowEscapeTimerHUD();
+		}
+	}
+	
 }
 
 //플레이어 탈출 지점에서 이탈 확인
@@ -68,6 +80,17 @@ void AEscapingPoint::OnCollisionEndOverlap(
 		//탈출 타이머 초기화
 		GetWorldTimerManager().ClearTimer(EscapeTimer);
 		UE_LOG(LogTemp, Warning, TEXT("탈출 지점에서 벗어났습니다."));
+	}
+	
+	//탈출 대기 시간 UI 삭제
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			HUD->HideEscapeTimerHUD();
+		}
 	}
 	
 }

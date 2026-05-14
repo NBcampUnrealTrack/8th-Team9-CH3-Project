@@ -20,7 +20,7 @@ void AMainHUD::ShowTitleHUD()
 {
 	if (TitleHUDClass)
 	{
-		TitleHUDWidget = CreateWidget<UTitleUIWidget>(GetWorld(), TitleHUDClass);
+		TitleHUDWidget = CreateWidget<UUserWidget>(GetWorld(), TitleHUDClass);
 		if (TitleHUDWidget)
 		{
 			TitleHUDWidget->AddToViewport();
@@ -38,14 +38,14 @@ void AMainHUD::ShowTitleHUD()
 
 void AMainHUD::HideTitleHUD()
 {
-	TitleHUDWidget->RemoveFromViewport();
+	TitleHUDWidget->RemoveFromParent();
 }
 
 void AMainHUD::ShowStageHUD()
 {
 	if (StageHUDClass)
 	{
-		StageHUDWidget = CreateWidget<UStageHUDWidget>(GetWorld(), StageHUDClass);
+		StageHUDWidget = CreateWidget<UUserWidget>(GetWorld(), StageHUDClass);
 		if (StageHUDWidget)
 		{
 			StageHUDWidget->AddToViewport();
@@ -57,5 +57,27 @@ void AMainHUD::HideStageHUD()
 	if (StageHUDWidget)
 	{
 		StageHUDWidget->RemoveFromParent();
+	}
+}
+
+void AMainHUD::ShowEscapeTimerHUD()
+{
+	if (EscapeTimerHUDClass)
+	{
+		EscapeTimerHUDWidget = CreateWidget<UUserWidget>(GetWorld(), EscapeTimerHUDClass);
+		{
+			if (EscapeTimerHUDWidget)
+			{
+				EscapeTimerHUDWidget->AddToViewport();
+			}
+		}
+	}
+}
+
+void AMainHUD::HideEscapeTimerHUD()
+{
+	if (EscapeTimerHUDWidget)
+	{
+		EscapeTimerHUDWidget->RemoveFromParent();
 	}
 }
