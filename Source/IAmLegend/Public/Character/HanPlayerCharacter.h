@@ -128,9 +128,6 @@ protected:
 	void StartAttack();
 	void StopAttack();
 
-	// 테스트용 어택 함수
-	UFUNCTION(BlueprintCallable)
-	void Attack();
 	// 조준 함수 
 	void StartAim();
 	void StopAim();
