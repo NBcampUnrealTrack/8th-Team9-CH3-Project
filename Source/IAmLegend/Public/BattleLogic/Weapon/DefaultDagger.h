@@ -45,5 +45,4 @@ public:
 	void ExcuteStab();
 	void EndStab();
 	void StabTrace();	// 찌르기 공격 판정 수행(범위 기준)
-	void StabTraceMesh(); // 찌르기 공격 판정 수행(메쉬 기준)
 };
