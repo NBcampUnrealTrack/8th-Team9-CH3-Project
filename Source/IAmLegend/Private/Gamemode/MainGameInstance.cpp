@@ -3,7 +3,6 @@
 UMainGameInstance::UMainGameInstance()
 {
 	bIsGameStarted = false;
-	bIsUIPopUp = true;
 	bIsStageStarted = false;
 	bIsPlayerEscaped = false;
 }
@@ -18,15 +17,6 @@ bool UMainGameInstance::GetbIsGameStarted() const
 	return bIsGameStarted;
 }
 
-void UMainGameInstance::SetUIPopUp(bool bUIPopUp)
-{
-	bIsUIPopUp = bUIPopUp;
-}
-
-bool UMainGameInstance::GetUIPopUp() const
-{
-	return bIsUIPopUp;
-}
 
 void UMainGameInstance::SetbIsStageStarted(bool bStarted)
 {

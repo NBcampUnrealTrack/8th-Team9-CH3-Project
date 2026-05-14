@@ -1,10 +1,10 @@
 #include "Gamemode/MainGameModeBase.h"
 
-#include "EnemySpawnVolume.h"
+#include "UI/MainHUD.h"
+#include "Spawn/SpawnManager.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Gamemode/MainGameStateBase.h"
 #include "Kismet/GameplayStatics.h"
-#include "TestUserWidget.h"
 #include "Gamemode/MainGameInstance.h"
 
 AMainGameModeBase::AMainGameModeBase()
@@ -12,9 +12,13 @@ AMainGameModeBase::AMainGameModeBase()
 	//게임모드 기본 클래스 세팅
 	GameStateClass = AMainGameStateBase::StaticClass();
 	DefaultPawnClass = AHanPlayerCharacter::StaticClass();
+	HUDClass = AMainHUD::StaticClass();
 	
 	//초기값 세팅
 	MaxStageDuration = 5.0f;
+	PlayerKillCount = 0;
+	
+
 }
 
 void AMainGameModeBase::BeginPlay()
@@ -23,12 +27,7 @@ void AMainGameModeBase::BeginPlay()
 	
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
-	
-	//게임시작 전인지 확인
-	if (!GI->GetbIsGameStarted())
-	{
-		SpawnTitleUI();
-	}
+
 	
 	//스테이지 시작했는지 확인
 	if (GI->GetbIsStageStarted())
@@ -40,39 +39,6 @@ void AMainGameModeBase::BeginPlay()
 	UE_LOG(LogTemp, Warning, TEXT("Is Player Escape: %s"), GI->GetbIsPlayerEscaped() ? TEXT("true") : TEXT("false"));
 }
 
-//타이틀 UI 출력 (사용 X)
-void AMainGameModeBase::SpawnTitleUI()
-{
-	if (!TitleUIWidgetClass) return;
-
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (!PC) return;
-
-	UUserWidget* UIWidget = CreateWidget<UUserWidget>(PC, TitleUIWidgetClass); 
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	if (UIWidget && GI)
-	{
-		UIWidget->AddToViewport();
-		PC->bShowMouseCursor = GI->GetUIPopUp();
-	}
-}
-
-//스테이지 선택 UI 출력 (임시)
-void AMainGameModeBase::SpawnStageSelectUI()
-{
-	if (!StageSelectUIWidgetClass) return;
-	
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (!PC) return;
-	
-	UUserWidget* UIWidget = CreateWidget<UUserWidget>(PC, StageSelectUIWidgetClass); 
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	if (UIWidget && GI)
-	{
-		UIWidget->AddToViewport();
-		PC->bShowMouseCursor = GI->GetUIPopUp();
-	}
-}
 
 //게임 시작(쉘터 진입)
 void AMainGameModeBase::StartGame()
@@ -81,7 +47,6 @@ void AMainGameModeBase::StartGame()
 	if (GI)
 	{
 		GI->SetbIsGameStarted(true);
-		GI->SetUIPopUp(false);
 	}
 	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
@@ -95,17 +60,6 @@ void AMainGameModeBase::StartGame()
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
 }
 
-//스테이지 선택, 현재 사용 X BP를 통해 테스트 중
-void AMainGameModeBase::EnterStageSelectZone()
-{
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	APlayerController* PC = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
-	if (GI && PC)
-	{
-		GI->SetUIPopUp(true);
-		PC->bShowMouseCursor = GI->GetUIPopUp();
-	}
-}
 
 // 스테이지 입장 시 초기 설정, 어떤 스테이지 입장했는지 인덱스 값을 받음 
 void AMainGameModeBase::EnterStage(int32 StageIndex)
@@ -131,27 +85,31 @@ void AMainGameModeBase::EnterStage(int32 StageIndex)
 void AMainGameModeBase::StartStage()
 {
 	//타이머를 통해 제한 시간 설정
-	GetWorldTimerManager().SetTimer(StageTimerHandle, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
+	GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
 	UE_LOG(LogTemp, Warning, TEXT("Timer Start"));
+	
+	//스테이지 UI 출력
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			HUD->ShowStageHUD();
+		}
+	}
+	
 	
 	//플레이어 탈출 여부 실패로 초기 설정
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
 	GI->SetbIsPlayerEscaped(false);
 	
-	SpawnEnemyAtStage();
-}
-
-void AMainGameModeBase::SpawnEnemyAtStage()
-{
-	//적 스폰
-	TArray<AActor*> EnemySpawnVolumes;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawnVolume::StaticClass(), EnemySpawnVolumes);
-	if (EnemySpawnVolumes.Num() <= 0) return;
-	for (int32 i=0; i<EnemySpawnVolumes.Num(); ++i)
+	//스폰 매니저에서 적 스폰
+	ASpawnManager* SpawnManager = Cast<ASpawnManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASpawnManager::StaticClass()));
+	if (SpawnManager)
 	{
-		AEnemySpawnVolume* EnemySpawnVolume = Cast<AEnemySpawnVolume>(EnemySpawnVolumes[i]);
-		EnemySpawnVolume->TrySpawn();
+		SpawnManager->SpawnEnemyAtStage();
 	}
 }
 
@@ -176,7 +134,7 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 		UE_LOG(LogTemp, Warning, TEXT("Player Escaped"));
 		GI->SetbIsPlayerEscaped(true);
 		
-		GetWorldTimerManager().ClearTimer(StageTimerHandle);
+		GetWorldTimerManager().ClearTimer(StageTimer);
 		
 	}
 	
@@ -184,4 +142,20 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	//스테이지 종료
 	GI->SetbIsStageStarted(false);
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
+}
+
+float AMainGameModeBase::GetRemainingStageTime() const
+{
+	return GetWorldTimerManager().GetTimerRemaining(StageTimer);
+}
+
+//적 처치 시 점수 저장
+void AMainGameModeBase::killedEnemy()
+{
+	++PlayerKillCount;
+}
+
+int32 AMainGameModeBase::GetPlayerKillCount() const
+{
+	return PlayerKillCount;
 }

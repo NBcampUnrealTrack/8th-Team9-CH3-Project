@@ -6,12 +6,21 @@
 #include "WeaponItemActor.h"
 #include "WeaponBase.generated.h"
 
+// 무기 타입이 추가로 필요하다면 여기에 추가하시면 됩니다.
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
-	Melee,      // 근접 무기
-	Ranged,     // 원거리 무기
-	Throwable   // 투척 무기
+	Dagger,     // 단검
+	Pistol,     // 권총
+	Rifle,      // 소총
+	Shotgun,    // 산탄총
+	Granade,    // 수류탄
+
+	// 추가 무기 타입 예시
+	OneHandedMelee,	// 한손 근접 무기
+	TwoHandedMelee,	// 양손 근접 무기
+	OneHandedRanged,	// 한손 원거리 무기
+	TwoHandedRanged,	// 양손 원거리 무기
 };
 
 UCLASS()
@@ -29,6 +38,9 @@ protected:
 	UPROPERTY()
 	TArray<AActor*> HitActors;	// 공격 시 이미 타격한 액터들을 저장
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	EWeaponType WeaponType;		// 무기 타입 (근접, 원거리, 투척 등)
+
 	class AHanPlayerCharacter* OwnerCharacter;
 
 public:
@@ -44,6 +56,18 @@ public:
 	virtual void WeaponInitFromData();
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	EWeaponType GetWeaponType() const;		// 무기 타입 반환 (근접, 원거리, 투척 등)
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void DestroyWeapon();			// 무기 파괴 (예: 투척 후)
 	
+	// 애니메이션 몽타주
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon | Animation")
+	class UAnimMontage* Attack_1_Montage = nullptr; // 일반 공격 (좌클릭)
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon | Animation")
+	class UAnimMontage* Attack_2_Montage = nullptr; // 조준 공격 (우클릭 도중 좌클릭)
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon | Animation")
+	class UAnimMontage* Reload_Montage = nullptr;   // 재장전 몽타주
 };

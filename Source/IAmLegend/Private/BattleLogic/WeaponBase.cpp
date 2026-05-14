@@ -23,7 +23,6 @@ void AWeaponBase::BeginPlay()
 	WeaponInitFromData();
 
 	// BeginPlay에서 소유자 캐릭터를 미리 캐스팅하여 저장합니다.
-	// 현재는 더미를 기준으로 코드를 작성하였습니다.
 	OwnerCharacter = Cast<AHanPlayerCharacter>(GetOwner());
 
 	if (!OwnerCharacter)
@@ -81,5 +80,10 @@ void AWeaponBase::DestroyWeapon()
 	
 	// 무기 액터를 파괴
 	Destroy();
+}
+
+EWeaponType AWeaponBase::GetWeaponType() const
+{
+	return WeaponType;
 }
 

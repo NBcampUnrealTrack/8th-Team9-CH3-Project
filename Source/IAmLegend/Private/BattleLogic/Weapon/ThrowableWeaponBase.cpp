@@ -3,18 +3,26 @@
 
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 #include "WeaponDataAsset.h"
-#include "BattleLogic/Weapon/WeaponProjectileBase.h"
+#include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
+#include "BattleLogic/TrajectoryComponent.h"
 
 AThrowableWeaponBase::AThrowableWeaponBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	WeaponType = EWeaponType::Granade; // 무기 타입 설정
+	TrajectoryComp = CreateDefaultSubobject<UTrajectoryComponent>(TEXT("TrajectoryComponent"));
 }
 
 void AThrowableWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
 	WeaponInitFromData();
+	
+	if(TrajectoryComp)
+	{
+		TrajectoryComp->InitializeTrajectory(ProjectileClass);
+	}
 }
 
 void AThrowableWeaponBase::OnConstruction(const FTransform& Transform)
@@ -76,5 +84,13 @@ void AThrowableWeaponBase::ThrowWeapon()
 		SpawnParams
 	);
 
-	Destroy();
+	OwnerCharacter->UnEquipWeapon(); // 투척 후 무기 해제
+}	
+
+void AThrowableWeaponBase::EnableTrajectory(bool bEnable)
+{
+	if (TrajectoryComp)
+	{
+		TrajectoryComp->EnableTrajectory(bEnable);
+	}
 }

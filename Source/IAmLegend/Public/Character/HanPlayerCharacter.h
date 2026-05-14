@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include <InputActionValue.h>
 #include "Item/InventoryComponent.h"
+#include "BattleLogic/WeaponBase.h" 
 #include "BattleLogic/BaseDummyCharacter.h"
 #include "HanPlayerCharacter.generated.h"
 
@@ -65,7 +66,7 @@ protected:
 	float BaseWalkSpeed = 300.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
-	float SprintWalkSpeed = BaseWalkSpeed*2;
+	float SprintWalkSpeed = BaseWalkSpeed*1.75;
 
 	// 앉기 시 이동 속도 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
@@ -76,7 +77,7 @@ protected:
 
 	// --- Camera Settings ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Camera")
-	float BaseArmLength = 220.f;
+	float BaseArmLength = 150.f;
 	
 	// --- 전투 관련 데이터 (Health) ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Battle")
@@ -96,28 +97,40 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Interaction")
 	class ABaseItemActor* TargetItem;
 
+	// 무기에서 넘겨 받을 몽타주 변수
+	UPROPERTY()
+	class UAnimMontage* CurrentAttack_1_Montage = nullptr;
 
+	UPROPERTY()
+	class UAnimMontage* CurrentAttack_2_Montage = nullptr;
+
+	UPROPERTY()
+	class UAnimMontage* CurrentReloadMontage = nullptr;
+
+	//카메라
+	bool bLastRotationState = false; // 이전 프레임의 상태를 기억
 
 	// --- 조준(FOV) 관련 변수 ---
 	float DefaultFOV = 90.f;
 	float AimingFOV = 60.f;
-	float TargetFOV = 90.f;
-	float CurrentFOV = 90.f;
+	float TargetFOV = DefaultFOV;
+	float CurrentFOV = TargetFOV;
 	float FOVInterpSpeed = 10.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character | Weapon") // ABP에서 쓸려면 필요
 	bool bIsAiming = false;
 	
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	// --- 달리기 변수 ---
 	bool bIsSprinting = false;
 
 	// --- 무기 관련 함수 ---
-	void EquipWeapon();
-	void UnEquipWeapon();
 	void StartAttack();
 	void StopAttack();
 
+	// 테스트용 어택 함수
+	UFUNCTION(BlueprintCallable)
+	void Attack();
 	// 조준 함수 
 	void StartAim();
 	void StopAim();
@@ -135,7 +148,8 @@ public:
 	void InputSprintEnd(const struct FInputActionValue& InValue);   // 달리기 종료
 	void InputCrouchToggle(const FInputActionValue& InValue);
 	void InputInteract(const FInputActionValue& InValue); // F 키 입력 시 실행될 함수
-	
+	void InputReload(const struct FInputActionValue& Value); // 장전
+
 	UFUNCTION()
 	void InventoryShow(const FInputActionValue& InValue); // 인벤토리 관련
 	
@@ -144,6 +158,10 @@ public:
 
 	// 조준 상태를 반환하는 함수를 추가했습니다. 
 	bool IsAiming() const;
+
+	// 무기 관련 입력 함수를 퍼블릭으로 이동했습니다.
+	void EquipWeapon();
+	void UnEquipWeapon();
 
 protected:
 	/// 현재 시점 모드

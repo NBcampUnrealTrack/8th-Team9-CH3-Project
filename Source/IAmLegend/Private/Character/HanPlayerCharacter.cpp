@@ -9,6 +9,7 @@
 #include "BattleLogic/WeaponBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Item/BaseItemActor.h"
+#include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -20,13 +21,6 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 	// 체력
 	MaxHealth = 100.f;
 	Health = MaxHealth;
-	// 초기값 설정
-	DefaultFOV = 90.f;
-	AimingFOV = 60.f;
-	TargetFOV = DefaultFOV;
-	CurrentFOV = TargetFOV;
-	FOVInterpSpeed = 10.f;
-	bIsAiming = false;
 
 	//몸체(캡슐) 크기 설정
 	float CharacterHalfHeight = 90.f;
@@ -88,14 +82,36 @@ void AHanPlayerCharacter::BeginPlay()
 void AHanPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	// 부드러운 카메라 줌인/아웃 로직 (InterpTo)
 	if (CameraComponent)
 	{
 		CurrentFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, FOVInterpSpeed);
 		CameraComponent->SetFieldOfView(CurrentFOV);
 	}
+
+	// 현재 속도 및 상태 체크
+	float CurrentSpeedSq = GetVelocity().SizeSquared();
+	bool bIsMoving = CurrentSpeedSq > 100.f;
+	// 달리기는 속도가 300 이상일 때라고 가정 
+	bool bIsRunning = CurrentSpeedSq > 110000.f; 
+
+	// 회전 모드 스위칭
+	// 조준 중이거나 '걷는 중'일 때만 카메라 방향을 본다
+	bool bShouldLookCamera = (bIsMoving && !bIsRunning) || bIsAiming;
+
+	if (bShouldLookCamera != bLastRotationState)
+	{
+		// 걷기: 카메라 방향을 보며 꽃게걸음
+		GetCharacterMovement()->bUseControllerDesiredRotation = bShouldLookCamera;
+
+		// 달리기: 가는 방향으로 몸을 돌려 전력 질주
+		GetCharacterMovement()->bOrientRotationToMovement = !bShouldLookCamera && bIsRunning;
+
+		bLastRotationState = bShouldLookCamera;
+	}
 }
+
 
 void AHanPlayerCharacter::PossessedBy(AController* NewController)
 {
@@ -207,12 +223,31 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			this, 
 			&AHanPlayerCharacter::InputInteract
 		);
+
+		// 장전
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Reload,
+			ETriggerEvent::Started,              
+			this,
+			&AHanPlayerCharacter::InputReload   
+		);
 	}
 }
 
 void AHanPlayerCharacter::InputMove(const FInputActionValue& InValue)
 {
 	FVector2D MovementVector = InValue.Get<FVector2D>();
+
+	// 이동중 공격시 움직임을 멈춤
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst && AnimInst->IsAnyMontagePlaying())
+	{
+		// 장전 모션 몽타주들을 ReloadSlot에 넣었습니다. 장전 몽타주 실행중에는 이동이 가능하게끔
+		if (!AnimInst->IsSlotActive(FName("ReloadSlot"))) 
+		{
+			return; 
+		}
+	}
 
 	switch (CurrentViewMode)
 	{
@@ -272,7 +307,7 @@ void AHanPlayerCharacter::SetViewMode(EViewMode InViewMode)
 
 		// 카메라 지연
 		SpringArmComponent->bEnableCameraLag = true;
-		SpringArmComponent->CameraLagSpeed = 7.0f;
+		SpringArmComponent->CameraLagSpeed = 15.0f;
 
 		// 회전 지연도 켜주면 마우스를 멈춰도 카메라가 부드럽게 멈춘다.
 		SpringArmComponent->bEnableCameraRotationLag = true;
@@ -293,17 +328,14 @@ void AHanPlayerCharacter::InputLook(const FInputActionValue& InValue)
 {
 	FVector2D LookVector = InValue.Get<FVector2D>();
 
-	// 현재 뷰 모드에 따라 시점 입력 처리
-	switch (CurrentViewMode)
+	// 0.5를 곱해서 마우스 감도를 절반으로 - 테스트용
+	// 숫자가 작을수록 마우스를 많이 움직여야 화면이 돌아가기에 약간 묵직한 느낌
+	float Sensitivity = 0.5f;
+
+	if (CurrentViewMode == EViewMode::BackView)
 	{
-	case EViewMode::BackView:
-		AddControllerYawInput(LookVector.X);
-		AddControllerPitchInput(LookVector.Y);
-		break;
-	case EViewMode::None:
-	case EViewMode::End:
-	default:
-		break;
+		AddControllerYawInput(LookVector.X * Sensitivity);
+		AddControllerPitchInput(LookVector.Y * Sensitivity);
 	}
 }
 
@@ -428,6 +460,11 @@ void AHanPlayerCharacter::EquipWeapon()
 			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
 			EquippedWeapon = SpawnedWeapon;
+
+			//한기담 - 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
+			CurrentAttack_1_Montage = SpawnedWeapon->Attack_1_Montage;
+			CurrentAttack_2_Montage = SpawnedWeapon->Attack_2_Montage;
+			CurrentReloadMontage = SpawnedWeapon->Reload_Montage;
 		}
 	}
 }
@@ -447,6 +484,34 @@ void AHanPlayerCharacter::StartAttack()
 	{
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
+
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (!AnimInst) return;
+
+	// 공격 몽타주가 이미 도는 중이면 추가 입력을 방지한다.
+	if ((CurrentAttack_1_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_1_Montage)) ||
+		(CurrentAttack_2_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_2_Montage)))
+	{
+		return;
+	}
+
+	// 공격하는 순간 움직임 금지
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+
+	// 조준 상태(bIsAiming)에 따라 기본 공격, 우클 공격 실행
+	if (bIsAiming)
+	{
+		if (CurrentAttack_2_Montage) PlayAnimMontage(CurrentAttack_2_Montage);
+		UE_LOG(LogTemp, Warning, TEXT("좌클릭 공격 몽타주 재생"));
+	}
+	else
+	{
+		if (CurrentAttack_1_Montage) PlayAnimMontage(CurrentAttack_1_Montage);
+		UE_LOG(LogTemp, Warning, TEXT("우클릭 공격 몽타주 재생"));
+	}
 }
 
 void AHanPlayerCharacter::StopAttack()
@@ -459,16 +524,28 @@ void AHanPlayerCharacter::StopAttack()
 
 void AHanPlayerCharacter::StartAim() 
 { 
+	// 장전중일때는 조준 입력 무시
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst && AnimInst->IsSlotActive(FName("ReloadSlot"))){ return; }
+
 	bIsAiming = true; 
 	TargetFOV = AimingFOV; 
 
 	bUseControllerRotationYaw = true;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
-
 	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
-	SpringArmComponent->SocketOffset = FVector(90.f, 25.f, 35.f); 
-
-	UE_LOG(LogTemp, Warning, TEXT("조준 시작! 목표 FOV: %f"), TargetFOV);
+	
+	// 임시로 만들어봄 - 단검일경우 카메라 확대는 안하도록
+	if (WeaponClass && WeaponClass->GetName().Contains(TEXT("Dagger")))
+	{
+		TargetFOV = DefaultFOV; // 줌 안 함
+	}
+	
+	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
+	if(AThrowableWeaponBase* ThrowableWeapon = Cast<AThrowableWeaponBase>(EquippedWeapon))
+	{
+		ThrowableWeapon->EnableTrajectory(true); // 투척 무기라면 조준할 때 궤적 표시
+	}
 }
 
 void AHanPlayerCharacter::StopAim() 
@@ -478,14 +555,32 @@ void AHanPlayerCharacter::StopAim()
 
 	// 조준 풀면 다시 입력 방향대로 자유롭게 몸을 돌린다.
 	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	//GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
-	SpringArmComponent->SocketOffset = FVector(50.f, 50.f, 35.f);
+
+	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
+	if (AThrowableWeaponBase* ThrowableWeapon = Cast<AThrowableWeaponBase>(EquippedWeapon))
+	{
+		ThrowableWeapon->EnableTrajectory(false); // 투척 무기라면 조준을 풀 때 궤적 표시 끄기
+	}
 }
 
 // 조준 상태 반환 함수를 추가했습니다.
 bool AHanPlayerCharacter::IsAiming() const
 {
 	return bIsAiming;
+}
+
+void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
+{
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (!AnimInst || AnimInst->IsAnyMontagePlaying()) return; // 공격중 장전 입력 불가능
+
+	// 근접 무기일 경우 nullptr 이므로 R을 눌러도 장전 불가능
+	if (CurrentReloadMontage)
+	{
+		PlayAnimMontage(CurrentReloadMontage);
+		UE_LOG(LogTemp, Warning, TEXT("재장전 몽타주 실행"));
+	}
 }

@@ -11,6 +11,7 @@
 ARangedWeaponBase::ARangedWeaponBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	WeaponType = EWeaponType::TwoHandedRanged; // 무기 타입 설정
 	Range = 10000.f;	// 사거리 10000
 	FireRate = 600.f;	// 분당 600발
 	MaxAmmo = 30;
@@ -18,8 +19,6 @@ ARangedWeaponBase::ARangedWeaponBase()
 	RecoilAmount = 0.05f;
 	BaseSpreadAngle = 0.f;
 	MaxSpreadAngle = 3.f;
-	
-	AimingBonus = 0.5f;			// 조준 시 퍼짐이 절반으로 감소
 	SpreadPerShot = 0.4f;		// 탄 퍼짐과 회복 속도는 두 배 정도가 적당한 것 같습니다. 추후 UI에서 확인 하면서 조정하면 좋을 것 같습니다.
 	RecoverySpreadSpeed = 0.8f;	// 무기 별로 다르게 설정가능 합니다
 
@@ -27,6 +26,12 @@ ARangedWeaponBase::ARangedWeaponBase()
 	bIsReloading = false;
 	bIsCoolDown = false;
 	bIsPressingAttack = false;
+	bIsMeleeAttacking = false;
+
+	MeleeAttackCooldown = 1.0f;
+	MeleeAttackDuration = 0.5f;
+	MeleeAttackBoxExtent = FVector(1.f, 40.f, 90.f);
+	MeleeAttackRange = 100.f;
 
 	// BeginPlay에서 초기화하는 값들
 	FireInterval = 60.f / FireRate;
@@ -46,6 +51,18 @@ void ARangedWeaponBase::BeginPlay()
 	CurrentAmmo = MaxAmmo;					// 초기 탄약 수 설정
 	CurrentSpreadAngle = BaseSpreadAngle;	// 초기 퍼짐 각도 설정
 	
+}
+
+void ARangedWeaponBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!Mesh || !OwnerCharacter) return;
+
+	if (bIsMeleeAttacking)
+	{
+		MeleeAttackTrace(); // 근접 공격 판정 수행
+	}
 }
 
 void ARangedWeaponBase::WeaponInitFromData()
@@ -68,20 +85,30 @@ void ARangedWeaponBase::StartWeaponAttack()
 
 	bIsPressingAttack = true;
 
-	if (CurrentAmmo <= 0)
+	// 캐릭터가 조준한 상태면 발사 로직
+	if(OwnerCharacter->IsAiming())
 	{
-		Reload();
-		return;
+		if (CurrentAmmo <= 0)
+		{
+			Reload();
+			return;
+		}
+
+		if (!CanFire())
+		{
+			return;
+		}
+
+		Fire();
+
+		GetWorldTimerManager().SetTimer(FireRateTimerHandle, this, &ARangedWeaponBase::HandleFire, FireInterval, true);
 	}
 
-	if(!CanFire())
+	// 조준하지 않은 상태에서는 무기별 근접 공격 로직
+	else if (CanMeleeAttack())
 	{
-		return;
+		ExecuteMeleeAttack();
 	}
-
-	Fire();
-
-	GetWorldTimerManager().SetTimer(FireRateTimerHandle, this, &ARangedWeaponBase::HandleFire, FireInterval, true);
 }
 
 void ARangedWeaponBase::StopWeaponAttack()
@@ -161,7 +188,7 @@ void ARangedWeaponBase::Fire()
 
 	// 발사 후 반동과 탄 퍼짐 증가 적용
 	ApplyRecoil();
-	ApplySpread(OwnerCharacter->IsAiming());
+	ApplySpread();
 
 	// 탄 퍼짐 회복 타이머 시작
 	GetWorldTimerManager().SetTimer(SpreadRecoveryTimerHandle, this, &ARangedWeaponBase::RecoverSpread, 0.01f, true);
@@ -196,16 +223,13 @@ void ARangedWeaponBase::FinishCooldown()
 
 bool ARangedWeaponBase::CanFire() const
 {
-	// 재장전 중이 아니고, 쿨다운 중이 아니며, 탄약이 남아있는 경우에만 발사 가능
-	return !bIsReloading && !bIsCoolDown && CurrentAmmo > 0; 
+	// 재장전 중이 아니고, 쿨다운 중이 아니며, 탄약이 남아있고, 조준 중일 때만 발사 가능
+	return !bIsReloading && !bIsCoolDown && CurrentAmmo > 0 && OwnerCharacter->IsAiming(); 
 }
 
-void ARangedWeaponBase::ApplySpread(bool bIsAiming)
+void ARangedWeaponBase::ApplySpread()
 {
-	float ActualMaxSpread = bIsAiming ? (MaxSpreadAngle * AimingBonus) : MaxSpreadAngle;
-	float ActualSpreadPerShot = bIsAiming ? (SpreadPerShot * AimingBonus) : SpreadPerShot;
-
-	CurrentSpreadAngle = FMath::Min(CurrentSpreadAngle + ActualSpreadPerShot, ActualMaxSpread);
+	CurrentSpreadAngle = FMath::Min(CurrentSpreadAngle + SpreadPerShot, MaxSpreadAngle);
 }
 
 void ARangedWeaponBase::RecoverSpread()
@@ -249,4 +273,60 @@ void ARangedWeaponBase::ProcessHit(const FHitResult& HitResult)
 		UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 		UGameplayStatics::ApplyDamage(HitActor, Damage, OwnerCharacter->GetInstigatorController(), this, nullptr);
 	}
+}
+
+//--------------------------------------------------------
+// 근접 공격 로직
+
+void ARangedWeaponBase::ExecuteMeleeAttack()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Executing melee attack for weapon: %s"), *GetName());
+
+	// 근접 공격을 시작하면 발사와 재장전 타이머를 모두 무효화
+	FireRateTimerHandle.Invalidate(); // 발사 타이머 무효화
+	ReloadTimerHandle.Invalidate();   // 재장전 타이머 무효화
+	bIsReloading = false;			  // 재장전 상태 해제
+
+	bIsMeleeAttacking = true;
+	SetActorTickEnabled(true);	// 틱을 활성화해 타격 판정 시작
+
+	GetWorldTimerManager().SetTimer(
+		MeleeAttackTimerHandle, 
+		this, 
+		&ARangedWeaponBase::StopMeleeAttack,
+		MeleeAttackDuration,
+		false
+	);
+}
+
+void ARangedWeaponBase::StopMeleeAttack()
+{
+	bIsMeleeAttacking = false;	// 근접 공격 종료
+	bIsCoolDown = true;			// 근접 공격 후에도 쿨다운 적용
+	SetActorTickEnabled(false); // 틱 비활성화해 타격 판정 종료
+	HitActors.Empty();			// 타격한 액터 목록 초기화
+
+	GetWorldTimerManager().SetTimer(
+		CoolDownTimerHandle,
+		this,
+		&ARangedWeaponBase::FinishCooldown,
+		MeleeAttackCooldown,
+		false
+	);
+	UE_LOG(LogTemp, Warning, TEXT("Finished melee attack for weapon: %s"), *GetName());
+}
+
+void ARangedWeaponBase::MeleeAttackTrace()
+{
+	// 근접 공격 로직은 자식에서 구현
+}
+
+void ARangedWeaponBase::ProcessMeleeHits(const TArray<FHitResult>& HitResults)
+{
+	// 근접 공격 타격 판정 처리 로직은 자식에서 구현
+}
+
+bool ARangedWeaponBase::CanMeleeAttack() const
+{
+	return !bIsCoolDown && !bIsMeleeAttacking && !OwnerCharacter->IsAiming(); 
 }

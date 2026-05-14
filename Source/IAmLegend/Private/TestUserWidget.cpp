@@ -33,7 +33,7 @@ void UTestUserWidget::OnHospitalStageClicked()
 	if (GM && GI)
 	{
 		GM->EnterStage(0);
-		GI->SetUIPopUp(false);
+
 	}
 }
 
@@ -44,7 +44,7 @@ void UTestUserWidget::OnSchoolStageClicked()
 	if (GM && GI)
 	{
 		GM->EnterStage(1);
-		GI->SetUIPopUp(false);
+
 	}
 }
 
@@ -55,6 +55,6 @@ void UTestUserWidget::OnOnPoliceStageClicked()
 	if (GM && GI)
 	{
 		GM->EnterStage(2);
-		GI->SetUIPopUp(false);
+
 	}
 }

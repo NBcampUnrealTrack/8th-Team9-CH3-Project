@@ -38,6 +38,7 @@ protected:
 	FTimerHandle AttackIntervalTimerHandle; // 자동 공격 관리 타이머 핸들
 	bool bIsPressingAttack; // 공격 버튼이 눌려있는지 여부 (자동 공격 관리용)
 
+
 public:
 	AMeleeWeaponBase();
 

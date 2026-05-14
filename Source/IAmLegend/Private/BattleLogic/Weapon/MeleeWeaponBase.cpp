@@ -4,7 +4,7 @@
 #include "BattleLogic/Weapon/MeleeWeaponBase.h"
 #include "WeaponDataAsset.h"
 #include "Kismet/GameplayStatics.h"
-#include "BattleLogic/Weapon/WeaponProjectileBase.h"
+#include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -13,6 +13,7 @@
 AMeleeWeaponBase::AMeleeWeaponBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	WeaponType = EWeaponType::TwoHandedMelee; // 무기 타입 설정
 	SwingSpeed = 1.f; // 휘두르는 속도
 	AttackDuration = 1.f; // 공격 지속 시간
 	AttackCooldown = .5f; // 공격 간격

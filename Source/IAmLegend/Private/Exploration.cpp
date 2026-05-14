@@ -18,6 +18,10 @@ AExploration::AExploration()
 	BoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	RootComponent = BoxComp;
 
+	// [추가] 캐릭터와의 오버랩을 정상 감지하도록 충돌 활성화
+	BoxComp->SetGenerateOverlapEvents(true);
+	BoxComp->SetCollisionProfileName(TEXT("Trigger"));
+
 	InteractWidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractWidgetComp"));
 	InteractWidgetComp->SetupAttachment(RootComponent);
 	InteractWidgetComp->SetWidgetSpace(EWidgetSpace::World);
