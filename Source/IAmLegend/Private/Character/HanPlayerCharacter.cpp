@@ -9,6 +9,7 @@
 #include "BattleLogic/WeaponBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Item/BaseItemActor.h"
+#include "UI/MainHUD.h"
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
@@ -431,6 +432,23 @@ float AHanPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Da
 
 void AHanPlayerCharacter::Die()
 {
+	// GameOver 화면 출력을 위해 코드 작성 했습니다 - 김민성
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			// GameOver UI 출력
+			HUD->ShowGameOverHUD();
+		}
+	}
+
+	// Destroy() 실행 전에 캐릭터를 투명하게 하거나 물리 엔진(Ragdoll) 켜기
+	// 바로 Destroy()를 하면 카메라까지 즉시 사라져서 GameOver UI가 보기 힘들 수 있음
+	GetMesh()->SetSimulatePhysics(true);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	// 나중에 여기에 사망 애니메이션을 넣을수도 있을것같습니다! - 한기담
 	Destroy();
 }

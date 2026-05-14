@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Gamemode/MainGameModeBase.h"
 #include "Gamemode/MainGameStateBase.h"
+#include "Gamemode/MainGameInstance.h"
 
 void UGameOverWidget::NativeConstruct()
 {
@@ -40,7 +41,17 @@ void UGameOverWidget::NativeConstruct()
 
 void UGameOverWidget::OnTitleButtonClicked()
 {
-	// 일시 정지 상태일 경우 해제 후 타이틀로 이동
+	// 일시 정지 해제
 	UGameplayStatics::SetGamePaused(GetWorld(), false);
+
+	// GameInstance 상태 초기화
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		GI->SetbIsGameStarted(false);
+		GI->SetbIsStageStarted(false);
+	}
+
+	// 타이틀 화면으로 이동
 	UGameplayStatics::OpenLevel(GetWorld(), FName("MainTitleLevel"));
 }
