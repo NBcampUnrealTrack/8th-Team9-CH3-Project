@@ -4,7 +4,7 @@
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
-#include "MainHUD.h"
+#include "UI/MainHUD.h"
 
 void UPauseMenuWidget::NativeConstruct()
 {
