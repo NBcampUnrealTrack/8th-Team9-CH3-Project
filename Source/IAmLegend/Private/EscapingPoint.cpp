@@ -4,6 +4,7 @@
 #include "GameMode/MainGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "UI/MainHUD.h"
 
 AEscapingPoint::AEscapingPoint()
 {
@@ -45,13 +46,24 @@ void AEscapingPoint::OnCollisionOverlap(
 {
 
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-	//플레이어 탈출 성공
+	//플레이어 탈출 시도
 	if (OtherActor && OtherActor == PlayerPawn)
 	{
 		//탈출 대기 시간 타이머 작동 & 로그 타이머 작동
 		GetWorldTimerManager().SetTimer(EscapeTimer, this, &AEscapingPoint::PlayerEscaped, EscapeDuration, false);
 		GetWorldTimerManager().SetTimer(LogTimer, this, &AEscapingPoint::RunLogTimer, 0.1f, true);
-		
+	}
+	
+	//탈출지점 UI 출력
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			HUD->ShowExtractionHUD();
+			
+		}
 	}
 }
 

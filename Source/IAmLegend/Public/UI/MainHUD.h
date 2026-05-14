@@ -31,6 +31,11 @@ public:
 	// BP_캐릭터에 접근하기 위한 Getter
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	UPlayerHealthWidget* GetPlayerHealthWidget() const { return PlayerHealthWidget; }
+
+	//탈출 지점 UI 관리
+	void ShowExtractionHUD();
+	void HideExtractionHUD();
+
 	
 protected:
 	//사용할 Widget 클래스 설정
@@ -42,6 +47,8 @@ protected:
 	TSubclassOf<UPauseMenuWidget> PauseMenuClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UPlayerHealthWidget> PlayerHealthClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UUserWidget> ExtractionHUDClass;
 	
 private:
 	
@@ -54,4 +61,6 @@ private:
 	UPauseMenuWidget* PauseMenuWidget;
 	UPROPERTY()
 	UPlayerHealthWidget* PlayerHealthWidget;
+	UPROPERTY()
+	UUserWidget* ExtractionHUDWidget;
 };
