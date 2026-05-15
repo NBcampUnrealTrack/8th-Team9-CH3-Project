@@ -15,7 +15,6 @@ ARangedWeaponBase::ARangedWeaponBase()
 	Range = 10000.f;	// 사거리 10000
 	FireRate = 600.f;	// 분당 600발
 	MaxAmmo = 30;
-	ReloadTime = 2.0f;
 	RecoilAmount = 0.05f;
 	BaseSpreadAngle = 0.f;
 	MaxSpreadAngle = 3.f;
@@ -29,7 +28,6 @@ ARangedWeaponBase::ARangedWeaponBase()
 	bIsMeleeAttacking = false;
 
 	MeleeAttackCooldown = 1.0f;
-	MeleeAttackDuration = 0.5f;
 	MeleeAttackBoxExtent = FVector(1.f, 40.f, 90.f);
 	MeleeAttackRange = 100.f;
 
@@ -122,10 +120,8 @@ void ARangedWeaponBase::Reload()
 {
 	GetWorldTimerManager().ClearTimer(FireRateTimerHandle);
 
-	if (bIsReloading) return; // 이미 재장전 중이면 무시
+	if (!OwnerCharacter || bIsReloading || CurrentAmmo >= MaxAmmo) return; // 이미 재장전 중이거나 탄약이 가득 차 있으면 무시
 
-	// 테스트용 재장전 애니메이션 재생
-	if (!OwnerCharacter) return;
 	OwnerCharacter->PlayAnimMontage(Reload_Montage);
 
 	bIsReloading = true;
@@ -170,7 +166,7 @@ void ARangedWeaponBase::Fire()
 {
 	// 테스트로 무기에서 발사 시 애니메이션 몽타주 재생하는 부분을 추가해봤습니다. 
 	// 추후에 캐릭터에서 발사 시 애니메이션 재생하는 것으로 변경할 예정입니다.
-	OwnerCharacter->PlayAnimMontage(Attack_2_Montage);
+	OwnerCharacter->PlayAttackMontage_2();
 
 	CurrentAmmo--;
 	bIsCoolDown = true;
@@ -288,8 +284,8 @@ void ARangedWeaponBase::ExecuteMeleeAttack()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Executing melee attack for weapon: %s"), *GetName());
 
-	// 근접 공격 애니메이션 재생 (테스트용, 추후에 캐릭터에서 재생하는 것으로 변경 예정)
-	OwnerCharacter->PlayAnimMontage(Attack_1_Montage); // 근접 공격 애니메이션 재생
+	// 근접 공격 애니메이션 재생
+	OwnerCharacter->PlayAttackMontage_1();
 
 	// 근접 공격을 시작하면 발사와 재장전 타이머를 모두 무효화
 	FireRateTimerHandle.Invalidate(); // 발사 타이머 무효화

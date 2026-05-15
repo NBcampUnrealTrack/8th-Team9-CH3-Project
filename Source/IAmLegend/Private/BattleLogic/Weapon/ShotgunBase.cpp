@@ -13,7 +13,6 @@ AShotgunBase::AShotgunBase()
 	Range = 10000.f;	// 사거리 10000
 	FireRate = 75.f;	// 분당 75발, 0.8초마다 발사
 	MaxAmmo = 5;
-	ReloadTime = 0.635f;	// 한번에 1발씩 재장전하는 샷건의 특성을 반영하여 재장전 시간을 짧게 설정
 	RecoilAmount = 0.1f;	// 현재 반동은 자동으로 회복되지 않으므로 고민을 좀 해봐야 할 것 같습니다.
 	BaseSpreadAngle = 5.5f;	// 샷건은 기본적으로 탄퍼짐을 크게 둡니다.
 	MaxSpreadAngle = 5.5f;	

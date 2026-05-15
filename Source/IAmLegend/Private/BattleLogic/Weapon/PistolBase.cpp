@@ -15,7 +15,6 @@ APistolBase::APistolBase()
 	WeaponType = EWeaponType::Pistol; // 무기 타입 설정
 	FireRate = 200.f;	// 분당 200발
 	MaxAmmo = 12;
-	ReloadTime = 2.0f;
 	RecoilAmount = 0.2f;
 	BaseSpreadAngle = 0.1f;		// 권총은 기본적으로 약간의 탄 퍼짐이 있는 것으로 설정했습니다. 필요에 따라 조정 가능합니다.
 	MaxSpreadAngle = 3.f;

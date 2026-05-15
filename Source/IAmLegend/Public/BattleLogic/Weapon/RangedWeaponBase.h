@@ -23,9 +23,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
 	int32 MaxAmmo; // 최대 탄약 수
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
-	float ReloadTime; // 재장전 시간 (초)
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
 	float RecoilAmount; // 반동량
@@ -47,9 +44,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Melee")
 	float MeleeAttackCooldown; // 근접 공격의 쿨다운 시간 (초)
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Melee")
-	float MeleeAttackDuration; // 근접 공격의 지속 시간 (초)
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Melee")
 	FVector MeleeAttackBoxExtent; // 근접 공격의 범위 (박스 형태)
