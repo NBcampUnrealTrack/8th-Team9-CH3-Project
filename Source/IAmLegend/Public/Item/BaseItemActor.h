@@ -64,4 +64,8 @@ public:
 	virtual void OnPlayerEntered(ACharacter* Player) override;
 	virtual void OnPlayerExited(ACharacter* Player) override;
 	void InitFromData();
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Settings")
+	int32 ItemAmount = 1;
 };
