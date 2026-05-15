@@ -122,6 +122,17 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 		
 	}
 	
+	//정상 UI 출력
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			
+		}
+	}
+	
 	
 	//스테이지 종료
 	GI->SetbIsStageStarted(false);
