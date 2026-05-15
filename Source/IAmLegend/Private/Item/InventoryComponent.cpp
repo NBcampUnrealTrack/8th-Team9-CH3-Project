@@ -17,6 +17,42 @@ UInventoryComponent::UInventoryComponent()
 }
 
 
+void UInventoryComponent::ToggleCraftingUI(bool bShow)
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC) return;
+
+	if (bShow)
+	{
+		if (!CraftingWidget && CraftingWidgetClass)
+		{
+			CraftingWidget = CreateWidget<UUserWidget>(PC, CraftingWidgetClass);
+		}
+
+		if (CraftingWidget)
+		{
+			CraftingWidget->AddToViewport();
+            
+			// 마우스 커서 활성화 및 입력 모드 변경
+			PC->bShowMouseCursor = true;
+			FInputModeGameAndUI InputMode;
+			PC->SetInputMode(InputMode);
+		}
+	}
+	else
+	{
+		if (CraftingWidget)
+		{
+			CraftingWidget->RemoveFromParent();
+            
+			// 다시 게임으로 돌아가기
+			PC->bShowMouseCursor = false;
+			FInputModeGameOnly InputMode;
+			PC->SetInputMode(InputMode);
+		}
+	}
+}
+
 TArray<FItemSlot>& UInventoryComponent::GetActualInventory()
 {
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetWorld()->GetGameInstance());
@@ -175,5 +211,38 @@ void UInventoryComponent::DisplayUI()
 	if (InventoryWidget)
 	{
 		InventoryWidget->RefreshInventory(Inv);
+	}
+}
+
+int32 UInventoryComponent::GetItemQuantity(UItemDataAsset* TargetItem)
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	int32 Total = 0;
+	for (const FItemSlot& Slot : Inv)
+	{
+		if (Slot.ItemData == TargetItem) Total += Slot.Quantity;
+	}
+	return Total;
+}
+
+void UInventoryComponent::RemoveItemQuantity(UItemDataAsset* TargetItem, int32 Amount)
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	for (int32 i = Inv.Num() - 1; i >= 0; i--) // 뒤에서부터 순회하며 삭제
+	{
+		if (Inv[i].ItemData == TargetItem)
+		{
+			if (Inv[i].Quantity > Amount)
+			{
+				Inv[i].Quantity -= Amount;
+				return;
+			}
+			else
+			{
+				Amount -= Inv[i].Quantity;
+				Inv.RemoveAt(i);
+			}
+		}
+		if (Amount <= 0) break;
 	}
 }
