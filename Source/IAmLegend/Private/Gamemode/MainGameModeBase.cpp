@@ -128,31 +128,29 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
 	
-	//플레이어 탈출 성공 판정
-	if (bIsPlayerEscaped)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Player Escaped"));
-		GI->SetbIsPlayerEscaped(true);
-		
-		GetWorldTimerManager().ClearTimer(StageTimer);
-		
-	}
-	
-	//정상 UI 출력
+	//게임 일시 정지
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (PC)
 	{
-		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-		if (HUD)
-		{
-			
-		}
+		PC->bShowMouseCursor = true;
+		PC->SetInputMode(FInputModeUIOnly());
+		UGameplayStatics::SetGamePaused(GetWorld(), true); // 게임 일시 정지
 	}
 	
 	
 	//스테이지 종료
 	GI->SetbIsStageStarted(false);
-	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
+	
+	//플레이어 탈출 성공 판정
+	if (bIsPlayerEscaped)
+	{
+		SuccessEscape();
+	}
+	else
+	{
+		FailEscape();
+	}
+	GetWorldTimerManager().ClearTimer(StageTimer);
 }
 
 float AMainGameModeBase::GetRemainingStageTime() const
@@ -169,4 +167,39 @@ void AMainGameModeBase::killedEnemy()
 int32 AMainGameModeBase::GetPlayerKillCount() const
 {
 	return PlayerKillCount;
+}
+
+void AMainGameModeBase::SuccessEscape()
+{
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (!GI) return;
+	
+	UE_LOG(LogTemp, Warning, TEXT("Player Escaped"));
+	//플레이어 탈출 성공 설정
+	GI->SetbIsPlayerEscaped(true);
+	
+	//정상 UI 출력
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			HUD->ShowStageResultHUD();
+		}
+	}
+}
+
+void AMainGameModeBase::FailEscape()
+{
+	//게임 오버 UI 출력
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC)
+	{
+		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		if (HUD)
+		{
+			HUD->ShowGameOverHUD();
+		}
+	}
 }
