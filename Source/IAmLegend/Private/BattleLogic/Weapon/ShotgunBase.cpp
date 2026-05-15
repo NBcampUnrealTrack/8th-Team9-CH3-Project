@@ -9,7 +9,7 @@
 AShotgunBase::AShotgunBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
-	WeaponType = EWeaponType::Shotgun; // 무기 타입 설정
+	WeaponType = EWeaponType::Rifle; // 무기 타입 설정
 	Range = 10000.f;	// 사거리 10000
 	FireRate = 75.f;	// 분당 75발, 0.8초마다 발사
 	MaxAmmo = 5;

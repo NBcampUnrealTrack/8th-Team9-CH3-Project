@@ -97,29 +97,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Interaction")
 	class ABaseItemActor* TargetItem;
 
-	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 퀵 턴 (구현 실패)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	class UAnimMontage* Running_Turn_181_Montage;
+	// 무기에서 넘겨 받을 몽타주 변수
+	UPROPERTY()
+	class UAnimMontage* CurrentAttack_1_Montage = nullptr;
 
-	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 단검 베기 (기본 좌클)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation | Attack")
-	class UAnimMontage* KnifeAttack_1;
+	UPROPERTY()
+	class UAnimMontage* CurrentAttack_2_Montage = nullptr;
 
-	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 단검 찌르기 (우클 상태에서 좌클)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation | Attack")
-	class UAnimMontage* KnifeAttack_2;
-
-	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 권총 발사 (우클 상태에서 좌클)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation | Attack")
-	class UAnimMontage* PistolAttack_1;
-
-	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 권총 발사 (기본 좌클)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation | Attack")
-	class UAnimMontage* PistolAttack_2;
-
-	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 권총 장전 -> 리로드 함수에 넣으면 될듯하다
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation | Reload")
-	class UAnimMontage* PistolReloading_1;
+	UPROPERTY()
+	class UAnimMontage* CurrentReloadMontage = nullptr;
 
 	//카메라
 	bool bLastRotationState = false; // 이전 프레임의 상태를 기억
@@ -142,9 +128,6 @@ protected:
 	void StartAttack();
 	void StopAttack();
 
-	// 테스트용 어택 함수
-	UFUNCTION(BlueprintCallable)
-	void Attack();
 	// 조준 함수 
 	void StartAim();
 	void StopAim();
@@ -162,7 +145,8 @@ public:
 	void InputSprintEnd(const struct FInputActionValue& InValue);   // 달리기 종료
 	void InputCrouchToggle(const FInputActionValue& InValue);
 	void InputInteract(const FInputActionValue& InValue); // F 키 입력 시 실행될 함수
-	
+	void InputReload(const struct FInputActionValue& Value); // 장전
+
 	UFUNCTION()
 	void InventoryShow(const FInputActionValue& InValue); // 인벤토리 관련
 	
