@@ -48,6 +48,10 @@ public:
 
 	// GameOver UI 관리
 	void ShowGameOverHUD();
+
+	// 조준점 UI 관리(마스터 스위치)
+	void ShowCrosshairHUD();
+	void SetCrosshairVisibilty(bool bVisible);
 	
 protected:
 	//사용할 Widget 클래스 설정
@@ -69,6 +73,11 @@ protected:
 	TSubclassOf<UUserWidget> GameOverClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UUserWidget> StageResultHUDClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UUserWidget> CrosshairClass;
+
+	UPROPERTY()
+	class UUserWidget* CrosshairWidget;
 	
 private:
 	
