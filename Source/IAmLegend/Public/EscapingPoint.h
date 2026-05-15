@@ -47,6 +47,8 @@ public:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex);
 	
+	float GetRemainingEscapingTime() const;
+	
 private:	
 	//탈출 타이머
 	FTimerHandle EscapeTimer;
