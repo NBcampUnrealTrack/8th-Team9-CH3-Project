@@ -15,7 +15,6 @@ AMeleeWeaponBase::AMeleeWeaponBase()
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
 	WeaponType = EWeaponType::TwoHandedMelee; // 무기 타입 설정
 	SwingSpeed = 1.f; // 휘두르는 속도
-	AttackDuration = 1.f; // 공격 지속 시간
 	AttackCooldown = .5f; // 공격 간격
 	bIsAttacking = false; // 공격 중인지 여부
 	bIsPressingAttack = false; // 공격 버튼이 눌려있는지 여부 (자동 공격 관리용)
@@ -92,8 +91,8 @@ void AMeleeWeaponBase::StopWeaponAttack()
 
 void AMeleeWeaponBase::ExcuteAttack()
 {
-	// 공격이 시작될 때 공격 애니메이션 재생 (추후에 캐릭터에서 재생하는 것으로 변경할 예정입니다.)
-	OwnerCharacter->PlayAnimMontage(Attack_1_Montage);
+	// 공격이 시작될 때 공격 애니메이션 재생
+	OwnerCharacter->PlayAttackMontage_1();
 
 	// 공격이 시작될 때 타이머를 초기화
 	GetWorldTimerManager().ClearTimer(AttackIntervalTimerHandle);

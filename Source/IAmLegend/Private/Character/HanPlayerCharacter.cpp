@@ -12,6 +12,7 @@
 #include "Item/CraftingVolumeActor.h"
 #include "UI/MainHUD.h"
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
+#include "BattleLogic/Weapon/RangedWeaponBase.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -522,17 +523,6 @@ void AHanPlayerCharacter::StopAttack()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->StopWeaponAttack(); // 공격 종료
-
-		// 한기담 - 마우스를 떼는 순간, 사격 몽타주를 멈춘다. 
-		// 현재 무기가 '소총(Rifle)'일 때만 마우스 뗄 때 애니메이션 정지.
-		
-		if (EquippedWeapon->GetWeaponType() == EWeaponType::Rifle)
-		{
-			if (CurrentAttack_2_Montage) AnimInst->Montage_Stop(0.1f, CurrentAttack_2_Montage);
-		}
-		
-		// 나중에 연사형 무기가 더 추가되면 
-		// 여기에 || EquippedWeapon->GetWeaponType() == EWeaponType::SMG 같은거 추가.
 	}
 }
 
@@ -586,15 +576,32 @@ bool AHanPlayerCharacter::IsAiming() const
 
 void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
 {
-	/*
-	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (!AnimInst || AnimInst->IsAnyMontagePlaying()) return; // 공격중 장전 입력 불가능
+	if(ARangedWeaponBase* RangedWeapon = Cast<ARangedWeaponBase>(EquippedWeapon))
+	{
+		RangedWeapon->Reload();
+	}
+}
 
-	// 근접 무기일 경우 nullptr 이므로 R을 눌러도 장전 불가능
-	if (CurrentReloadMontage)
+void AHanPlayerCharacter::PlayAttackMontage_1()
+{
+	if(CurrentAttack_1_Montage)
+	{
+		PlayAnimMontage(CurrentAttack_1_Montage);
+	}
+}
+
+void AHanPlayerCharacter::PlayAttackMontage_2()
+{
+	if (CurrentAttack_2_Montage)
+	{
+		PlayAnimMontage(CurrentAttack_2_Montage);
+	}
+}
+
+void AHanPlayerCharacter::PlayReloadMontage()
+{
+	if(CurrentReloadMontage)
 	{
 		PlayAnimMontage(CurrentReloadMontage);
-		UE_LOG(LogTemp, Warning, TEXT("재장전 몽타주 실행"));
 	}
-	*/
 }

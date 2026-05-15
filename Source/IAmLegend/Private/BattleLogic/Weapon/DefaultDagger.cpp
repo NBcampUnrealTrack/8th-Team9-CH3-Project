@@ -16,7 +16,6 @@ ADefaultDagger::ADefaultDagger()
 	WeaponType = EWeaponType::Dagger; // 무기 타입 설정
 	StabDamage = 20.f; // 찌르기 공격의 추가 데미지
 	StabCooldown = 1.0f; // 찌르기 공격의 쿨다운 시간
-	StabDuration = 0.3f; // 찌르기 공격의 지속 시간
 	StabRange = 100.f; // 찌르기 공격의 최대 사거리
 	StabBoxExtent = FVector(1.f, 40.f, 90.f); // 찌르기 공격의 범위 (박스 형태)
 	bIsStabbing = false; // 찌르기 공격 중인지 여부
@@ -76,8 +75,8 @@ void ADefaultDagger::StartWeaponAttack()
 
 void ADefaultDagger::ExcuteStab()
 {
-	// 찌르기 공격이 시작될 때 공격 애니메이션 재생 (추후에 캐릭터에서 재생하는 것으로 변경할 예정입니다.)
-	OwnerCharacter->PlayAnimMontage(Attack_2_Montage);
+	// 찌르기 공격이 시작될 때 공격 애니메이션 재생
+	OwnerCharacter->PlayAttackMontage_2();
 
 	// 찌르기가 시작될 때 타이머를 초기화
 	GetWorldTimerManager().ClearTimer(AttackIntervalTimerHandle);
