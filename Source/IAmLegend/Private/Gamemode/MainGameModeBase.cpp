@@ -1,6 +1,6 @@
 #include "Gamemode/MainGameModeBase.h"
 
-#include "UI/MainHUD.h"
+#include "Spawn/EnemySpawnVolume.h"
 #include "Spawn/SpawnManager.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Gamemode/MainGameStateBase.h"
@@ -12,13 +12,9 @@ AMainGameModeBase::AMainGameModeBase()
 	//게임모드 기본 클래스 세팅
 	GameStateClass = AMainGameStateBase::StaticClass();
 	DefaultPawnClass = AHanPlayerCharacter::StaticClass();
-	HUDClass = AMainHUD::StaticClass();
 	
 	//초기값 세팅
 	MaxStageDuration = 5.0f;
-	PlayerKillCount = 0;
-	
-
 }
 
 void AMainGameModeBase::BeginPlay()
@@ -88,18 +84,6 @@ void AMainGameModeBase::StartStage()
 	GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
 	UE_LOG(LogTemp, Warning, TEXT("Timer Start"));
 	
-	//스테이지 UI 출력
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (PC)
-	{
-		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-		if (HUD)
-		{
-			HUD->ShowStageHUD();
-		}
-	}
-	
-	
 	//플레이어 탈출 여부 실패로 초기 설정
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
@@ -142,20 +126,4 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	//스테이지 종료
 	GI->SetbIsStageStarted(false);
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
-}
-
-float AMainGameModeBase::GetRemainingStageTime() const
-{
-	return GetWorldTimerManager().GetTimerRemaining(StageTimer);
-}
-
-//적 처치 시 점수 저장
-void AMainGameModeBase::killedEnemy()
-{
-	++PlayerKillCount;
-}
-
-int32 AMainGameModeBase::GetPlayerKillCount() const
-{
-	return PlayerKillCount;
 }

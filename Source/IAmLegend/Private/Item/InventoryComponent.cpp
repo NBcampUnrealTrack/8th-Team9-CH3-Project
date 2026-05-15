@@ -80,55 +80,39 @@ void UInventoryComponent::BeginPlay()
 void UInventoryComponent::ShowInventory()
 {
 	TArray<FItemSlot>& Inv = GetActualInventory();
+	UE_LOG(LogTemp , Warning, TEXT("=== Current Inventory Status ==="));
 
-	UE_LOG(LogTemp, Warning,
-		TEXT("=== Current Inventory Status ==="));
-
+	
 	if (Inv.Num() == 0)
 	{
-		UE_LOG(LogTemp, Log,
-			TEXT("Inventory is Empty."));
-
-		ShowInventoryOnScreen();
-	}
-	else
-	{
-		TMap<EItemCategory, int32> CategoryCounts;
-
-		for (const FItemSlot& Slot : Inv)
-		{
-			if (Slot.ItemData)
-			{
-				UE_LOG(LogTemp, Log,
-					TEXT("Item: [%s] | Quantity: %d | Type: %d"),
-					*Slot.ItemData->ItemName,
-					Slot.Quantity,
-					(int32)Slot.ItemData->Category);
-
-				CategoryCounts.FindOrAdd(
-					Slot.ItemData->Category) += Slot.Quantity;
-			}
-		}
-
-		UE_LOG(LogTemp, Warning,
-			TEXT("--- Summary by Category ---"));
-
-		for (auto& It : CategoryCounts)
-		{
-			FString CategoryName =
-				StaticEnum<EItemCategory>()
-				->GetNameStringByValue((int64)It.Key);
-
-			UE_LOG(LogTemp, Warning,
-				TEXT("%s: %d items"),
-				*CategoryName,
-				It.Value);
-		}
-
-		ShowInventoryOnScreen();
+		UE_LOG(LogTemp, Log, TEXT("Inventory is Empty."));
+		ShowInventoryOnScreen(); // 여기서 한 번만 호출하고 끝냄
+		return; 
 	}
 
 	
+	TMap<EItemCategory, int32> CategoryCounts;
+	for (const FItemSlot& Slot : Inv)
+	{
+		if (Slot.ItemData)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Item: [%s] | Quantity: %d | Type: %d"), 
+			   *Slot.ItemData->ItemName, Slot.Quantity, (int32)Slot.ItemData->Category);
+
+			CategoryCounts.FindOrAdd(Slot.ItemData->Category) += Slot.Quantity;
+		}
+	}
+
+
+	UE_LOG(LogTemp, Warning, TEXT("--- Summary by Category ---"));
+	for (auto& It : CategoryCounts)
+	{
+		FString CategoryName = StaticEnum<EItemCategory>()->GetNameStringByValue((int64)It.Key);
+		UE_LOG(LogTemp, Warning, TEXT("%s: %d items"), *CategoryName, It.Value);
+	}
+    
+	
+	ShowInventoryOnScreen();
 	DisplayUI();
 }
 
@@ -167,53 +151,29 @@ void UInventoryComponent::DisplayUI()
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!PC) return;
 
-	// 위젯 없으면 생성
+	// 1. 위젯이 없는 경우 생성 시도
 	if (!InventoryWidget)
 	{
-		if (InventoryWidgetClass)
+		// InventoryWidgetClass가 에디터에서 선택되었는지 확인 필수!
+		if (InventoryWidgetClass) 
 		{
-			InventoryWidget =
-				CreateWidget<UInventoryWidget>(PC, InventoryWidgetClass);
-
-			if (!InventoryWidget)
+			InventoryWidget = CreateWidget<UInventoryWidget>(PC, InventoryWidgetClass);
+            
+			if (InventoryWidget)
 			{
-				return;
+				InventoryWidget->AddToViewport();
 			}
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error,
-				TEXT("InventoryWidgetClass가 할당되지 않았습니다!"));
-			return;
+			UE_LOG(LogTemp, Error, TEXT("InventoryWidgetClass가 할당되지 않았습니다!"));
+			return; // 클래스가 없으면 아래 코드를 실행하면 안 됨
 		}
 	}
 
-	// 현재 보이는 상태면 숨김
-	if (bInventoryVisible)
+	// 2. 최종적으로 위젯이 유효한지 확인 후 함수 호출
+	if (InventoryWidget)
 	{
-		InventoryWidget->RemoveFromParent();
-
-		bInventoryVisible = false;
-
-		PC->bShowMouseCursor = false;
-
-		FInputModeGameOnly InputMode;
-		PC->SetInputMode(InputMode);
-	}
-	else
-	{
-		InventoryWidget->AddToViewport();
-
 		InventoryWidget->RefreshInventory(Inv);
-
-		bInventoryVisible = true;
-
-		PC->bShowMouseCursor = true;
-
-		FInputModeGameAndUI InputMode;
-		InputMode.SetLockMouseToViewportBehavior(
-			EMouseLockMode::DoNotLock);
-
-		PC->SetInputMode(InputMode);
 	}
 }

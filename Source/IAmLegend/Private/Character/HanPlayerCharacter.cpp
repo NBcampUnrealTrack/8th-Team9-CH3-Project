@@ -9,8 +9,6 @@
 #include "BattleLogic/WeaponBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Item/BaseItemActor.h"
-#include "UI/MainHUD.h"
-#include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -22,6 +20,13 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 	// 체력
 	MaxHealth = 100.f;
 	Health = MaxHealth;
+	// 초기값 설정
+	DefaultFOV = 90.f;
+	AimingFOV = 60.f;
+	TargetFOV = DefaultFOV;
+	CurrentFOV = TargetFOV;
+	FOVInterpSpeed = 10.f;
+	bIsAiming = false;
 
 	//몸체(캡슐) 크기 설정
 	float CharacterHalfHeight = 90.f;
@@ -224,14 +229,6 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			this, 
 			&AHanPlayerCharacter::InputInteract
 		);
-
-		// 장전
-		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Reload,
-			ETriggerEvent::Started,              
-			this,
-			&AHanPlayerCharacter::InputReload   
-		);
 	}
 }
 
@@ -429,23 +426,6 @@ float AHanPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Da
 
 void AHanPlayerCharacter::Die()
 {
-	// GameOver 화면 출력을 위해 코드 작성 했습니다 - 김민성
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (PC)
-	{
-		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-		if (HUD)
-		{
-			// GameOver UI 출력
-			HUD->ShowGameOverHUD();
-		}
-	}
-
-	// Destroy() 실행 전에 캐릭터를 투명하게 하거나 물리 엔진(Ragdoll) 켜기
-	// 바로 Destroy()를 하면 카메라까지 즉시 사라져서 GameOver UI가 보기 힘들 수 있음
-	GetMesh()->SetSimulatePhysics(true);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	// 나중에 여기에 사망 애니메이션을 넣을수도 있을것같습니다! - 한기담
 	Destroy();
 }
@@ -467,11 +447,6 @@ void AHanPlayerCharacter::EquipWeapon()
 			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
 			EquippedWeapon = SpawnedWeapon;
-
-			//한기담 - 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
-			CurrentAttack_1_Montage = SpawnedWeapon->Attack_1_Montage;
-			CurrentAttack_2_Montage = SpawnedWeapon->Attack_2_Montage;
-			CurrentReloadMontage = SpawnedWeapon->Reload_Montage;
 		}
 	}
 }
@@ -491,44 +466,6 @@ void AHanPlayerCharacter::StartAttack()
 	{
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
-
-	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (!AnimInst) return;
-	
-	// 1. 소총이 아닐 때만 단발 연타 꼬임 방지
-	if (EquippedWeapon)
-	{
-		if (EquippedWeapon->GetWeaponType() != EWeaponType::Rifle)
-		{
-			if ((CurrentAttack_1_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_1_Montage)) ||
-				(CurrentAttack_2_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_2_Montage)))
-			{
-				return;
-			}
-		}
-	}
-	else return;
-	
-	// bIsAiming이 false일 때만 자리에 탁 멈추게 합니다.
-	if (bIsAiming == false)
-	{
-		if (GetCharacterMovement())
-		{
-			GetCharacterMovement()->StopMovementImmediately();
-		}
-	}
-
-	// 조준 상태(bIsAiming)에 따라 기본 공격, 우클 공격 실행
-	if (bIsAiming)
-	{
-		if (CurrentAttack_2_Montage) PlayAnimMontage(CurrentAttack_2_Montage);
-		UE_LOG(LogTemp, Warning, TEXT("우클릭 조준 사격 공격 몽타주 재생")); 
-	}
-	else
-	{
-		if (CurrentAttack_1_Montage) PlayAnimMontage(CurrentAttack_1_Montage);
-		UE_LOG(LogTemp, Warning, TEXT("좌클릭 일반 공격 몽타주 재생"));
-	}
 }
 
 void AHanPlayerCharacter::StopAttack()
@@ -537,30 +474,10 @@ void AHanPlayerCharacter::StopAttack()
 	{
 		EquippedWeapon->StopWeaponAttack(); // 공격 종료
 	}
-
-	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (!AnimInst) return;
-
-	// 한기담 - 마우스를 떼는 순간, 사격 몽타주를 멈춘다. 
-	if (EquippedWeapon)
-	{
-		// 현재 무기가 '소총(Rifle)'일 때만 마우스 뗄 때 애니메이션 정지.
-		if (EquippedWeapon->GetWeaponType() == EWeaponType::Rifle)
-		{
-			// CurrentAttack_2_Montage가 사격 공격이다.
-			if (CurrentAttack_2_Montage) AnimInst->Montage_Stop(0.1f, CurrentAttack_2_Montage);
-		}
-		// 나중에 연사형 무기가 더 추가되면 
-		// 여기에 || EquippedWeapon->GetWeaponType() == EWeaponType::SMG 같은거 추가.
-	}
 }
 
 void AHanPlayerCharacter::StartAim() 
 { 
-	// 장전중일때는 조준 입력 무시
-	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (AnimInst && AnimInst->IsSlotActive(FName("ReloadSlot"))){ return; }
-
 	bIsAiming = true; 
 	TargetFOV = AimingFOV; 
 
@@ -568,17 +485,14 @@ void AHanPlayerCharacter::StartAim()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
 	
-	// 임시로 만들어봄 - 단검일경우 카메라 확대는 안하도록
-	if (WeaponClass && WeaponClass->GetName().Contains(TEXT("Dagger")))
+	SpringArmComponent->SocketOffset = FVector(10.f, 50.f, 0.f);
+	
+	// 임시로 만들어봄 - 근접 무기일경우 카메라 확대는 안하도록
+	if (WeaponClass && WeaponClass->GetName().Contains(TEXT("MeleeWeaponBase")))
 	{
 		TargetFOV = DefaultFOV; // 줌 안 함
 	}
 	
-	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
-	if(AThrowableWeaponBase* ThrowableWeapon = Cast<AThrowableWeaponBase>(EquippedWeapon))
-	{
-		ThrowableWeapon->EnableTrajectory(true); // 투척 무기라면 조준할 때 궤적 표시
-	}
 }
 
 void AHanPlayerCharacter::StopAim() 
@@ -591,12 +505,7 @@ void AHanPlayerCharacter::StopAim()
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
-
-	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
-	if (AThrowableWeaponBase* ThrowableWeapon = Cast<AThrowableWeaponBase>(EquippedWeapon))
-	{
-		ThrowableWeapon->EnableTrajectory(false); // 투척 무기라면 조준을 풀 때 궤적 표시 끄기
-	}
+	SpringArmComponent->SocketOffset = FVector(0.f, 50.f, 0.f);
 }
 
 // 조준 상태 반환 함수를 추가했습니다.
@@ -605,15 +514,29 @@ bool AHanPlayerCharacter::IsAiming() const
 	return bIsAiming;
 }
 
-void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
+// 테스트용 어택 함수 - 공격 몽타주 실행용
+void AHanPlayerCharacter::Attack()
 {
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (!AnimInst || AnimInst->IsAnyMontagePlaying()) return; // 공격중 장전 입력 불가능
+	if (!AnimInst) return;
 
-	// 근접 무기일 경우 nullptr 이므로 R을 눌러도 장전 불가능
-	if (CurrentReloadMontage)
+	AHanPlayerCharacter* MyOwner = Cast<AHanPlayerCharacter>(GetOwner());
+	
+	if (AnimInst->IsAnyMontagePlaying()) { return; }
+
+	// 조준 중일 때 찌르기 공격 가능
+	if (bIsAiming)
 	{
-		PlayAnimMontage(CurrentReloadMontage);
-		UE_LOG(LogTemp, Warning, TEXT("재장전 몽타주 실행"));
+		if (AnimInst && !AnimInst->Montage_IsPlaying(KnifeAttack_2))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("단검 조준 공격 몽타주 실행"));
+			PlayAnimMontage(KnifeAttack_2);
+		}
+	}
+	// 그게 아니라면 기본 공격
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("단검 기본 공격 몽타주 실행"));
+		PlayAnimMontage(KnifeAttack_1);
 	}
 }

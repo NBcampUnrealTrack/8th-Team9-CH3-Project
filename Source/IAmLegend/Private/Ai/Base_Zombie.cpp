@@ -90,6 +90,7 @@ void ABase_Zombie::Tick(float DeltaTime)
 		// 좀비 애니메이션이 팔을 쭉 뻗는 형태라면 80~100도 괜찮습니다.
 		if (Distance <= AttackRange) // 100.0f에서 조금 더 타이트하게 조정
 		{
+
 			PlayAttackMontage();
 		}
 	}
@@ -183,8 +184,15 @@ float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 		if (HitMontage && CurrentState != EZombieState::Attacking)
 		{
 			CurrentState = EZombieState::Hit;
-			PlayAnimMontage(HitMontage);
-			// Tip: 몽타주 종료 시 다시 Idle로 바꾸려면 OnMontageEnded 델리게이트를 쓰면 좋습니다.
+			float HitLength = PlayAnimMontage(HitMontage);
+
+			// ✅ 이 부분 추가: Hit 몽타주가 끝나면 Idle로 복귀
+			FTimerHandle HitTimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
+				{
+					if (CurrentState == EZombieState::Hit)
+						SetCurrentState(EZombieState::Idle);
+				}, HitLength, false);
 		}
 	}
 

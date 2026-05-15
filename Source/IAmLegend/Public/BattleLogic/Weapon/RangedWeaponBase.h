@@ -51,12 +51,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Melee")
 	float MeleeAttackDuration; // 근접 공격의 지속 시간 (초)
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Melee")
-	FVector MeleeAttackBoxExtent; // 근접 공격의 범위 (박스 형태)
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Melee")
-	float MeleeAttackRange;	// 근접 공격 사거리
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
 	FName MuzzleSocketName; // 총구 소켓 이름
 	
@@ -86,7 +80,7 @@ public:
 
 	// 발사 관련 함수
 	void Reload();			// 재장전
-	virtual void FinishReload();	// 재장전 완료 시 호출
+	void FinishReload();	// 재장전 완료 시 호출
 	void HandleFire();		// 실제 발사 처리 (발사 속도에 따라 타이머로 호출)
 	void ApplyRecoil();		// 반동 적용
 	void FinishCooldown();	// 발사 쿨다운 종료 시 호출
@@ -100,8 +94,8 @@ public:
 	bool CanFire() const;		// 발사 가능한지 여부 체크 (탄약, 재장전 상태 등)
 
 	// 근접 공격 관련 함수
-	void ExecuteMeleeAttack();	// 근접 공격 실행
-	void StopMeleeAttack();		// 근접 공격 종료
+	virtual void ExecuteMeleeAttack();	// 근접 공격 실행
+	virtual void StopMeleeAttack();		// 근접 공격 종료
 	virtual void MeleeAttackTrace();	// 근접 공격 시 트레이스 계산 및 타격 판정
 	virtual void ProcessMeleeHits(const TArray<FHitResult>& HitResults);	// 근접 공격 타격 판정 처리 (근접 공격 시마다 호출)
 	bool CanMeleeAttack() const;		// 근접 공격 가능한지 여부 체크
