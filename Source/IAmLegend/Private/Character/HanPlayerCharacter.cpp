@@ -461,7 +461,6 @@ void AHanPlayerCharacter::Die()
 	GetMesh()->SetSimulatePhysics(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// 나중에 여기에 사망 애니메이션을 넣을수도 있을것같습니다! - 한기담
 	Destroy();
 }
 
@@ -525,12 +524,12 @@ void AHanPlayerCharacter::StopAttack()
 
 		// 한기담 - 마우스를 떼는 순간, 사격 몽타주를 멈춘다. 
 		// 현재 무기가 '소총(Rifle)'일 때만 마우스 뗄 때 애니메이션 정지.
-		
+		/*
 		if (EquippedWeapon->GetWeaponType() == EWeaponType::Rifle)
 		{
 			if (CurrentAttack_2_Montage) AnimInst->Montage_Stop(0.1f, CurrentAttack_2_Montage);
 		}
-		
+		*/
 		// 나중에 연사형 무기가 더 추가되면 
 		// 여기에 || EquippedWeapon->GetWeaponType() == EWeaponType::SMG 같은거 추가.
 	}
