@@ -115,6 +115,29 @@ void AMainHUD::HideExtractionHUD()
 	}
 }
 
+void AMainHUD::ShowStageResultHUD()
+{
+	if (!StageResultHUDClass) return;
+	
+	if (StageResultHUDWidget == nullptr)
+	{
+		StageResultHUDWidget = CreateWidget<UUserWidget>(GetWorld(), StageResultHUDClass);
+	}
+	
+	if (StageResultHUDWidget)
+	{
+		StageResultHUDWidget->AddToViewport();
+	}
+}
+
+void AMainHUD::HideStageResultHUD()
+{
+	if (StageResultHUDWidget)
+	{
+		StageResultHUDWidget->RemoveFromParent();
+	}
+}
+
 void AMainHUD::TogglePauseMenu()
 {
 	if (UGameplayStatics::GetCurrentLevelName(this) == "MainTitleLevel") return;
