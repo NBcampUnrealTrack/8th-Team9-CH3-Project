@@ -69,23 +69,45 @@ bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
 {
 	if (!NewItem) return false;
 
+	//  전체 인벤토리 업데이트
 	TArray<FItemSlot>& Inv = GetActualInventory();
-	// 이미 인벤토리에 같은 아이템이 있는지 찾기
+	bool bFoundInTotal = false;
 	for (FItemSlot& Slot : Inv)
 	{
 		if (Slot.ItemData == NewItem)
 		{
 			Slot.Quantity++;
-			UE_LOG(LogTemp, Log, TEXT("%s 개수 증가! 현재: %d"), *NewItem->ItemName, Slot.Quantity);
-			return true;
+			UE_LOG(LogTemp, Log, TEXT("%s 전체 개수 증가: %d"), *NewItem->ItemName, Slot.Quantity);
+			bFoundInTotal = true;
+			break;
 		}
 	}
 
-	// 없다면 새로 추가
-	Inv.Add(FItemSlot(NewItem, 1));
-	return true;
-}
+	if (!bFoundInTotal)
+	{
+		Inv.Add(FItemSlot(NewItem, 1));
+	}
 
+	// 이번 스테이지 획득 아이템용
+	// Shelter 맵이 아닐 때만 기록하고 싶다면 여기에 if문을 추가할 수 있음
+	bool bFoundInStage = false;
+	for (FItemSlot& Slot : CurrentStageAcquiredItems)
+	{
+		if (Slot.ItemData == NewItem)
+		{
+			Slot.Quantity++;
+			bFoundInStage = true;
+			break;
+		}
+	}
+
+	if (!bFoundInStage)
+	{
+		CurrentStageAcquiredItems.Add(FItemSlot(NewItem, 1));
+	}
+
+	return true; 
+}
 void UInventoryComponent::UseItem(int32 Index)
 {
 	TArray<FItemSlot>& Inv = GetActualInventory();
