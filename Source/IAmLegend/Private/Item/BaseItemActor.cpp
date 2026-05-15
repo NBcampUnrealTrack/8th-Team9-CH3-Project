@@ -85,9 +85,9 @@ void ABaseItemActor::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* Othe
 	const FHitResult& SweepResult)
 {
 	ACharacter* Player = Cast<ACharacter>(OtherActor);
-	if (Player)
+	
+	if (Player && OtherActor != GetOwner())
 	{
-		
 		OnPlayerEntered(Player);
 	}
 }
