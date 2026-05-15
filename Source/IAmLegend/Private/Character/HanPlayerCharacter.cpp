@@ -9,6 +9,7 @@
 #include "BattleLogic/WeaponBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Item/BaseItemActor.h"
+#include "Item/CraftingVolumeActor.h"
 #include "UI/MainHUD.h"
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 
@@ -388,13 +389,27 @@ void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
 
 void AHanPlayerCharacter::InputInteract(const FInputActionValue& InValue)
 {
-	if (TargetItem)
+	//상호작용 대상이 아예 없으면 즉시 종료
+	if (!TargetItem)
 	{
-		// 아이템의 Interact 호출 -> 내부적으로 ApplyPickup(this) 실행됨
-		TargetItem->Interact(this);
+		UE_LOG(LogTemp, Warning, TEXT("상호작용 대상이 없습니다."));
+		return;
+	}
 
-		// 아이템을 주웠으므로 참조 제거 (Destroy될 것이지만 안전을 위해)
-		TargetItem = nullptr;
+	// 대상이 아이템(ABaseItemActor)인 경우
+	if (ABaseItemActor* Item = Cast<ABaseItemActor>(TargetItem))
+	{
+		Item->Interact(this);
+		
+		TargetItem = nullptr; 
+		return;
+	}
+
+	// 제작대(ACraftingVolumeActor)인 경우
+	if (ACraftingVolumeActor* CraftStation = Cast<ACraftingVolumeActor>(TargetItem))
+	{
+		CraftStation->OnInteract(this);
+		return;
 	}
 }
 
