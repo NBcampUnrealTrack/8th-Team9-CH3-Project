@@ -36,7 +36,10 @@ private:
 	void StartStage();
 	//스테이지 제한시간 종료
 	void OnStageTimeUp();
-
+	//플레이어 탈출 성공
+	void SuccessEscape();
+	//플레이어 탈출 실패
+	void FailEscape();
 	
 	//타이머 핸들
 	FTimerHandle StageTimer;
