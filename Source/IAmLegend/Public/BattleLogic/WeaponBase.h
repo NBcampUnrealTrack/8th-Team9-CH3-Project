@@ -70,4 +70,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon | Animation")
 	class UAnimMontage* Reload_Montage = nullptr;   // 재장전 몽타주
+
+	// 애니메이션 노티파이
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Animation")
+	virtual void AnimNotify_EndAttack_1();	// 일반 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Animation")
+	virtual void AnimNotify_EndAttack_2();	// 조준 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Animation")
+	virtual void AnimNotify_EndReload();	// 재장전 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
 };

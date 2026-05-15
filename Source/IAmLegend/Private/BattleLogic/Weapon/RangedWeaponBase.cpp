@@ -47,7 +47,7 @@ void ARangedWeaponBase::BeginPlay()
 	WeaponInitFromData();
 
 	FireInterval = 60.f / FireRate;			// 발사 간격 계산
-	CoolDownTime = FireInterval - 0.01f;	// 발사 후 쿨다운 시간 계산 (오토와 시간이 완전히 동일하면 타이머가 제대로 작동하지 않을 수 있으므로 약간의 여유를 둡니다.)
+	CoolDownTime = FireInterval - 0.015f;	// 발사 후 쿨다운 시간 계산 (오토와 시간이 완전히 동일하면 타이머가 제대로 작동하지 않을 수 있으므로 약간의 여유를 둡니다.)
 	CurrentAmmo = MaxAmmo;					// 초기 탄약 수 설정
 	CurrentSpreadAngle = BaseSpreadAngle;	// 초기 퍼짐 각도 설정
 	
@@ -124,15 +124,17 @@ void ARangedWeaponBase::Reload()
 
 	if (bIsReloading) return; // 이미 재장전 중이면 무시
 
+	// 테스트용 재장전 애니메이션 재생
+	if (!OwnerCharacter) return;
+	OwnerCharacter->PlayAnimMontage(Reload_Montage);
+
 	bIsReloading = true;
-	GetWorldTimerManager().SetTimer(ReloadTimerHandle, this, &ARangedWeaponBase::FinishReload, ReloadTime, false);
 
 	UE_LOG(LogTemp, Log, TEXT("Started reloading weapon: %s"), *GetName());
 }
 
 void ARangedWeaponBase::FinishReload()
 {
-	GetWorldTimerManager().ClearTimer(ReloadTimerHandle);
 	CurrentAmmo = MaxAmmo; // 탄약 수 초기화
 	bIsReloading = false;
 
@@ -166,6 +168,10 @@ void ARangedWeaponBase::HandleFire()
 
 void ARangedWeaponBase::Fire()
 {
+	// 테스트로 무기에서 발사 시 애니메이션 몽타주 재생하는 부분을 추가해봤습니다. 
+	// 추후에 캐릭터에서 발사 시 애니메이션 재생하는 것으로 변경할 예정입니다.
+	OwnerCharacter->PlayAnimMontage(Attack_2_Montage);
+
 	CurrentAmmo--;
 	bIsCoolDown = true;
 	GetWorldTimerManager().SetTimer(CoolDownTimerHandle, this, &ARangedWeaponBase::FinishCooldown, CoolDownTime, false);
@@ -282,21 +288,15 @@ void ARangedWeaponBase::ExecuteMeleeAttack()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Executing melee attack for weapon: %s"), *GetName());
 
+	// 근접 공격 애니메이션 재생 (테스트용, 추후에 캐릭터에서 재생하는 것으로 변경 예정)
+	OwnerCharacter->PlayAnimMontage(Attack_1_Montage); // 근접 공격 애니메이션 재생
+
 	// 근접 공격을 시작하면 발사와 재장전 타이머를 모두 무효화
 	FireRateTimerHandle.Invalidate(); // 발사 타이머 무효화
-	ReloadTimerHandle.Invalidate();   // 재장전 타이머 무효화
 	bIsReloading = false;			  // 재장전 상태 해제
 
 	bIsMeleeAttacking = true;
 	SetActorTickEnabled(true);	// 틱을 활성화해 타격 판정 시작
-
-	GetWorldTimerManager().SetTimer(
-		MeleeAttackTimerHandle, 
-		this, 
-		&ARangedWeaponBase::StopMeleeAttack,
-		MeleeAttackDuration,
-		false
-	);
 }
 
 void ARangedWeaponBase::StopMeleeAttack()
@@ -329,4 +329,19 @@ void ARangedWeaponBase::ProcessMeleeHits(const TArray<FHitResult>& HitResults)
 bool ARangedWeaponBase::CanMeleeAttack() const
 {
 	return !bIsCoolDown && !bIsMeleeAttacking && !OwnerCharacter->IsAiming(); 
+}
+
+// --------------------------------------------------------
+// 애니메이션 노티파이 함수들 (애니메이션 몽타주에서 호출)
+
+void ARangedWeaponBase::AnimNotify_EndAttack_1()
+{
+	Super::AnimNotify_EndAttack_1();
+	StopMeleeAttack();
+}
+
+void ARangedWeaponBase::AnimNotify_EndReload()
+{
+	Super::AnimNotify_EndReload();
+	FinishReload();
 }

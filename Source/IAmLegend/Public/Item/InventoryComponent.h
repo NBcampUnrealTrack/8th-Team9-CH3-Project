@@ -89,5 +89,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 	
+	UPROPERTY()
+	TArray<FItemSlot> CurrentStageAcquiredItems;
+	
+public:
+	UFUNCTION()
+	TArray<FItemSlot> GetItemList() const { return CurrentStageAcquiredItems; }
+	
 	virtual void BeginPlay() override;
 };
