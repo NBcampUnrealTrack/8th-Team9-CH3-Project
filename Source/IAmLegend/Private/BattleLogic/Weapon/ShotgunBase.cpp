@@ -33,9 +33,8 @@ void AShotgunBase::BeginPlay()
 void AShotgunBase::StartWeaponAttack()
 {
 	// 샷건은 재장전 중 공격 시 취소하고 발사
-	if (bIsReloading)
+	if (bIsReloading && CurrentAmmo > 0)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle); // 재장전 타이머 취소
 		bIsReloading = false;
 	}
 
@@ -51,19 +50,15 @@ void AShotgunBase::FinishReload()
 	if (CurrentAmmo >= MaxAmmo)
 	{
 		bIsReloading = false; // 재장전 완료
-		GetWorld()->GetTimerManager().ClearTimer(ReloadTimerHandle); // 재장전 타이머 취소
 		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Current Ammo: %d"), CurrentAmmo);
-	}
-
-	else
-	{
-		GetWorld()->GetTimerManager().SetTimer(ReloadTimerHandle, this, &AShotgunBase::FinishReload, ReloadTime, false); // 다음 탄약 추가 타이머 설정
 	}
 }
 
 void AShotgunBase::Fire()
 {
 	if (!OwnerCharacter) return;
+
+	OwnerCharacter->PlayAnimMontage(Attack_2_Montage);
 
 	CurrentAmmo--;
 	bIsCoolDown = true;

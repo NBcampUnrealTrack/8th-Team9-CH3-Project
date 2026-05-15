@@ -17,6 +17,42 @@ UInventoryComponent::UInventoryComponent()
 }
 
 
+void UInventoryComponent::ToggleCraftingUI(bool bShow)
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC) return;
+
+	if (bShow)
+	{
+		if (!CraftingWidget && CraftingWidgetClass)
+		{
+			CraftingWidget = CreateWidget<UUserWidget>(PC, CraftingWidgetClass);
+		}
+
+		if (CraftingWidget)
+		{
+			CraftingWidget->AddToViewport();
+            
+			// 마우스 커서 활성화 및 입력 모드 변경
+			PC->bShowMouseCursor = true;
+			FInputModeGameAndUI InputMode;
+			PC->SetInputMode(InputMode);
+		}
+	}
+	else
+	{
+		if (CraftingWidget)
+		{
+			CraftingWidget->RemoveFromParent();
+            
+			// 다시 게임으로 돌아가기
+			PC->bShowMouseCursor = false;
+			FInputModeGameOnly InputMode;
+			PC->SetInputMode(InputMode);
+		}
+	}
+}
+
 TArray<FItemSlot>& UInventoryComponent::GetActualInventory()
 {
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetWorld()->GetGameInstance());
@@ -33,23 +69,46 @@ bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
 {
 	if (!NewItem) return false;
 
+	//  전체 인벤토리 업데이트
 	TArray<FItemSlot>& Inv = GetActualInventory();
-	// 이미 인벤토리에 같은 아이템이 있는지 찾기
+	bool bFoundInTotal = false;
 	for (FItemSlot& Slot : Inv)
 	{
 		if (Slot.ItemData == NewItem)
 		{
 			Slot.Quantity++;
-			UE_LOG(LogTemp, Log, TEXT("%s 개수 증가! 현재: %d"), *NewItem->ItemName, Slot.Quantity);
-			return true;
+			UE_LOG(LogTemp, Log, TEXT("%s 전체 개수 증가: %d"), *NewItem->ItemName, Slot.Quantity);
+			bFoundInTotal = true;
+			break;
 		}
 	}
 
-	// 없다면 새로 추가
-	Inv.Add(FItemSlot(NewItem, 1));
-	return true;
-}
+	if (!bFoundInTotal)
+	{
+		Inv.Add(FItemSlot(NewItem, 1));
+	}
 
+	// 이번 스테이지 획득 아이템용
+	// Shelter 맵이 아닐 때만 기록하고 싶다면 여기에 if문을 추가할 수 있음
+	// 추후에 필요시 추가하겠습니다
+	bool bFoundInStage = false;
+	for (FItemSlot& Slot : CurrentStageAcquiredItems)
+	{
+		if (Slot.ItemData == NewItem)
+		{
+			Slot.Quantity++;
+			bFoundInStage = true;
+			break;
+		}
+	}
+
+	if (!bFoundInStage)
+	{
+		CurrentStageAcquiredItems.Add(FItemSlot(NewItem, 1));
+	}
+
+	return true; 
+}
 void UInventoryComponent::UseItem(int32 Index)
 {
 	TArray<FItemSlot>& Inv = GetActualInventory();
@@ -215,5 +274,38 @@ void UInventoryComponent::DisplayUI()
 			EMouseLockMode::DoNotLock);
 
 		PC->SetInputMode(InputMode);
+	}
+}
+
+int32 UInventoryComponent::GetItemQuantity(UItemDataAsset* TargetItem)
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	int32 Total = 0;
+	for (const FItemSlot& Slot : Inv)
+	{
+		if (Slot.ItemData == TargetItem) Total += Slot.Quantity;
+	}
+	return Total;
+}
+
+void UInventoryComponent::RemoveItemQuantity(UItemDataAsset* TargetItem, int32 Amount)
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	for (int32 i = Inv.Num() - 1; i >= 0; i--) // 뒤에서부터 순회하며 삭제
+	{
+		if (Inv[i].ItemData == TargetItem)
+		{
+			if (Inv[i].Quantity > Amount)
+			{
+				Inv[i].Quantity -= Amount;
+				return;
+			}
+			else
+			{
+				Amount -= Inv[i].Quantity;
+				Inv.RemoveAt(i);
+			}
+		}
+		if (Amount <= 0) break;
 	}
 }

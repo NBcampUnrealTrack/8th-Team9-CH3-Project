@@ -68,10 +68,8 @@ protected:
 	bool bIsMeleeAttacking;	// 근접 공격 중인지 여부
 
 	FTimerHandle FireRateTimerHandle;		// 발사 속도 관리 타이머 핸들
-	FTimerHandle ReloadTimerHandle;			// 재장전 관리 타이머 핸들
 	FTimerHandle CoolDownTimerHandle;		// 발사 쿨다운 관리 타이머 핸들
 	FTimerHandle SpreadRecoveryTimerHandle; // 탄 퍼짐 회복 관리 타이머 핸들
-	FTimerHandle MeleeAttackTimerHandle;	// 근접 공격 관리 타이머 핸들
 
 	virtual void BeginPlay() override;
 
@@ -106,4 +104,8 @@ public:
 	virtual void ProcessMeleeHits(const TArray<FHitResult>& HitResults);	// 근접 공격 타격 판정 처리 (근접 공격 시마다 호출)
 	bool CanMeleeAttack() const;		// 근접 공격 가능한지 여부 체크
 
+	// 애니메이션 노티파이
+	virtual void AnimNotify_EndAttack_1();	// 일반 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)	
+	//virtual void AnimNotify_EndAttack_2() override;	// 조준 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
+	virtual void AnimNotify_EndReload() override;	// 재장전 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
 };

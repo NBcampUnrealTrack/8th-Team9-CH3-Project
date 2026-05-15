@@ -76,22 +76,14 @@ void ADefaultDagger::StartWeaponAttack()
 
 void ADefaultDagger::ExcuteStab()
 {
-	// 현재는 타이머 기반으로 동작하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.
+	// 찌르기 공격이 시작될 때 공격 애니메이션 재생 (추후에 캐릭터에서 재생하는 것으로 변경할 예정입니다.)
+	OwnerCharacter->PlayAnimMontage(Attack_2_Montage);
+
 	// 찌르기가 시작될 때 타이머를 초기화
-	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 	GetWorldTimerManager().ClearTimer(AttackIntervalTimerHandle);
 
 	bIsStabbing = true;		// 찌르기 공격 중 상태로 설정
 	SetActorTickEnabled(true);	// 틱을 활성화해 타격 판정 시작
-
-	// 공격 판정이 끝나는 시점을 관리하기 위해 타이머 설정
-	GetWorldTimerManager().SetTimer(
-		AttackTimerHandle,
-		this,
-		&ADefaultDagger::EndStab,
-		StabDuration,
-		false
-	);
 }
 
 void ADefaultDagger::EndStab()
@@ -181,4 +173,10 @@ void ADefaultDagger::WeaponInitFromData()
 		}
 		*/
 	}
+}
+
+void ADefaultDagger::AnimNotify_EndAttack_2()
+{
+	Super::AnimNotify_EndAttack_2();
+	EndStab(); // 찌르기 공격 종료 처리
 }

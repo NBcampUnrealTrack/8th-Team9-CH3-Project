@@ -16,6 +16,7 @@ class UInputMappingContext;
 class UInventoryComponent; 
 class AWeaponBase;         
 class ABaseItemActor;      
+class ACraftingVolumeActor;
 
 //BackView
 UENUM(BlueprintType)
@@ -95,7 +96,7 @@ protected:
 	
 	// 현재 상호작용 가능한 아이템 (범위 내에 들어온 아이템)	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Interaction")
-	class ABaseItemActor* TargetItem;
+	class AActor* TargetItem;
 
 	// 무기에서 넘겨 받을 몽타주 변수
 	UPROPERTY()
@@ -152,7 +153,7 @@ public:
 	void InventoryShow(const FInputActionValue& InValue); // 인벤토리 관련
 	
 	// 아이템 쪽에서 캐릭터의 TargetItem을 설정해주기 위한 Getter/Setter
-	void SetTargetItem(class ABaseItemActor* NewItem) { TargetItem = NewItem; }
+	void SetTargetItem(class AActor* NewItem) { TargetItem = NewItem; }
 
 	// 조준 상태를 반환하는 함수를 추가했습니다. 
 	bool IsAiming() const;

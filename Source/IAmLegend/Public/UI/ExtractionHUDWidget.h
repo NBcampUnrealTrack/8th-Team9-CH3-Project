@@ -12,10 +12,8 @@ class IAMLEGEND_API UExtractionHUDWidget : public UUserWidget
 	
 public:
 	virtual void NativeConstruct() override;
+
 	
-	void ShowEscapingZone();
-	void HideEscapingZone();
-	void SuccessEscape();
 	
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_RemainingTime;
@@ -23,8 +21,12 @@ public:
 	
 	
 private:
-	void UpdateEscapingTimer();
+	//탈출 지점 UI 업데이트
+	void UpdateExtractionHUD();
+
 	
 	float RemainingEscapingTime;
+	
+	FTimerHandle UpdateTimerHandle;
 	
 };
