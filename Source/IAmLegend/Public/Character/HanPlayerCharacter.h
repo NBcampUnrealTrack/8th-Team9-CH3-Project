@@ -108,6 +108,7 @@ protected:
 	UPROPERTY()
 	class UAnimMontage* CurrentReloadMontage = nullptr;
 
+
 	//카메라
 	bool bLastRotationState = false; // 이전 프레임의 상태를 기억
 
@@ -160,6 +161,9 @@ public:
 	// 무기 관련 입력 함수를 퍼블릭으로 이동했습니다.
 	void EquipWeapon();
 	void UnEquipWeapon();
+
+	// 몽타주 재생 함수를 퍼블릭으로 선언했습니다.
+	void PlayWeaponMontage(UAnimMontage* MontageToPlay);
 
 protected:
 	/// 현재 시점 모드

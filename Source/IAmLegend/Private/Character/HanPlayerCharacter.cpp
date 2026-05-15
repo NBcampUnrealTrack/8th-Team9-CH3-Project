@@ -507,64 +507,30 @@ void AHanPlayerCharacter::StartAttack()
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
 
-	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (!AnimInst) return;
-	
-	// 1. 소총이 아닐 때만 단발 연타 꼬임 방지
-	if (EquippedWeapon)
-	{
-		if (EquippedWeapon->GetWeaponType() != EWeaponType::Rifle)
-		{
-			if ((CurrentAttack_1_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_1_Montage)) ||
-				(CurrentAttack_2_Montage && AnimInst->Montage_IsPlaying(CurrentAttack_2_Montage)))
-			{
-				return;
-			}
-		}
-	}
-	else return;
-	
-	// bIsAiming이 false일 때만 자리에 탁 멈추게 합니다.
+	// bIsAiming이 false일 때만 자리에 멈추게 합니다.
 	if (bIsAiming == false)
 	{
-		if (GetCharacterMovement())
-		{
-			GetCharacterMovement()->StopMovementImmediately();
-		}
-	}
-
-	// 조준 상태(bIsAiming)에 따라 기본 공격, 우클 공격 실행
-	if (bIsAiming)
-	{
-		if (CurrentAttack_2_Montage) PlayAnimMontage(CurrentAttack_2_Montage);
-		UE_LOG(LogTemp, Warning, TEXT("우클릭 조준 사격 공격 몽타주 재생")); 
-	}
-	else
-	{
-		if (CurrentAttack_1_Montage) PlayAnimMontage(CurrentAttack_1_Montage);
-		UE_LOG(LogTemp, Warning, TEXT("좌클릭 일반 공격 몽타주 재생"));
+		if (GetCharacterMovement()) GetCharacterMovement()->StopMovementImmediately();
 	}
 }
 
 void AHanPlayerCharacter::StopAttack()
 {
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->StopWeaponAttack(); // 공격 종료
-	}
-
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (!AnimInst) return;
 
-	// 한기담 - 마우스를 떼는 순간, 사격 몽타주를 멈춘다. 
 	if (EquippedWeapon)
 	{
+		EquippedWeapon->StopWeaponAttack(); // 공격 종료
+
+		// 한기담 - 마우스를 떼는 순간, 사격 몽타주를 멈춘다. 
 		// 현재 무기가 '소총(Rifle)'일 때만 마우스 뗄 때 애니메이션 정지.
+		
 		if (EquippedWeapon->GetWeaponType() == EWeaponType::Rifle)
 		{
-			// CurrentAttack_2_Montage가 사격 공격이다.
 			if (CurrentAttack_2_Montage) AnimInst->Montage_Stop(0.1f, CurrentAttack_2_Montage);
 		}
+		
 		// 나중에 연사형 무기가 더 추가되면 
 		// 여기에 || EquippedWeapon->GetWeaponType() == EWeaponType::SMG 같은거 추가.
 	}
@@ -603,8 +569,6 @@ void AHanPlayerCharacter::StopAim()
 
 	// 조준 풀면 다시 입력 방향대로 자유롭게 몸을 돌린다.
 	bUseControllerRotationYaw = false;
-	//GetCharacterMovement()->bOrientRotationToMovement = true;
-
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
 
 	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
@@ -622,6 +586,7 @@ bool AHanPlayerCharacter::IsAiming() const
 
 void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
 {
+	/*
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (!AnimInst || AnimInst->IsAnyMontagePlaying()) return; // 공격중 장전 입력 불가능
 
@@ -631,4 +596,5 @@ void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
 		PlayAnimMontage(CurrentReloadMontage);
 		UE_LOG(LogTemp, Warning, TEXT("재장전 몽타주 실행"));
 	}
+	*/
 }
