@@ -11,7 +11,6 @@
 ARangedWeaponBase::ARangedWeaponBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
-	WeaponType = EWeaponType::TwoHandedRanged; // 무기 타입 설정
 	Range = 10000.f;	// 사거리 10000
 	FireRate = 600.f;	// 분당 600발
 	MaxAmmo = 30;
@@ -30,8 +29,6 @@ ARangedWeaponBase::ARangedWeaponBase()
 
 	MeleeAttackCooldown = 1.0f;
 	MeleeAttackDuration = 0.5f;
-	MeleeAttackBoxExtent = FVector(1.f, 40.f, 90.f);
-	MeleeAttackRange = 100.f;
 
 	// BeginPlay에서 초기화하는 값들
 	FireInterval = 60.f / FireRate;

@@ -12,8 +12,10 @@ UENUM(BlueprintType)
 enum class EZombieState : uint8
 {
     Idle,
+    Screaming,
     Attacking,
     Hit,
+    Knockdown,
     Dead
 };
 
@@ -30,6 +32,12 @@ public:
     // 언리얼 내장 데미지 시스템: 누군가 이 좀비를 때리면 이 함수가 자동으로 실행됩니다.
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
+    UFUNCTION(BlueprintCallable, Category = "ZombieState")
+    EZombieState GetCurrentState() const { return CurrentState; }
+
+    UFUNCTION(BlueprintCallable, Category = "ZombieState")
+    virtual void SetCurrentState(EZombieState NewState) { CurrentState = NewState; }
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -44,6 +52,9 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
     class UAnimMontage* DeathMontage;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    class UAnimMontage* KnockdownMontage; // 넘어지기 
 
     // AI가 추적 중인 플레이어 캐릭터를 담아둘 변수입니다.
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -89,6 +100,7 @@ protected:
     // 공격 후 쿨타임이 지나면 다시 공격 가능하게 해주는 함수입니다.
     virtual void ResetAttack();
 
+
     // 체력이 0이 되었을 때의 처리를 담당합니다.
     virtual void Die();
     UFUNCTION()
@@ -98,10 +110,12 @@ protected:
     UFUNCTION(BlueprintCallable)
     virtual void DisableAttackCollision();
 
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    virtual void Knockdown();
 
     // 소리 재개 함수
     UFUNCTION()
-    void ResumeIdleSound();
+    virtual void ResumeIdleSound();
 
     // 공격 판정을 위한 구체 충돌체
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Zombie | Combat")
@@ -119,5 +133,6 @@ protected:
     float LastDamageTime = 0.0f;
 
     // 잠금 시간 (예: 2초 동안은 추가 데미지 무시)
-    const float DamageLockDuration = 2.0f;
+    const float DamageLockDuration = 1.0f;
+
 };

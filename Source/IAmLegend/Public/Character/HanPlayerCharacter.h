@@ -4,7 +4,6 @@
 #include "GameFramework/Character.h"
 #include <InputActionValue.h>
 #include "Item/InventoryComponent.h"
-#include "BattleLogic/WeaponBase.h" 
 #include "BattleLogic/BaseDummyCharacter.h"
 #include "HanPlayerCharacter.generated.h"
 
@@ -71,7 +70,7 @@ protected:
 
 	// 앉기 시 이동 속도 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
-	float CrouchWalkSpeed = BaseWalkSpeed/2; 
+	float CrouchWalkSpeed = BaseWalkSpeed/1.5; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character | Movement")
 	float BaseJumpVelocity = 500.f;
@@ -98,15 +97,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Interaction")
 	class AActor* TargetItem;
 
-	// 무기에서 넘겨 받을 몽타주 변수
-	UPROPERTY()
-	class UAnimMontage* CurrentAttack_1_Montage = nullptr;
+	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 퀵 턴 (구현 실패)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	class UAnimMontage* Running_Turn_181_Montage;
 
-	UPROPERTY()
-	class UAnimMontage* CurrentAttack_2_Montage = nullptr;
+	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 단검 베기 (기본 좌클)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	class UAnimMontage* KnifeAttack_1;
 
-	UPROPERTY()
-	class UAnimMontage* CurrentReloadMontage = nullptr;
+	// 블루프린트에서 몽타주 파일을 선택할 수 있게 노출 - 단검 찌르기 (우클 상태에서 좌클)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	class UAnimMontage* KnifeAttack_2;
 
 	//카메라
 	bool bLastRotationState = false; // 이전 프레임의 상태를 기억
@@ -114,8 +115,8 @@ protected:
 	// --- 조준(FOV) 관련 변수 ---
 	float DefaultFOV = 90.f;
 	float AimingFOV = 60.f;
-	float TargetFOV = DefaultFOV;
-	float CurrentFOV = TargetFOV;
+	float TargetFOV = 90.f;
+	float CurrentFOV = 90.f;
 	float FOVInterpSpeed = 10.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character | Weapon") // ABP에서 쓸려면 필요
@@ -129,6 +130,9 @@ protected:
 	void StartAttack();
 	void StopAttack();
 
+	// 테스트용 어택 함수
+	UFUNCTION(BlueprintCallable)
+	void Attack();
 	// 조준 함수 
 	void StartAim();
 	void StopAim();
@@ -146,8 +150,7 @@ public:
 	void InputSprintEnd(const struct FInputActionValue& InValue);   // 달리기 종료
 	void InputCrouchToggle(const FInputActionValue& InValue);
 	void InputInteract(const FInputActionValue& InValue); // F 키 입력 시 실행될 함수
-	void InputReload(const struct FInputActionValue& Value); // 장전
-
+	
 	UFUNCTION()
 	void InventoryShow(const FInputActionValue& InValue); // 인벤토리 관련
 	

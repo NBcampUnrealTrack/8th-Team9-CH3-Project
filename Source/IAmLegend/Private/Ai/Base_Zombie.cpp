@@ -90,6 +90,7 @@ void ABase_Zombie::Tick(float DeltaTime)
 		// 좀비 애니메이션이 팔을 쭉 뻗는 형태라면 80~100도 괜찮습니다.
 		if (Distance <= AttackRange) // 100.0f에서 조금 더 타이트하게 조정
 		{
+
 			PlayAttackMontage();
 		}
 	}
@@ -183,8 +184,15 @@ float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 		if (HitMontage && CurrentState != EZombieState::Attacking)
 		{
 			CurrentState = EZombieState::Hit;
-			PlayAnimMontage(HitMontage);
-			// Tip: 몽타주 종료 시 다시 Idle로 바꾸려면 OnMontageEnded 델리게이트를 쓰면 좋습니다.
+			float HitLength = PlayAnimMontage(HitMontage);
+
+			// ✅ 이 부분 추가: Hit 몽타주가 끝나면 Idle로 복귀
+			FTimerHandle HitTimerHandle;
+			GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
+				{
+					if (CurrentState == EZombieState::Hit)
+						SetCurrentState(EZombieState::Idle);
+				}, HitLength, false);
 		}
 	}
 
@@ -286,5 +294,63 @@ void ABase_Zombie::DisableAttackCollision()
 	{
 
 		AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void ABase_Zombie::Knockdown()
+{
+	// 죽었거나 이미 넘어진 상태면 무시
+	if (CurrentState == EZombieState::Dead) return;
+	if (CurrentState == EZombieState::Knockdown) return;
+
+	CurrentState = EZombieState::Knockdown;
+
+	// AI 이동 및 공격 중단
+	AAIController* AIC = Cast<AAIController>(GetController());
+	if (AIC) AIC->StopMovement();
+
+	// 이동 속도 0
+	if (GetCharacterMovement())
+		GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+
+	// 진행 중인 공격 타이머 초기화
+	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+	bIsAttacking = false;
+
+	// 넘어지기 몽타주 재생
+	if (KnockdownMontage)
+	{
+		float MontageLength = PlayAnimMontage(KnockdownMontage);
+
+		// 몽타주가 끝나면 자동으로 일어나서 Idle로 복귀
+		FTimerHandle KnockdownTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(KnockdownTimerHandle, [this]()
+			{
+				if (CurrentState == EZombieState::Knockdown)
+				{
+					GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
+					SetCurrentState(EZombieState::Idle);
+				}
+			}, MontageLength, false);
+	}
+	else
+	{
+		// 몽타주 없을 때 대비 — 2초 후 자동 복귀
+		FTimerHandle KnockdownTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(KnockdownTimerHandle, [this]()
+			{
+				if (CurrentState == EZombieState::Knockdown)
+				{
+					GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
+					SetCurrentState(EZombieState::Idle);
+				}
+			}, 2.0f, false);
+	}
+
+	// 블랙보드 동기화
+	if (AIC && AIC->GetBlackboardComponent())
+	{
+		AIC->GetBlackboardComponent()->SetValueAsEnum(
+			TEXT("CurrentState"), (uint8)EZombieState::Knockdown);
 	}
 }

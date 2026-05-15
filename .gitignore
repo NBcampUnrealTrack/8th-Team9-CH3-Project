@@ -36,4 +36,4 @@ Saved/
 
 # --- 시스템 파일 ---
 .DS_Store
-Thumbs.db
+Thumbs.db"Content/Zombie/Sound/**/*.wav" 
