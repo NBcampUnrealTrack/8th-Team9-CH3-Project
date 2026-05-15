@@ -25,18 +25,29 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UCraftRecipe> TargetRecipe;
 	
-    
-	// 결과물 아이콘
+	// --- 재료 1 ---
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> ResultIcon;
+	class UImage* Ingredient_1_Icon;
 
-	// 결과물 이름 또는 수량
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> ResultNameText;
+	class UTextBlock* Ingredient_1_Count;
 
-	// 제작 버튼
+	// --- 재료 2 ---
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UButton> CraftButton;
+	class UImage* Ingredient_2_Icon;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Ingredient_2_Count;
+
+	// --- 결과물 및 버튼 ---
+	UPROPERTY(meta = (BindWidget))
+	class UImage* ResultIcon;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ResultNameText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UButton* CraftButton;
 
 	// 제작 버튼 클릭 시 실행될 함수
 	UFUNCTION()
