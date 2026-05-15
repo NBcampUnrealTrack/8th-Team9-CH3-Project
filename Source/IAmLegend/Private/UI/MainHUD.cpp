@@ -67,13 +67,16 @@ void AMainHUD::HideTitleHUD()
 
 void AMainHUD::ShowStageHUD()
 {
-	if (StageHUDClass)
+	if (!StageHUDClass) return;
+	
+	if (StageHUDWidget == nullptr)
 	{
 		StageHUDWidget = CreateWidget<UStageHUDWidget>(GetWorld(), StageHUDClass);
-		if (StageHUDWidget)
-		{
-			StageHUDWidget->AddToViewport();
-		}
+	}
+	
+	if (StageHUDWidget)
+	{
+		StageHUDWidget->AddToViewport();
 	}
 }
 
@@ -91,18 +94,25 @@ void AMainHUD::ShowPlayerHealthHUD()
 
 void AMainHUD::ShowExtractionHUD()
 {
-	if (ExtractionHUDClass)
+	if (!ExtractionHUDClass) return;
+	
+	if (ExtractionHUDWidget == nullptr)
 	{
 		ExtractionHUDWidget = CreateWidget<UUserWidget>(GetWorld(), ExtractionHUDClass);
-		if (ExtractionHUDWidget)
-		{
-			ExtractionHUDWidget->AddToViewport();
-		}
+	}
+	
+	if (ExtractionHUDWidget)
+	{
+		ExtractionHUDWidget->AddToViewport();
 	}
 }
 
 void AMainHUD::HideExtractionHUD()
 {
+	if (ExtractionHUDWidget)
+	{
+		ExtractionHUDWidget->RemoveFromParent();
+	}
 }
 
 void AMainHUD::TogglePauseMenu()
@@ -136,7 +146,7 @@ void AMainHUD::TogglePauseMenu()
 	}
 }
 
-// ≈©∑πµ˜ «‘ºˆ
+// ÌÅ¨Î†àÎîß Ìï®Ïàò
 void AMainHUD::ShowCreditHUD()
 {
 	if (CreditHUDClass)
@@ -149,7 +159,7 @@ void AMainHUD::ShowCreditHUD()
 	}
 }
 
-// ø…º« «‘ºˆ
+// ÏòµÏÖò Ìï®Ïàò
 void AMainHUD::ShowOptionHUD()
 {
 	if (OptionHUDClass)
@@ -162,7 +172,7 @@ void AMainHUD::ShowOptionHUD()
 	}
 }
 
-// ∞‘¿” ø¿πˆ «‘ºˆ
+// Í≤åÏûÑ Ïò§Î≤Ñ Ìï®Ïàò
 void AMainHUD::ShowGameOverHUD()
 {
 	if (GameOverClass)
@@ -172,13 +182,13 @@ void AMainHUD::ShowGameOverHUD()
 		{
 			GameOverWidget->AddToViewport();
 
-			// ∏∂øÏΩ∫ ƒøº≠∏¶ ∫∏¿Ã∞‘ «œ∞Ì ∞‘¿” ¿‘∑¬¿ª UI∑Œ ¿¸»Ø
+			// ÎßàÏö∞Ïä§ Ïª§ÏÑúÎ•º Î≥¥Ïù¥Í≤å ÌïòÍ≥† Í≤åÏûÑ ÏûÖÎ†•ÏùÑ UIÎ°ú Ï†ÑÌôò
 			APlayerController* PC = GetOwningPlayerController();
 			if (PC)
 			{
 				PC->bShowMouseCursor = true;
 				PC->SetInputMode(FInputModeUIOnly());
-				UGameplayStatics::SetGamePaused(GetWorld(), true); // ∞‘¿” ¿œΩ√ ¡§¡ˆ
+				UGameplayStatics::SetGamePaused(GetWorld(), true); // Í≤åÏûÑ ÏùºÏãú Ï†ïÏßÄ
 			}
 		}
 	}
