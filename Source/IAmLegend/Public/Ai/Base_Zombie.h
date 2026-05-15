@@ -15,6 +15,7 @@ enum class EZombieState : uint8
     Screaming,
     Attacking,
     Hit,
+    Knockdown,
     Dead
 };
 
@@ -52,6 +53,8 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
     class UAnimMontage* DeathMontage;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    class UAnimMontage* KnockdownMontage; // 넘어지기 
 
     // AI가 추적 중인 플레이어 캐릭터를 담아둘 변수입니다.
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
@@ -107,6 +110,8 @@ protected:
     UFUNCTION(BlueprintCallable)
     virtual void DisableAttackCollision();
 
+    UFUNCTION(BlueprintCallable, Category = "Combat")
+    virtual void Knockdown();
 
     // 소리 재개 함수
     UFUNCTION()
