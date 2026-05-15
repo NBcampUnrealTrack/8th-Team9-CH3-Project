@@ -32,6 +32,9 @@ protected:
 	float CollisionHalfHeight;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float GravityScale;	// 중력의 영향을 얼마나 받을지 (1.0f = 기본 중력, 0.0f = 중력 영향 없음)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float InitialSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")

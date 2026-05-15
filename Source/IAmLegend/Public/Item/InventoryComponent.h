@@ -72,6 +72,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	TArray<FItemSlot>& GetActualInventory();
 	
+	UPROPERTY()
+	bool bInventoryVisible = false;
 	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")

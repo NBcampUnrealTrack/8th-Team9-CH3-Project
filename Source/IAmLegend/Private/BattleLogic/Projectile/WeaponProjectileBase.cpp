@@ -25,13 +25,14 @@ AWeaponProjectileBase::AWeaponProjectileBase()
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-
+	GravityScale = 1.0f;
 	InitialSpeed = 3000.f;
 	MaxSpeed = 3000.f;
 	bRotationFollowsVelocity = true;
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->UpdatedComponent = CollisionComp;
+	ProjectileMovement->ProjectileGravityScale = GravityScale;
 	ProjectileMovement->InitialSpeed = InitialSpeed;
 	ProjectileMovement->MaxSpeed = MaxSpeed;
 	ProjectileMovement->bRotationFollowsVelocity = bRotationFollowsVelocity;
