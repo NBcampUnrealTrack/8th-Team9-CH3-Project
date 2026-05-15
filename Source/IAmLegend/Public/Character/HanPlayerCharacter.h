@@ -163,7 +163,9 @@ public:
 	void UnEquipWeapon();
 
 	// 몽타주 재생 함수를 퍼블릭으로 선언했습니다.
-	void PlayWeaponMontage(UAnimMontage* MontageToPlay);
+	void PlayAttackMontage_1();
+	void PlayAttackMontage_2();
+	void PlayReloadMontage();
 
 protected:
 	/// 현재 시점 모드

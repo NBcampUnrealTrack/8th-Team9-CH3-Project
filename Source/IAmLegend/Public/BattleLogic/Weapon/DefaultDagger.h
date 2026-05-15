@@ -20,9 +20,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Dagger")
 	float StabCooldown; // 찌르기 공격의 쿨다운 시간
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Dagger")
-	float StabDuration; // 찌르기 공격의 지속 시간
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Dagger")
 	float StabRange; // 찌르기 공격의 최대 사거리
