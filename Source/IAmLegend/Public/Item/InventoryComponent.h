@@ -8,6 +8,7 @@
 
 class UItemDataAsset;
 class UInventoryWidget;
+class UCraftRecipe;
 
 USTRUCT(BlueprintType)
 struct FItemSlot
@@ -48,6 +49,22 @@ public:
 	
 	UFUNCTION()
 	void DisplayUI();
+	
+	UFUNCTION()
+	int32 GetItemQuantity(UItemDataAsset* TargetItem);
+	
+	UFUNCTION()
+	void RemoveItemQuantity(UItemDataAsset* TargetItem, int32 Amount);
+	
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UUserWidget> CraftingWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> CraftingWidget;
+
+	// 제작 전용 UI 토글 함수
+	void ToggleCraftingUI(bool bShow);
+	
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FItemSlot> Inventory;
@@ -58,6 +75,9 @@ public:
 	UPROPERTY()
 	bool bInventoryVisible = false;
 	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
+	TArray<TObjectPtr<UCraftRecipe>> KnownRecipes;
        
 protected:
 	UPROPERTY()
