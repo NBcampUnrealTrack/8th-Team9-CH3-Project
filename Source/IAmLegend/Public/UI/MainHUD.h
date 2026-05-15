@@ -35,10 +35,6 @@ public:
 	//탈출 지점 UI 관리
 	void ShowExtractionHUD();
 	void HideExtractionHUD();
-	
-	//탈출 결과 UI 관리 
-	void ShowStageResultHUD();
-	void HideStageResultHUD();
 
 	// 크레딧 UI 관리
 	void ShowCreditHUD();
@@ -48,10 +44,6 @@ public:
 
 	// GameOver UI 관리
 	void ShowGameOverHUD();
-
-	// 조준점 UI 관리(마스터 스위치)
-	void ShowCrosshairHUD();
-	void SetCrosshairVisibilty(bool bVisible);
 	
 protected:
 	//사용할 Widget 클래스 설정
@@ -71,13 +63,6 @@ protected:
 	TSubclassOf<UUserWidget> OptionHUDClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UUserWidget> GameOverClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UUserWidget> StageResultHUDClass;
-	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UUserWidget> CrosshairClass;
-
-	UPROPERTY()
-	class UUserWidget* CrosshairWidget;
 	
 private:
 	
@@ -92,6 +77,4 @@ private:
 	UPlayerHealthWidget* PlayerHealthWidget;
 	UPROPERTY()
 	UUserWidget* ExtractionHUDWidget;
-	UPROPERTY()
-	UUserWidget* StageResultHUDWidget;
 };
