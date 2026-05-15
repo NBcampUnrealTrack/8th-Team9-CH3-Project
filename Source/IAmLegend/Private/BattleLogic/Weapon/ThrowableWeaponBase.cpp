@@ -62,7 +62,7 @@ void AThrowableWeaponBase::ThrowWeapon()
 
 	// 플레이어의 시점에 따라 투사체의 초기 회전을 설정
 	FRotator SpawnRotation;							 // 주석이 깨져요 ㅠㅠ
-	if (OwnerCharacter)  //�ѱ�� - ���� �κ��� ����ĳ���ͷ� �Ǿ��־ APawn���� �����߽��ϴ�
+	if (OwnerCharacter)
 	{
 		SpawnRotation = OwnerCharacter->GetControlRotation();
 	}

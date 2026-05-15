@@ -87,3 +87,19 @@ EWeaponType AWeaponBase::GetWeaponType() const
 	return WeaponType;
 }
 
+
+// 애니메이션 노티파이 함수들은 자식에서 오버라이드하여 자신의 공격을 종료합니다.
+void AWeaponBase::AnimNotify_EndAttack_1()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Attack 1 Animation Ended!"));
+}
+
+void AWeaponBase::AnimNotify_EndAttack_2()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Attack 2 Animation Ended!"));
+}
+
+void AWeaponBase::AnimNotify_EndReload()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Reload Animation Ended!"));
+}
