@@ -6,24 +6,33 @@
 #include "Kismet/GameplayStatics.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "BattleLogic/TrajectoryComponent.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 ADefaultDagger::ADefaultDagger()
 {
 	// 초기값 설정
+	WeaponType = EWeaponType::Dagger; // 무기 타입 설정
 	StabDamage = 20.f; // 찌르기 공격의 추가 데미지
 	StabCooldown = 1.0f; // 찌르기 공격의 쿨다운 시간
 	StabDuration = 0.3f; // 찌르기 공격의 지속 시간
 	StabRange = 100.f; // 찌르기 공격의 최대 사거리
 	StabBoxExtent = FVector(1.f, 40.f, 90.f); // 찌르기 공격의 범위 (박스 형태)
 	bIsStabbing = false; // 찌르기 공격 중인지 여부
+
+	// 단검은 투척이 불가능하므로 궤적 컴포넌트를 비활성화
+	if (TrajectoryComp)
+	{
+		TrajectoryComp->PrimaryComponentTick.bCanEverTick = false;
+		TrajectoryComp->PrimaryComponentTick.bStartWithTickEnabled = false;
+		TrajectoryComp->SetComponentTickEnabled(false);
+	}
 }
 
 void ADefaultDagger::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ADefaultDagger::OnConstruction(const FTransform& Transform)

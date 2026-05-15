@@ -18,40 +18,25 @@ void UCraftingSlotWidget::NativeConstruct()
 
 void UCraftingSlotWidget::InitSlot(UCraftRecipe* InRecipe)
 {
-	if (!InRecipe || !InRecipe->ResultItem) return;
+	if (!InRecipe) return;
+
 	TargetRecipe = InRecipe;
 
-	// 모든 재료 UI를 일단 숨김 처리
-	Ingredient_1_Icon->SetVisibility(ESlateVisibility::Collapsed);
-	Ingredient_1_Count->SetVisibility(ESlateVisibility::Collapsed);
-	Ingredient_2_Icon->SetVisibility(ESlateVisibility::Collapsed);
-	Ingredient_2_Count->SetVisibility(ESlateVisibility::Collapsed);
-
-	// 1. 재료 데이터 채우기
-	for (int32 i = 0; i < InRecipe->Ingredients.Num(); ++i)
+	
+	if (ResultIcon && TargetRecipe->ResultItem)
 	{
-		const FCraftingIngredient& Ing = InRecipe->Ingredients[i];
-		if (!Ing.ItemData) continue;
-
-		if (i == 0) // 첫 번째 재료
-		{
-			Ingredient_1_Icon->SetBrushFromTexture(Ing.ItemData->ItemIcon);
-			Ingredient_1_Count->SetText(FText::AsNumber(Ing.Quantity));
-			Ingredient_1_Icon->SetVisibility(ESlateVisibility::Visible);
-			Ingredient_1_Count->SetVisibility(ESlateVisibility::Visible);
-		}
-		else if (i == 1) // 두 번째 재료
-		{
-			Ingredient_2_Icon->SetBrushFromTexture(Ing.ItemData->ItemIcon);
-			Ingredient_2_Count->SetText(FText::AsNumber(Ing.Quantity));
-			Ingredient_2_Icon->SetVisibility(ESlateVisibility::Visible);
-			Ingredient_2_Count->SetVisibility(ESlateVisibility::Visible);
-		}
+		ResultIcon->SetBrushFromTexture(TargetRecipe->ResultItem->ItemIcon);
 	}
 
-	// 2. 결과물 설정
-	ResultIcon->SetBrushFromTexture(InRecipe->ResultItem->ItemIcon);
-	ResultNameText->SetText(FText::FromString(InRecipe->ResultItem->ItemName));
+	
+	if (ResultNameText)
+	{
+		FString DisplayString = FString::Printf(TEXT("%s (%d)"), 
+			*TargetRecipe->ResultItem->ItemName, TargetRecipe->ResultQuantity);
+		ResultNameText->SetText(FText::FromString(DisplayString));
+	}
+    
+	
 }
 
 void UCraftingSlotWidget::OnCraftButtonClicked()
