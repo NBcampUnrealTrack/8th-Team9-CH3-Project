@@ -90,6 +90,7 @@ bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
 
 	// 이번 스테이지 획득 아이템용
 	// Shelter 맵이 아닐 때만 기록하고 싶다면 여기에 if문을 추가할 수 있음
+	// 추후에 필요시 추가하겠습니다
 	bool bFoundInStage = false;
 	for (FItemSlot& Slot : CurrentStageAcquiredItems)
 	{
