@@ -24,7 +24,7 @@ void UStageHUDWidget::UpdateStageHUD()
 	
 	if (GM)
 	{
-		CurrentRemainingTime = GM->GetRemainingStageTime();
+//		CurrentRemainingTime = GM->GetRemainingStageTime();
 	}
 	
 	if (Text_RemainingTime)
@@ -49,6 +49,6 @@ void UStageHUDWidget::UpdateKillCount()
 	
 	if (GM)
 	{
-		Text_KillCount->SetText(FText::FromString(FString::FromInt(GM->GetPlayerKillCount())));
+		//Text_KillCount->SetText(FText::FromString(FString::FromInt(GM->GetPlayerKillCount())));
 	}
 }

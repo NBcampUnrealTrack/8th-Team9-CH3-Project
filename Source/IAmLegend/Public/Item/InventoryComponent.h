@@ -35,7 +35,7 @@ public:
 	UInventoryComponent();
     
 	UFUNCTION(BlueprintCallable)
-	bool AddItem(UItemDataAsset* NewItem);
+	bool AddItem(UItemDataAsset* NewItem, int32 Amount = 1);
     
 	UFUNCTION(BlueprintCallable)
 	void UseItem(int32 Index);
@@ -95,6 +95,7 @@ protected:
 public:
 	UFUNCTION()
 	TArray<FItemSlot> GetItemList() const { return CurrentStageAcquiredItems; }
+	
 	
 	virtual void BeginPlay() override;
 };
