@@ -1,4 +1,4 @@
-#include "Ai/NurseZombie_ai.h"
+ï»¿#include "Ai/NurseZombie_ai.h"
 #include "Ai/NurseZombie.h"
 #include "Character/HanPlayerCharacter.h"
 
@@ -9,7 +9,7 @@ void ANurseZombie_ai::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
     ANurseZombie* Nurse = Cast<ANurseZombie>(GetPawn());
     if (!Nurse || !Actor) return;
 
-    // ÅÂ±× ´ë½Å Ä³½ºÆÃÀ¸·Î ÇÃ·¹ÀÌ¾î È®ÀÎ
+    // íƒœê·¸ ëŒ€ì‹  ìºìŠ¤íŒ…ìœ¼ë¡œ í”Œë ˆì´ì–´ í™•ì¸
     AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(Actor);
     if (!Player) return;
 

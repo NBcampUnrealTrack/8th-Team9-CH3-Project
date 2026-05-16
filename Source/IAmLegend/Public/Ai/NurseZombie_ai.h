@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "CoreMinimal.h"
 #include "Ai/BaseZombie_Ai.h"
 #include "NurseZombie_ai.generated.h"
