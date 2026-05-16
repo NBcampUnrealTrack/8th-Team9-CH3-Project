@@ -34,8 +34,8 @@ void UGameOverWidget::NativeConstruct()
 	// 좀비 Kill 수 UI 업데이트
 	if (KillCount && GM)
 	{
-		FString KillString = FString::Printf(TEXT("처치한 좀비 : %d"), GM->GetPlayerKillCount());
-		KillCount->SetText(FText::FromString(KillString));
+	//	FString KillString = FString::Printf(TEXT("처치한 좀비 : %d"), GM->GetPlayerKillCount());
+	//	KillCount->SetText(FText::FromString(KillString));
 	}
 }
 

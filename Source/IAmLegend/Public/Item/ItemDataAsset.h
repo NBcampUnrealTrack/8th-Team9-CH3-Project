@@ -12,6 +12,7 @@ enum class EItemCategory : uint8
 	Ranged       UMETA(DisplayName = "Ranged Weapon"),
 	Throwable    UMETA(DisplayName = "Throwable"),
 	Consumable   UMETA(DisplayName = "Item"),
+	Ammo		 UMETA(DisplayName = "Ammo"),
 	ETC          UMETA(DisplayName = "Etc")
 };
 
@@ -49,5 +50,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
 	float MeshScale = 1.0f; 
-	;
+	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Info")
+	int32 MaxStackSize = 999;
 };

@@ -85,13 +85,13 @@ void AEscapingPoint::OnCollisionEndOverlap(
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (PC)
 	{
-		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-		if (HUD)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("탈출 지점 이탈"));
-			HUD->HideExtractionHUD();
-			
-		}
+		//AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+		//if (HUD)
+		//{
+		//	UE_LOG(LogTemp, Warning, TEXT("탈출 지점 이탈"));
+		//	HUD->HideExtractionHUD();
+		//	
+		//}
 	}
 	
 }

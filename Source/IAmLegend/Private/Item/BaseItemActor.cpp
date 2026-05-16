@@ -106,23 +106,20 @@ void ABaseItemActor::ApplyPickup(ACharacter* Player)
 {
 	if (!Player || !ItemData) return;
 
-	//캐릭터로부터 인벤토리 컴포넌트를 가져오기
 	UInventoryComponent* InvComp = Player->FindComponentByClass<UInventoryComponent>();
 
 	if (InvComp)
 	{
-		// 인벤토리에 이 액터가 들고 있는 ItemData를 추가
-		bool bAdded = InvComp->AddItem(ItemData);
+		// 수정된 포인트: ItemData만 보내는 게 아니라 ItemAmount도 같이 보낸다!
+		bool bAdded = InvComp->AddItem(ItemData, ItemAmount);
 
 		if (bAdded)
 		{
-			
-			UE_LOG(LogTemp, Log, TEXT("%s 아이템 획득 성공!"), *ItemData->ItemName);
+			UE_LOG(LogTemp, Log, TEXT("%s (%d개) 획득 성공!"), *ItemData->ItemName, ItemAmount);
 			Destroy();
 		}
 		else 
 		{
-			
 			UE_LOG(LogTemp, Warning, TEXT("인벤토리가 가득 차서 %s를 주울 수 없습니다."), *ItemData->ItemName);
 		}
 	}

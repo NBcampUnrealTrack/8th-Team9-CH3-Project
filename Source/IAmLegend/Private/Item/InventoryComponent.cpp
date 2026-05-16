@@ -65,19 +65,23 @@ TArray<FItemSlot>& UInventoryComponent::GetActualInventory()
 	return EmptyInv;
 }
 
-bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
+bool UInventoryComponent::AddItem(UItemDataAsset* NewItem, int32 Amount)
 {
-	if (!NewItem) return false;
+	// 아이템이 없거나 추가하려는 개수가 0 이하면 바로 리턴
+	if (!NewItem || Amount <= 0) return false;
 
-	//  전체 인벤토리 업데이트
+	//전체 인벤토리 (GameInstance 전역 인벤토리) 업데이트
 	TArray<FItemSlot>& Inv = GetActualInventory();
 	bool bFoundInTotal = false;
+
 	for (FItemSlot& Slot : Inv)
 	{
 		if (Slot.ItemData == NewItem)
 		{
-			Slot.Quantity++;
-			UE_LOG(LogTemp, Log, TEXT("%s 전체 개수 증가: %d"), *NewItem->ItemName, Slot.Quantity);
+			// 기존에 있던 아이템이면 Amount만큼 더해줌
+			Slot.Quantity += Amount; 
+			UE_LOG(LogTemp, Log, TEXT("%s 전체 개수 %d 증가 (현재 총합: %d)"), 
+				*NewItem->ItemName, Amount, Slot.Quantity);
 			bFoundInTotal = true;
 			break;
 		}
@@ -85,18 +89,17 @@ bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
 
 	if (!bFoundInTotal)
 	{
-		Inv.Add(FItemSlot(NewItem, 1));
+		// 새로 추가하는 아이템이면 처음부터 Amount 개수만큼 생성
+		Inv.Add(FItemSlot(NewItem, Amount));
 	}
 
-	// 이번 스테이지 획득 아이템용
-	// Shelter 맵이 아닐 때만 기록하고 싶다면 여기에 if문을 추가할 수 있음
-	// 추후에 필요시 추가하겠습니다
+	// 이번 스테이지 획득 아이템 목록 업데이트 (결과창 등에 활용)
 	bool bFoundInStage = false;
 	for (FItemSlot& Slot : CurrentStageAcquiredItems)
 	{
 		if (Slot.ItemData == NewItem)
 		{
-			Slot.Quantity++;
+			Slot.Quantity += Amount; // 여기도 Amount 적용
 			bFoundInStage = true;
 			break;
 		}
@@ -104,11 +107,12 @@ bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
 
 	if (!bFoundInStage)
 	{
-		CurrentStageAcquiredItems.Add(FItemSlot(NewItem, 1));
+		CurrentStageAcquiredItems.Add(FItemSlot(NewItem, Amount));
 	}
 
 	return true; 
 }
+
 void UInventoryComponent::UseItem(int32 Index)
 {
 	TArray<FItemSlot>& Inv = GetActualInventory();
