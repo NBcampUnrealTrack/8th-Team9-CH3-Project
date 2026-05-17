@@ -15,6 +15,8 @@ AMainGameModeBase::AMainGameModeBase()
 	
 	//초기값 세팅
 	MaxStageDuration = 5.0f;
+	PlayerKillCount = 0;
+	bIsStageTimeUp = false;
 }
 
 void AMainGameModeBase::BeginPlay()
@@ -97,11 +99,18 @@ void AMainGameModeBase::StartStage()
 	}
 }
 
-//스테이지 제한 시간 종료
+//스테이지 제한 시간 종료(몬스터 대량 스폰)
 void AMainGameModeBase::OnStageTimeUp()
 {
+	bIsStageTimeUp = true;
 	
-	EndStage(false);
+	//스폰 매니저에서 적 대량스폰
+	ASpawnManager* SpawnManager = Cast<ASpawnManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASpawnManager::StaticClass()));
+	if (SpawnManager)
+	{
+		SpawnManager->SpawnEnemyAtStage();
+	}
+	//EndStage(false);
 	UE_LOG(LogTemp, Warning, TEXT("Stage End"));
 }
 
@@ -116,35 +125,78 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	if (bIsPlayerEscaped)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Player Escaped"));
-		GI->SetbIsPlayerEscaped(true);
-		
+		SuccessEscape();
 		GetWorldTimerManager().ClearTimer(StageTimer);
 		
 	}
+	else
+	{
+		FailEscape();
+	}
+	GetWorldTimerManager().ClearTimer(StageTimer);
+}
+//스테이지 남은 시간 가져가기
+float AMainGameModeBase::GetRemainingStageTime() const
+{
+	return GetWorldTimerManager().GetTimerRemaining(StageTimer);
+}
+
+//적 처치 시 점수 저장
+void AMainGameModeBase::killedEnemy()
+{
+	++PlayerKillCount;
+}
+
+//적 처치 수 가져가기
+int32 AMainGameModeBase::GetPlayerKillCount() const
+{
+	return PlayerKillCount;
+}
+
+//탈출 지점을 통해 탈출 성공 
+void AMainGameModeBase::SuccessEscape()
+{
+	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
+	if (!GI) return;
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PC) return;
 	
-	//정상 UI 출력
+	//게임 일시정지
+	UGameplayStatics::SetGamePaused(GetWorld(), true);
+	PC->bShowMouseCursor = true;
+	PC->SetInputMode(FInputModeGameAndUI());
+	
+	UE_LOG(LogTemp, Warning, TEXT("Player Escaped"));
+	//플레이어 탈출 성공 설정
+	GI->SetbIsPlayerEscaped(true);
+	
+	//정산 UI 출력
+
+	AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+	if (HUD)
+	{
+		HUD->ShowStageResultHUD();
+	}
+}
+
+
+//탈출 실패 시 게임 오버 UI 출력
+void AMainGameModeBase::FailEscape()
+{
+	//게임 오버 UI 출력
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (PC)
 	{
 		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
 		if (HUD)
 		{
-			
+			HUD->ShowGameOverHUD();
 		}
 	}
-	
-	
-	//스테이지 종료
-	GI->SetbIsStageStarted(false);
-	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
 }
 
-float AMainGameModeBase::GetRemainingStageTime() const
-{
-	return 0.0f;
-}
 
-int AMainGameModeBase::GetPlayerKillCount() const
+bool AMainGameModeBase::GetIsStageTimeUp() const
 {
-	return 0;
+	return bIsStageTimeUp;
 }

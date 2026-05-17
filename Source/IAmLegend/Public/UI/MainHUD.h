@@ -35,6 +35,10 @@ public:
 	//탈출 지점 UI 관리
 	void ShowExtractionHUD();
 	void HideExtractionHUD();
+	
+	//탈출 결과 UI 관리 
+	void ShowStageResultHUD();
+	void HideStageResultHUD();
 
 	// 크레딧 UI 관리
 	void ShowCreditHUD();
@@ -63,6 +67,8 @@ protected:
 	TSubclassOf<UUserWidget> OptionHUDClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UUserWidget> GameOverClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UUserWidget> StageResultHUDClass;
 	
 private:
 	
@@ -73,8 +79,10 @@ private:
 	UUserWidget* StageHUDWidget;
 	UPROPERTY()
 	UPauseMenuWidget* PauseMenuWidget;
-	UPROPERTY()
-	UPlayerHealthWidget* PlayerHealthWidget;
+	//UPROPERTY()
+	//UPlayerHealthWidget* PlayerHealthWidget;
 	UPROPERTY()
 	UUserWidget* ExtractionHUDWidget;
+	UPROPERTY()
+	UUserWidget* StageResultHUDWidget;
 };

@@ -94,25 +94,25 @@ void AMainHUD::ShowPlayerHealthHUD()
 
 void AMainHUD::ShowExtractionHUD()
 {
-	//if (!ExtractionHUDClass) return;
-	//
-	////if (ExtractionHUDWidget == nullptr)
-	//{
-	//	ExtractionHUDWidget = CreateWidget<UUserWidget>(GetWorld(), ExtractionHUDClass);
-	//}
-	//
-	//if (ExtractionHUDWidget)
-	//{
-	//	ExtractionHUDWidget->AddToViewport();
-	//}
+	if (!ExtractionHUDClass) return;
+	
+	if (ExtractionHUDWidget == nullptr)
+	{
+		ExtractionHUDWidget = CreateWidget<UUserWidget>(GetWorld(), ExtractionHUDClass);
+	}
+	
+	if (ExtractionHUDWidget)
+	{
+		ExtractionHUDWidget->AddToViewport();
+	}
 }
 
 void AMainHUD::HideExtractionHUD()
 {
-	//if (ExtractionHUDWidget)
-	//{
-	//	ExtractionHUDWidget->RemoveFromParent();
-	//}
+	if (ExtractionHUDWidget)
+	{
+		ExtractionHUDWidget->RemoveFromParent();
+	}
 }
 
 void AMainHUD::TogglePauseMenu()
@@ -191,5 +191,28 @@ void AMainHUD::ShowGameOverHUD()
 				UGameplayStatics::SetGamePaused(GetWorld(), true); // 게임 일시 정지
 			}
 		}
+	}
+}
+
+void AMainHUD::ShowStageResultHUD()
+{
+	if (!StageResultHUDClass) return;
+	
+	if (StageResultHUDWidget == nullptr)
+	{
+		StageResultHUDWidget = CreateWidget<UUserWidget>(GetWorld(), StageResultHUDClass);
+	}
+	
+	if (StageResultHUDWidget)
+	{
+		StageResultHUDWidget->AddToViewport();
+	}
+}
+
+void AMainHUD::HideStageResultHUD()
+{
+	if (StageResultHUDWidget)
+	{
+		StageResultHUDWidget->RemoveFromParent();
 	}
 }

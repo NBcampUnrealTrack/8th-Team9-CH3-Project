@@ -540,7 +540,9 @@ void AHanPlayerCharacter::StartAim()
 	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
 	
 	// 임시로 만들어봄 - 단검일경우 카메라 확대는 안하도록
-	if (WeaponClass && WeaponClass->GetName().Contains(TEXT("Dagger")))
+	if (EquippedWeapon == nullptr) return;
+	EWeaponType CurrentWeapon = EquippedWeapon->GetWeaponType();
+	if (CurrentWeapon == EWeaponType::Dagger || CurrentWeapon == EWeaponType::TwoHandedMelee)
 	{
 		TargetFOV = DefaultFOV; // 줌 안 함
 	}
