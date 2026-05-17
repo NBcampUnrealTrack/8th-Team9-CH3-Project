@@ -6,8 +6,14 @@
 #include "Components/ComboBoxString.h"
 #include "Components/Slider.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Sound/SoundMix.h"
+#include "Sound/SoundClass.h"
 #include "Kismet/GameplayStatics.h"
+
+// 볼륨 전역 변수
+static float CurrentSavedVolume = 1.0f;
 
 void UOptionUIWidget::NativeConstruct()
 {
@@ -45,6 +51,9 @@ void UOptionUIWidget::InitializeSettings()
 	if (ResolutionComboBox)
 	{
 		ResolutionComboBox->ClearOptions();
+		ResolutionComboBox->AddOption(TEXT("2560x1600"));
+		ResolutionComboBox->AddOption(TEXT("2560x1440"));
+		ResolutionComboBox->AddOption(TEXT("1920x1440"));
 		ResolutionComboBox->AddOption(TEXT("1920x1080"));
 		ResolutionComboBox->AddOption(TEXT("1280x720"));
 
@@ -53,10 +62,14 @@ void UOptionUIWidget::InitializeSettings()
 		ResolutionComboBox->SetSelectedOption(CurrentRes);
 	}
 
-	// 볼륨 초기값 (기본값 1.0)
+	// 볼륨값
 	if (VolumeSlider)
 	{
-		VolumeSlider->SetValue(1.0f);
+		VolumeSlider->SetValue(CurrentSavedVolume);
+		if (VolumeText)
+		{
+			VolumeText->SetText(FText::AsNumber(FMath::RoundToInt(CurrentSavedVolume * 100.0f)));
+		}
 	}
 }
 
@@ -88,7 +101,20 @@ void UOptionUIWidget::OnApplyClicked()
 
 void UOptionUIWidget::OnVolumeChanged(float Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Volume: %f"), Value);
+	// 변경된 값을 변수에 저장
+	CurrentSavedVolume = Value;
+
+	// 실시간 볼륨 수치 업데이트
+	if (VolumeText)
+	{
+		VolumeText->SetText(FText::AsNumber(FMath::RoundToInt(Value * 100.0f)));
+	}
+
+	// 실제 사운드 볼륨 조절
+	if (MasterSoundMix && MasterSoundClass)
+	{
+		UGameplayStatics::SetSoundMixClassOverride(GetWorld(), MasterSoundMix, MasterSoundClass, Value, 1.f, 1.f, true);
+	}
 }
 
 void UOptionUIWidget::OnCloseClicked()
