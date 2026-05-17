@@ -30,6 +30,9 @@ public:
 	
 	//적 처치
 	void killedEnemy();
+	
+	//스테이지 제한 시간 여부 확인
+	bool GetIsStageTimeUp() const;
 
 private:
 	//스테이지 시작
@@ -40,7 +43,6 @@ private:
 	void SuccessEscape();
 	//플레이어 탈출 실패
 	void FailEscape();
-	
 	//타이머 핸들
 	FTimerHandle StageTimer;
 	
@@ -55,4 +57,6 @@ private:
 	TObjectPtr<UWidgetComponent> StageWidget;
 	//적 처치 횟수 (스테이지 정산 시스템에 사용 예정)
 	int32 PlayerKillCount;
+	//스테이지 제한 시간 종료 여부
+	bool bIsStageTimeUp;
 };

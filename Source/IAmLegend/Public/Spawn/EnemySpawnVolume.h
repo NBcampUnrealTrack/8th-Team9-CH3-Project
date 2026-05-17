@@ -16,7 +16,7 @@ public:
 	AEnemySpawnVolume();
 	
 	//적 스폰
-	void TrySpawn();
+	void TrySpawn(bool IsTimeUp);
 	
 protected:
 	//스폰 공간 컴포넌트
