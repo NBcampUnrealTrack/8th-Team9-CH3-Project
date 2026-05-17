@@ -29,6 +29,9 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Back;
 
+	UPROPERTY(meta = (BindWidget))
+	class UButton* Boss;
+
 private:
 	UFUNCTION()
 	void OnHospitalClicked();
@@ -41,4 +44,7 @@ private:
 
 	UFUNCTION()
 	void OnBackClicked();
+
+	UFUNCTION()
+	void OnBossClicked();
 };
