@@ -1,12 +1,7 @@
 #include "Spawn/SpawnManager.h"
 #include "Spawn/EnemySpawnVolume.h"
 #include "Kismet/GameplayStatics.h"
-
-
-ASpawnManager::ASpawnManager()
-{
-}
-
+#include "Gamemode/MainGameModeBase.h"
 
 void ASpawnManager::BeginPlay()
 {
@@ -40,10 +35,16 @@ void ASpawnManager::SpawnEnemyAtStage()
 	TArray<AActor*> EnemySpawnVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawnVolume::StaticClass(), EnemySpawnVolumes);
 	if (EnemySpawnVolumes.Num() <= 0) return;
+	
+	//스테이지 종료 확인
+	AMainGameModeBase* GM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (!GM) return;
+	bool IsStageTimeUp = GM->GetIsStageTimeUp();
+	
 	//모든 스폰 볼륨에 적 스폰
 	for (int32 i=0; i<EnemySpawnVolumes.Num(); ++i)
 	{
 		AEnemySpawnVolume* EnemySpawnVolume = Cast<AEnemySpawnVolume>(EnemySpawnVolumes[i]);
-		EnemySpawnVolume->TrySpawn();
+		EnemySpawnVolume->TrySpawn(IsStageTimeUp);
 	}
 }

@@ -8,10 +8,6 @@ UCLASS()
 class IAMLEGEND_API ASpawnManager : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	
-	ASpawnManager();
 
 protected:
 	// Called when the game starts or when spawned

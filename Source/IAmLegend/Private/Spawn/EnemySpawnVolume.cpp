@@ -1,9 +1,6 @@
 #include "Spawn/EnemySpawnVolume.h"
 
-#include "AudioMixerBlueprintLibrary.h"
 #include "Components/BoxComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 
@@ -23,11 +20,21 @@ AEnemySpawnVolume::AEnemySpawnVolume()
 }
 
 //적 스폰 시도
-void AEnemySpawnVolume::TrySpawn()
+void AEnemySpawnVolume::TrySpawn(bool IsTimeUp)
 {
-	for (int32 i = 0; i<MaxSpawnCount; ++i)
+	if (!IsTimeUp)
 	{
-		SpawnEnemy(ActualEnemyClass);
+		for (int32 i = 0; i<MaxSpawnCount; ++i)
+		{
+			SpawnEnemy(ActualEnemyClass);
+		}
+	}
+	else
+	{
+		for (int32 i = 0; i<MaxSpawnCount*2; ++i)
+		{
+			SpawnEnemy(ActualEnemyClass);
+		}
 	}
 }
 
@@ -58,10 +65,24 @@ void AEnemySpawnVolume::SpawnEnemy(TSubclassOf<AActor> EnemyClass)
 	if (!TryGetValidSpawnLocation(SpawnLocation)) return;
 	
 	//적 스폰
+	//SpawnActor가 충돌 조정없이 그대로 스폰하도록 설정
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = 
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
 		EnemyClass,
 		SpawnLocation,
 		RandRotation);
+	
+	if (SpawnedActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("실제 스폰 위치: %s"), *SpawnedActor->GetActorLocation().ToString());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("스폰 실패"));
+	}
+	
 	
 }
 
@@ -141,8 +162,8 @@ bool AEnemySpawnVolume::TryGetValidSpawnLocation(FVector& OutLocation)
 				false,
 				30.f
 			);
-			OutLocation = GroundHit.ImpactPoint;
-			UE_LOG(LogTemp, Warning, TEXT("ImpactPoint: %s"), *GroundHit.ImpactPoint.ToString());
+			OutLocation = GroundHit.ImpactPoint + FVector(0.f, 0.f, SpawnCheckCapsuleHalfHeight);
+			//UE_LOG(LogTemp, Warning, TEXT("ImpactPoint: %s"), *GroundHit.ImpactPoint.ToString());
 			return true;
 		}
 	}

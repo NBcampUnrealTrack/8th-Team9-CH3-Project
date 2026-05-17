@@ -1,4 +1,4 @@
-#include "StageResultHUDWidget.h"
+#include "UI/StageResultHUDWidget.h"
 #include "GameMode/MainGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
