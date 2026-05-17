@@ -138,3 +138,13 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	GI->SetbIsStageStarted(false);
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
 }
+
+float AMainGameModeBase::GetRemainingStageTime() const
+{
+	return 0.0f;
+}
+
+int AMainGameModeBase::GetPlayerKillCount() const
+{
+	return 0;
+}

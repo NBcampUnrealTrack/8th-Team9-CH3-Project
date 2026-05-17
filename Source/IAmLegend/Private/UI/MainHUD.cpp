@@ -62,7 +62,7 @@ void AMainHUD::ShowTitleHUD()
 
 void AMainHUD::HideTitleHUD()
 {
-	TitleHUDWidget->RemoveFromViewport();
+	// TitleHUDWidget->RemoveFromViewport();
 }
 
 void AMainHUD::ShowStageHUD()

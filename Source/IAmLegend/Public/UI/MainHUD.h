@@ -73,8 +73,8 @@ private:
 	UUserWidget* StageHUDWidget;
 	UPROPERTY()
 	UPauseMenuWidget* PauseMenuWidget;
-	//UPROPERTY()
-	//UPlayerHealthWidget* PlayerHealthWidget;
-	//UPROPERTY()
-	//UUserWidget* ExtractionHUDWidget;
+	UPROPERTY()
+	UPlayerHealthWidget* PlayerHealthWidget;
+	UPROPERTY()
+	UUserWidget* ExtractionHUDWidget;
 };
