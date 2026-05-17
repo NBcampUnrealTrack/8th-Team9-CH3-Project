@@ -22,4 +22,12 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TSubclassOf<class AWeaponBase> WeaponActorClass;
+	
+	// WeaponDataAsset.h
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
+	int32 MagazineSize = 30; // 한 번 장전하면 들어가는 총알 수
+	
+	//이 무기가 사용할 총알 에셋
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TObjectPtr<UItemDataAsset> RequiredAmmoItem;
 };
