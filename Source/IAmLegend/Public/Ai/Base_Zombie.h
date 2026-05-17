@@ -12,8 +12,10 @@ UENUM(BlueprintType)
 enum class EZombieState : uint8
 {
     Idle,
+    Screaming,    // ← 추가
     Attacking,
     Hit,
+    Knockdown,    // ← 추가
     Dead
 };
 
@@ -29,7 +31,11 @@ public:
     virtual void Tick(float DeltaTime) override;
     // 언리얼 내장 데미지 시스템: 누군가 이 좀비를 때리면 이 함수가 자동으로 실행됩니다.
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+    UFUNCTION(BlueprintCallable, Category = "ZombieState")
+    EZombieState GetCurrentState() const { return CurrentState; }
 
+    UFUNCTION(BlueprintCallable, Category = "ZombieState")
+    virtual void SetCurrentState(EZombieState NewState) { CurrentState = NewState; }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
