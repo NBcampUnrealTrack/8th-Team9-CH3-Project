@@ -9,6 +9,7 @@ AWeaponBase::AWeaponBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = false; // 시작하자마자 틱이 도는 것을 방지
+	WeaponSlot = EWeaponSlot::None; // 기본 무기 슬롯 설정
 
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 평소엔 충돌 없음
 	Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);       // 모든 채널 무시
@@ -87,6 +88,10 @@ EWeaponType AWeaponBase::GetWeaponType() const
 	return WeaponType;
 }
 
+EWeaponSlot AWeaponBase::GetWeaponSlot() const
+{
+	return WeaponSlot;
+}
 
 // 애니메이션 노티파이 함수들은 자식에서 오버라이드하여 자신의 공격을 종료합니다.
 void AWeaponBase::AnimNotify_EndAttack_1()
