@@ -68,8 +68,21 @@ void AHanPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// 시작 시 무기 소환
-	if (WeaponClass) EquipWeapon();
+	// 시작 시 무기 장착
+	for (const TPair<EWeaponSlot, TSubclassOf<AWeaponBase>>& Elem : DefaultWeaponClasses)
+	{
+		TSubclassOf<AWeaponBase> WeaponClass = Elem.Value;
+		if (IsValid(WeaponClass))
+		{
+			EquipWeapon(WeaponClass);
+		}
+	}
+
+	// 기본 무기가 단검 슬롯에 있다면 단검으로 시작
+	if(WeaponSlots.Contains(EWeaponSlot::Dagger) && IsValid(WeaponSlots[EWeaponSlot::Dagger]))
+	{
+		ChangeWeapon(EWeaponSlot::Dagger);
+	}
 
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	if (IsValid(PlayerController) == true)
@@ -233,6 +246,13 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			ETriggerEvent::Started,              
 			this,
 			&AHanPlayerCharacter::InputReload   
+		);
+
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->ChangeWeapon,
+			ETriggerEvent::Triggered,
+			this,
+			&AHanPlayerCharacter::InputChangeWeapon
 		);
 	}
 }
@@ -467,38 +487,117 @@ void AHanPlayerCharacter::Die()
 	Destroy();
 }
 
-void AHanPlayerCharacter::EquipWeapon()
+void AHanPlayerCharacter::EquipWeapon(TSubclassOf<AWeaponBase> NewWeaponClass)
 {
-	if (EquippedWeapon) UnEquipWeapon();
-
-	if (WeaponClass)
+	if (!NewWeaponClass)
 	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = GetInstigator();
+		return;
+	}
+	
+	// 무기 클래스의 CDO를 가져와서 슬롯 정보를 확인
+	const AWeaponBase* WeaponCDO = GetDefault<AWeaponBase>(NewWeaponClass);
+	if (!WeaponCDO) return;
 
-		// 무기 생성
-		AWeaponBase* SpawnedWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, SpawnParams);
-		if (SpawnedWeapon)
+	// 이미 해당 슬롯에 무기가 존재한다면 기존 무기를 제거
+	EWeaponSlot NewSlot = WeaponCDO->GetWeaponSlot();
+	if (WeaponSlots.Contains(NewSlot))
+	{
+		// 차재현
+		// 현재는 액터를 파괴합니다.
+		// 추후에 인벤토리에 다시 넣는 방식으로 변경할 수 있습니다.
+		UnEquipWeapon(NewSlot);
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = GetInstigator();
+
+	// 무기 생성
+	AWeaponBase* SpawnedWeapon = GetWorld()->SpawnActor<AWeaponBase>(NewWeaponClass, SpawnParams);
+	if (SpawnedWeapon)
+	{
+		WeaponSlots.Add(NewSlot, SpawnedWeapon);
+
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+		SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
+
+		// 무기는 처음에 보이지 않게 설정
+		SpawnedWeapon->SetActorHiddenInGame(true);
+		SpawnedWeapon->SetActorEnableCollision(false);
+
+		// 현재 장착된 무기가 없을 때만 새로 장착한 무기로 변경
+		if (CurrentWeaponSlot == EWeaponSlot::None)
 		{
-			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
-			EquippedWeapon = SpawnedWeapon;
-
-			//한기담 - 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
-			CurrentAttack_1_Montage = SpawnedWeapon->Attack_1_Montage;
-			CurrentAttack_2_Montage = SpawnedWeapon->Attack_2_Montage;
-			CurrentReloadMontage = SpawnedWeapon->Reload_Montage;
+			//ChangeWeapon(NewSlot);
 		}
 	}
 }
 
-void AHanPlayerCharacter::UnEquipWeapon()
+void AHanPlayerCharacter::UnEquipWeapon(EWeaponSlot RemoveSlot)
 {
+	// 슬롯에 무기가 존재하지 않으면 리턴
+	if (!WeaponSlots.Contains(RemoveSlot))
+	{
+		return;
+	}
+
+	AWeaponBase* WeaponToRemove = WeaponSlots[RemoveSlot];
+
+	if(WeaponToRemove)
+	{
+		if (CurrentWeaponSlot == RemoveSlot)
+		{
+			CurrentWeaponSlot = EWeaponSlot::None;
+			EquippedWeapon = nullptr;
+
+			UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+			if (AnimInst)
+			{
+				CurrentAttack_1_Montage = nullptr;
+				CurrentAttack_2_Montage = nullptr;
+				CurrentReloadMontage = nullptr;
+			}
+		}
+
+		WeaponToRemove->DestroyWeapon(); 
+		WeaponSlots.Remove(RemoveSlot);
+
+		// 기본 무기가 단검 슬롯에 있다면 단검으로 시작
+		if (WeaponSlots.Contains(EWeaponSlot::Dagger) && IsValid(WeaponSlots[EWeaponSlot::Dagger]))
+		{
+			ChangeWeapon(EWeaponSlot::Dagger);
+		}
+	}
+}
+
+void AHanPlayerCharacter::ChangeWeapon(EWeaponSlot NewSlot)
+{
+	// 이미 장착된 슬롯이거나 해당 슬롯에 무기가 없으면 리턴
+	if (CurrentWeaponSlot == NewSlot || !WeaponSlots.Contains(NewSlot)) 
+	{
+		return;
+	}
+
+	// 장착된 무기를 숨김
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->DestroyWeapon(); 
-		EquippedWeapon = nullptr;
+		EquippedWeapon->SetActorHiddenInGame(true);
+		EquippedWeapon->SetActorEnableCollision(false);
+	}
+
+	// 새 무기를 장착
+	AWeaponBase* NewWeapon = WeaponSlots[NewSlot];
+	if(NewWeapon)
+	{
+		NewWeapon->SetActorHiddenInGame(false);
+
+		EquippedWeapon = NewWeapon;
+		CurrentWeaponSlot = NewSlot;
+		// 한기담 - 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
+
+		CurrentAttack_1_Montage = EquippedWeapon->Attack_1_Montage;
+		CurrentAttack_2_Montage = EquippedWeapon->Attack_2_Montage;
+		CurrentReloadMontage = EquippedWeapon->Reload_Montage;
 	}
 }
 
@@ -578,6 +677,21 @@ void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
 		RangedWeapon->Reload();
 	}
 }
+
+void AHanPlayerCharacter::InputChangeWeapon(const FInputActionValue& Value)
+{
+	float SlotIndex = Value.Get<float>();
+	EWeaponSlot TargetSlot = EWeaponSlot::None;
+
+	if (FMath::IsNearlyEqual(SlotIndex, 1.0f)) TargetSlot = EWeaponSlot::Melee;
+	else if (FMath::IsNearlyEqual(SlotIndex, 2.0f)) TargetSlot = EWeaponSlot::Ranged;
+	else if (FMath::IsNearlyEqual(SlotIndex, 3.0f)) TargetSlot = EWeaponSlot::Dagger;
+	else if (FMath::IsNearlyEqual(SlotIndex, 4.0f)) TargetSlot = EWeaponSlot::Grenade;
+	else return; // 유효하지 않은 입력이면 리턴
+
+	ChangeWeapon(TargetSlot);
+}
+
 
 void AHanPlayerCharacter::PlayAttackMontage_1()
 {

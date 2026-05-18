@@ -89,7 +89,13 @@ protected:
 
 	// --- 무기 관련 변수 ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
-	TSubclassOf<class AWeaponBase> WeaponClass;
+	TMap<EWeaponSlot, class AWeaponBase*> WeaponSlots;
+
+	// 기본 제공 무기
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
+	TMap<EWeaponSlot, TSubclassOf<AWeaponBase>> DefaultWeaponClasses;
+
+	EWeaponSlot CurrentWeaponSlot;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;
@@ -152,6 +158,7 @@ public:
 	void InputCrouchToggle(const FInputActionValue& InValue);
 	void InputInteract(const FInputActionValue& InValue); // F 키 입력 시 실행될 함수
 	void InputReload(const struct FInputActionValue& Value); // 장전
+	void InputChangeWeapon(const struct FInputActionValue& Value); // 무기 변경
 
 	UFUNCTION()
 	void InventoryShow(const FInputActionValue& InValue); // 인벤토리 관련
@@ -163,8 +170,9 @@ public:
 	bool IsAiming() const;
 
 	// 무기 관련 입력 함수를 퍼블릭으로 이동했습니다.
-	void EquipWeapon();
-	void UnEquipWeapon();
+	void EquipWeapon(TSubclassOf<AWeaponBase> NewWeaponClass);
+	void UnEquipWeapon(EWeaponSlot Slot);
+	void ChangeWeapon(EWeaponSlot NewSlot);
 
 	// 몽타주 재생 함수를 퍼블릭으로 선언했습니다.
 	void PlayAttackMontage_1();
