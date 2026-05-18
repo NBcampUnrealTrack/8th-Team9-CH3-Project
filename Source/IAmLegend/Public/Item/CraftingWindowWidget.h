@@ -26,4 +26,7 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	
+	virtual FReply NativeOnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent) override;
+
 };
