@@ -84,7 +84,15 @@ void AMainGameModeBase::StartStage()
 {
 	//타이머를 통해 제한 시간 설정
 	GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
-	UE_LOG(LogTemp, Warning, TEXT("Timer Start"));
+	
+	//스테이지 UI 출력
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PC) return;
+	AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+	if (HUD)
+	{
+		HUD->ShowStageHUD();
+	}
 	
 	//플레이어 탈출 여부 실패로 초기 설정
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
@@ -120,6 +128,15 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 {
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
+	
+	//스테이지 UI 숨김
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PC) return;
+	AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+	if (HUD)
+	{
+		HUD->HideStageHUD();
+	}
 	
 	//플레이어 탈출 성공 판정
 	if (bIsPlayerEscaped)
@@ -175,6 +192,7 @@ void AMainGameModeBase::SuccessEscape()
 	AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
 	if (HUD)
 	{
+		HUD->HideExtractionHUD();
 		HUD->ShowStageResultHUD();
 	}
 }
