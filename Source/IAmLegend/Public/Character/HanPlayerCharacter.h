@@ -94,6 +94,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;
 	
+	// 공격중인지 판단 - 공격중일때 캐릭터를 멈추기 위해서.
+	UPROPERTY(BlueprintReadOnly, Category = "Character | State")
+	bool bIsAttacking = false;
+
 	// 현재 상호작용 가능한 아이템 (범위 내에 들어온 아이템)	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Interaction")
 	class AActor* TargetItem;

@@ -247,12 +247,39 @@ void ARangedWeaponBase::RecoverSpread()
 
 void ARangedWeaponBase::CalculateTrace(FVector& Start, FVector& End)
 {
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter || !OwnerCharacter->GetController()) return;
+	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+
+	if (!PlayerController) return;
+
+	FVector CameraLocation;
+	FRotator CameraRotation;
+
+	PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
+	FVector CameraEnd = CameraLocation + (CameraRotation.Vector() * Range);
+
+	FHitResult ScreenTraceHit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerCharacter); 
+	Params.AddIgnoredActor(this);           
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		ScreenTraceHit,
+		CameraLocation,
+		CameraEnd,
+		ECC_Visibility,
+		Params
+	);
+	FVector TargetPoint = bHit ? ScreenTraceHit.ImpactPoint : CameraEnd;
+
 	FRotator Rotation;
 	OwnerCharacter->GetActorEyesViewPoint(Start, Rotation);
+	
+	// 목적지 계산
+	FVector DirectionToTarget = (TargetPoint - Start).GetSafeNormal();
 
 	// 탄 퍼짐 계산
-	FVector Spread = FMath::VRandCone(Rotation.Vector(), FMath::DegreesToRadians(CurrentSpreadAngle));
+	FVector Spread = FMath::VRandCone(DirectionToTarget, FMath::DegreesToRadians(CurrentSpreadAngle));
 
 	// Range는 AWeaponBase에서 상속받은 사거리입니다. 현재는 블루프린트 내에서 값을 수정해서 사용하고 있습니다.
 	End = Start + Spread * Range;

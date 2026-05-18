@@ -239,6 +239,8 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 void AHanPlayerCharacter::InputMove(const FInputActionValue& InValue)
 {
+	if (bIsAttacking == true) return; //공격중이면 리턴
+
 	FVector2D MovementVector = InValue.Get<FVector2D>();
 
 	switch (CurrentViewMode)
@@ -462,7 +464,6 @@ void AHanPlayerCharacter::Die()
 	GetMesh()->SetSimulatePhysics(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// 나중에 여기에 사망 애니메이션을 넣을수도 있을것같습니다! - 한기담
 	Destroy();
 }
 
@@ -507,12 +508,6 @@ void AHanPlayerCharacter::StartAttack()
 	{
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
 	}
-
-	// bIsAiming이 false일 때만 자리에 멈추게 합니다.
-	if (bIsAiming == false)
-	{
-		if (GetCharacterMovement()) GetCharacterMovement()->StopMovementImmediately();
-	}
 }
 
 void AHanPlayerCharacter::StopAttack()
@@ -539,7 +534,7 @@ void AHanPlayerCharacter::StartAim()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
 	
-	// 임시로 만들어봄 - 단검일경우 카메라 확대는 안하도록
+	// 근접 무기일경우 조준 모드에서도 카메라 확대는 안하도록
 	if (EquippedWeapon == nullptr) return;
 	EWeaponType CurrentWeapon = EquippedWeapon->GetWeaponType();
 	if (CurrentWeapon == EWeaponType::Dagger || CurrentWeapon == EWeaponType::TwoHandedMelee)
@@ -586,9 +581,28 @@ void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
 
 void AHanPlayerCharacter::PlayAttackMontage_1()
 {
+	bIsAttacking = true;
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+
 	if(CurrentAttack_1_Montage)
 	{
 		PlayAnimMontage(CurrentAttack_1_Montage);
+	}
+
+	// 몽타주가 완전히 끝나는 프레임 타이밍에 센서를 OFF
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst)
+	{
+		FOnMontageEnded MontageEndedDelegate;
+		MontageEndedDelegate.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
+			{
+				bIsAttacking = false; // 애니메이션 끝나면 다시 이동 가능하게끔
+			});
+		AnimInst->Montage_SetEndDelegate(MontageEndedDelegate, CurrentAttack_1_Montage);
 	}
 }
 
