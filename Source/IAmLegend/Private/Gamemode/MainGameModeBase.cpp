@@ -137,7 +137,6 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	//플레이어 탈출 성공 판정
 	if (bIsPlayerEscaped)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player Escaped"));
 		SuccessEscape();
 		GetWorldTimerManager().ClearTimer(StageTimer);
 		
@@ -151,6 +150,7 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	//현재 스테이지 쉘터로 변경
 	UMainGameInstance* GI = Cast<UMainGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 	if (!GI) return;
+	GI->SetbIsStageStarted(false);
 	GI->SetCurrentStage(EStageType::Shelter);
 }
 //스테이지 남은 시간 가져가기
@@ -228,8 +228,10 @@ void AMainGameModeBase::LoadStageLevel(EStageType StageType)
 	if (!GI) return;
 	GI->SetCurrentStage(StageType);
 	
+
 	//TMap에서 키를 통해 현재 맵의 이름 가져오기
 	const FName* LevelName = LevelMapNames.Find(StageType);
 	if (!LevelName) return;
 	UGameplayStatics::OpenLevel(GetWorld(), *LevelName);
+
 }
