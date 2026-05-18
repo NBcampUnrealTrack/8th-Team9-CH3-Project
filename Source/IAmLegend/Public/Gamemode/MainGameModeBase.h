@@ -2,11 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "Gamemode/MainGameStateBase.h"
+#include "Gamemode/MainGameInstance.h"
 #include "MainGameModeBase.generated.h"
 
 class UWidgetComponent;
-class AMainGameStateBase;
 
 UCLASS()
 class IAMLEGEND_API AMainGameModeBase : public AGameModeBase

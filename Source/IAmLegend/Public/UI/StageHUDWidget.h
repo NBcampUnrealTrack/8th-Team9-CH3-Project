@@ -18,6 +18,8 @@ public:
 	class UTextBlock* Text_RemainingTime;
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_KillCount;
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* Text_CurrentStage;
 	
 private:
 	float CurrentRemainingTime;

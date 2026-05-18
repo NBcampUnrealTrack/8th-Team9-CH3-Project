@@ -124,3 +124,8 @@ float AEscapingPoint::GetRemainingEscapingTime() const
 {
 	return GetWorldTimerManager().GetTimerRemaining(EscapeTimer);
 }
+
+float AEscapingPoint::GetMaxEscapingDuration() const
+{
+	return EscapeDuration;
+}
