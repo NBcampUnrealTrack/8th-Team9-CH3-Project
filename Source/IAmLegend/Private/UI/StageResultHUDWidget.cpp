@@ -26,7 +26,6 @@ void UStageResultHUDWidget::OnReturnButtonClicked()
 	AMainGameModeBase* GM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
 	if (!GM) return;
 	GM->LoadStageLevel(EStageType::Shelter);
-	UE_LOG(LogTemp, Warning, TEXT("버튼 눌름"));
 }
 
 void UStageResultHUDWidget::UpdateStageRemainingTime()

@@ -27,9 +27,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Escape|Component")
 	TObjectPtr<UParticleSystemComponent> SmokeParticle;
 	
-	//탈출 대기 시간
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Escape|Time")
-	float EscapeDuration;
+
 	
 	//플레이어 오버랩 및 오버랩 종료 확인
 	UFUNCTION()
@@ -48,6 +46,7 @@ public:
 		int32 OtherBodyIndex);
 	
 	float GetRemainingEscapingTime() const;
+	float GetMaxEscapingDuration() const;
 	
 private:	
 	//탈출 타이머
@@ -56,7 +55,9 @@ private:
 	FTimerHandle LogTimer;
 	void RunLogTimer();
 	
-	
+	//탈출 대기 시간
+	UPROPERTY(EditAnywhere, Category = "Escape|Time")
+	float EscapeDuration;
 	
 	//플레이어 탈출 성공 시 호출
 	void PlayerEscaped();

@@ -5,6 +5,7 @@ UMainGameInstance::UMainGameInstance()
 	bIsGameStarted = false;
 	bIsStageStarted = false;
 	bIsPlayerEscaped = false;
+	CurrentStage = EStageType::Shelter;
 }
 
 void UMainGameInstance::SetbIsGameStarted(bool bStarted)
@@ -36,4 +37,15 @@ void UMainGameInstance::SetbIsPlayerEscaped(bool bEscaped)
 bool UMainGameInstance::GetbIsPlayerEscaped() const
 {
 	return bIsPlayerEscaped;
+}
+
+//현재 스테이지 설정
+void UMainGameInstance::SetCurrentStage(EStageType StageType)
+{
+	CurrentStage = StageType;
+}
+//현재 스테이지 반환
+EStageType UMainGameInstance::GetCurrentStage() const
+{
+	return CurrentStage;
 }

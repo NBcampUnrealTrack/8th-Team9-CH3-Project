@@ -4,6 +4,7 @@
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Gamemode/MainGameInstance.h"
+#include "Gamemode/MainGameStateBase.h"
 
 AMainGameModeBase::AMainGameModeBase()
 {
@@ -123,10 +124,7 @@ void AMainGameModeBase::OnStageTimeUp()
 
 //스테이지 종료, 탈출 성공 실패를 확인
 void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
-{
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	if (!GI) return;
-	
+{	
 	//스테이지 UI 숨김
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (!PC) return;
@@ -151,9 +149,9 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	GetWorldTimerManager().ClearTimer(StageTimer);
 	
 	//현재 스테이지 쉘터로 변경
-	AMainGameStateBase* GS = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
-	if (!GS) return;
-	GS->SetCurrentStage(EStageType::Shelter);
+	UMainGameInstance* GI = Cast<UMainGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (!GI) return;
+	GI->SetCurrentStage(EStageType::Shelter);
 }
 //스테이지 남은 시간 가져가기
 float AMainGameModeBase::GetRemainingStageTime() const
@@ -226,9 +224,9 @@ bool AMainGameModeBase::GetIsStageTimeUp() const
 void AMainGameModeBase::LoadStageLevel(EStageType StageType)
 {
 	//게임 인스턴스에 현재 스테이지 저장
-	AMainGameStateBase* GS = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
-	if (!GS) return;
-	GS->SetCurrentStage(StageType);
+	UMainGameInstance* GI = Cast<UMainGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (!GI) return;
+	GI->SetCurrentStage(StageType);
 	
 	//TMap에서 키를 통해 현재 맵의 이름 가져오기
 	const FName* LevelName = LevelMapNames.Find(StageType);
