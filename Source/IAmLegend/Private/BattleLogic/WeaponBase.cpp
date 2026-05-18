@@ -23,7 +23,6 @@ void AWeaponBase::BeginPlay()
 	WeaponInitFromData();
 
 	// BeginPlay에서 소유자 캐릭터를 미리 캐스팅하여 저장합니다.
-	// 현재는 더미를 기준으로 코드를 작성하였습니다.
 	OwnerCharacter = Cast<AHanPlayerCharacter>(GetOwner());
 
 	if (!OwnerCharacter)
@@ -83,3 +82,24 @@ void AWeaponBase::DestroyWeapon()
 	Destroy();
 }
 
+EWeaponType AWeaponBase::GetWeaponType() const
+{
+	return WeaponType;
+}
+
+
+// 애니메이션 노티파이 함수들은 자식에서 오버라이드하여 자신의 공격을 종료합니다.
+void AWeaponBase::AnimNotify_EndAttack_1()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Attack 1 Animation Ended!"));
+}
+
+void AWeaponBase::AnimNotify_EndAttack_2()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Attack 2 Animation Ended!"));
+}
+
+void AWeaponBase::AnimNotify_EndReload()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Reload Animation Ended!"));
+}

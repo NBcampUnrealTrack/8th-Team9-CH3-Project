@@ -2,6 +2,9 @@
 #include "GameFramework/Character.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Item/UseItemDataAsset.h"
+#include "Blueprint/UserWidget.h"
+#include "Item/InventoryWidget.h"
+#include "Item/InventorySlotWidget.h"
 #include "Gamemode/MainGameInstance.h"
 #include "WeaponDataAsset.h"
 
@@ -13,6 +16,42 @@ UInventoryComponent::UInventoryComponent()
 	// ...
 }
 
+
+void UInventoryComponent::ToggleCraftingUI(bool bShow)
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC) return;
+
+	if (bShow)
+	{
+		if (!CraftingWidget && CraftingWidgetClass)
+		{
+			CraftingWidget = CreateWidget<UUserWidget>(PC, CraftingWidgetClass);
+		}
+
+		if (CraftingWidget)
+		{
+			CraftingWidget->AddToViewport();
+            
+			// 마우스 커서 활성화 및 입력 모드 변경
+			PC->bShowMouseCursor = true;
+			FInputModeGameAndUI InputMode;
+			PC->SetInputMode(InputMode);
+		}
+	}
+	else
+	{
+		if (CraftingWidget)
+		{
+			CraftingWidget->RemoveFromParent();
+            
+			// 다시 게임으로 돌아가기
+			PC->bShowMouseCursor = false;
+			FInputModeGameOnly InputMode;
+			PC->SetInputMode(InputMode);
+		}
+	}
+}
 
 TArray<FItemSlot>& UInventoryComponent::GetActualInventory()
 {
@@ -26,25 +65,52 @@ TArray<FItemSlot>& UInventoryComponent::GetActualInventory()
 	return EmptyInv;
 }
 
-bool UInventoryComponent::AddItem(UItemDataAsset* NewItem)
+bool UInventoryComponent::AddItem(UItemDataAsset* NewItem, int32 Amount)
 {
-	if (!NewItem) return false;
+	// 아이템이 없거나 추가하려는 개수가 0 이하면 바로 리턴
+	if (!NewItem || Amount <= 0) return false;
 
+	//전체 인벤토리 (GameInstance 전역 인벤토리) 업데이트
 	TArray<FItemSlot>& Inv = GetActualInventory();
-	// 이미 인벤토리에 같은 아이템이 있는지 찾기
+	bool bFoundInTotal = false;
+
 	for (FItemSlot& Slot : Inv)
 	{
 		if (Slot.ItemData == NewItem)
 		{
-			Slot.Quantity++;
-			UE_LOG(LogTemp, Log, TEXT("%s 개수 증가! 현재: %d"), *NewItem->ItemName, Slot.Quantity);
-			return true;
+			// 기존에 있던 아이템이면 Amount만큼 더해줌
+			Slot.Quantity += Amount; 
+			UE_LOG(LogTemp, Log, TEXT("%s 전체 개수 %d 증가 (현재 총합: %d)"), 
+				*NewItem->ItemName, Amount, Slot.Quantity);
+			bFoundInTotal = true;
+			break;
 		}
 	}
 
-	// 없다면 새로 추가
-	Inv.Add(FItemSlot(NewItem, 1));
-	return true;
+	if (!bFoundInTotal)
+	{
+		// 새로 추가하는 아이템이면 처음부터 Amount 개수만큼 생성
+		Inv.Add(FItemSlot(NewItem, Amount));
+	}
+
+	// 이번 스테이지 획득 아이템 목록 업데이트 (결과창 등에 활용)
+	bool bFoundInStage = false;
+	for (FItemSlot& Slot : CurrentStageAcquiredItems)
+	{
+		if (Slot.ItemData == NewItem)
+		{
+			Slot.Quantity += Amount; // 여기도 Amount 적용
+			bFoundInStage = true;
+			break;
+		}
+	}
+
+	if (!bFoundInStage)
+	{
+		CurrentStageAcquiredItems.Add(FItemSlot(NewItem, Amount));
+	}
+
+	return true; 
 }
 
 void UInventoryComponent::UseItem(int32 Index)
@@ -77,39 +143,56 @@ void UInventoryComponent::BeginPlay()
 void UInventoryComponent::ShowInventory()
 {
 	TArray<FItemSlot>& Inv = GetActualInventory();
-	UE_LOG(LogTemp , Warning, TEXT("=== Current Inventory Status ==="));
 
-	
+	UE_LOG(LogTemp, Warning,
+		TEXT("=== Current Inventory Status ==="));
+
 	if (Inv.Num() == 0)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Inventory is Empty."));
-		ShowInventoryOnScreen(); // 여기서 한 번만 호출하고 끝냄
-		return; 
-	}
+		UE_LOG(LogTemp, Log,
+			TEXT("Inventory is Empty."));
 
-	
-	TMap<EItemCategory, int32> CategoryCounts;
-	for (const FItemSlot& Slot : Inv)
+		ShowInventoryOnScreen();
+	}
+	else
 	{
-		if (Slot.ItemData)
+		TMap<EItemCategory, int32> CategoryCounts;
+
+		for (const FItemSlot& Slot : Inv)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Item: [%s] | Quantity: %d | Type: %d"), 
-			   *Slot.ItemData->ItemName, Slot.Quantity, (int32)Slot.ItemData->Category);
+			if (Slot.ItemData)
+			{
+				UE_LOG(LogTemp, Log,
+					TEXT("Item: [%s] | Quantity: %d | Type: %d"),
+					*Slot.ItemData->ItemName,
+					Slot.Quantity,
+					(int32)Slot.ItemData->Category);
 
-			CategoryCounts.FindOrAdd(Slot.ItemData->Category) += Slot.Quantity;
+				CategoryCounts.FindOrAdd(
+					Slot.ItemData->Category) += Slot.Quantity;
+			}
 		}
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("--- Summary by Category ---"));
+
+		for (auto& It : CategoryCounts)
+		{
+			FString CategoryName =
+				StaticEnum<EItemCategory>()
+				->GetNameStringByValue((int64)It.Key);
+
+			UE_LOG(LogTemp, Warning,
+				TEXT("%s: %d items"),
+				*CategoryName,
+				It.Value);
+		}
+
+		ShowInventoryOnScreen();
 	}
 
-
-	UE_LOG(LogTemp, Warning, TEXT("--- Summary by Category ---"));
-	for (auto& It : CategoryCounts)
-	{
-		FString CategoryName = StaticEnum<EItemCategory>()->GetNameStringByValue((int64)It.Key);
-		UE_LOG(LogTemp, Warning, TEXT("%s: %d items"), *CategoryName, It.Value);
-	}
-    
 	
-	ShowInventoryOnScreen();
+	DisplayUI();
 }
 
 void UInventoryComponent::ShowInventoryOnScreen()
@@ -138,4 +221,95 @@ void UInventoryComponent::ShowInventoryOnScreen()
 
 	
 	GEngine->AddOnScreenDebugMessage(100, 5.0f, FColor::Cyan, FullInventoryText);
+}
+
+void UInventoryComponent::DisplayUI()
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC) return;
+
+	// 위젯 없으면 생성
+	if (!InventoryWidget)
+	{
+		if (InventoryWidgetClass)
+		{
+			InventoryWidget =
+				CreateWidget<UInventoryWidget>(PC, InventoryWidgetClass);
+
+			if (!InventoryWidget)
+			{
+				return;
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error,
+				TEXT("InventoryWidgetClass가 할당되지 않았습니다!"));
+			return;
+		}
+	}
+
+	// 현재 보이는 상태면 숨김
+	if (bInventoryVisible)
+	{
+		InventoryWidget->RemoveFromParent();
+
+		bInventoryVisible = false;
+
+		PC->bShowMouseCursor = false;
+
+		FInputModeGameOnly InputMode;
+		PC->SetInputMode(InputMode);
+	}
+	else
+	{
+		InventoryWidget->AddToViewport();
+
+		InventoryWidget->RefreshInventory(Inv);
+
+		bInventoryVisible = true;
+
+		PC->bShowMouseCursor = true;
+
+		FInputModeGameAndUI InputMode;
+		InputMode.SetLockMouseToViewportBehavior(
+			EMouseLockMode::DoNotLock);
+
+		PC->SetInputMode(InputMode);
+	}
+}
+
+int32 UInventoryComponent::GetItemQuantity(UItemDataAsset* TargetItem)
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	int32 Total = 0;
+	for (const FItemSlot& Slot : Inv)
+	{
+		if (Slot.ItemData == TargetItem) Total += Slot.Quantity;
+	}
+	return Total;
+}
+
+void UInventoryComponent::RemoveItemQuantity(UItemDataAsset* TargetItem, int32 Amount)
+{
+	TArray<FItemSlot>& Inv = GetActualInventory();
+	for (int32 i = Inv.Num() - 1; i >= 0; i--) // 뒤에서부터 순회하며 삭제
+	{
+		if (Inv[i].ItemData == TargetItem)
+		{
+			if (Inv[i].Quantity > Amount)
+			{
+				Inv[i].Quantity -= Amount;
+				return;
+			}
+			else
+			{
+				Amount -= Inv[i].Quantity;
+				Inv.RemoveAt(i);
+			}
+		}
+		if (Amount <= 0) break;
+	}
 }

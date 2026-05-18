@@ -3,18 +3,26 @@
 
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 #include "WeaponDataAsset.h"
-#include "BattleLogic/Weapon/WeaponProjectileBase.h"
+#include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
+#include "BattleLogic/TrajectoryComponent.h"
 
 AThrowableWeaponBase::AThrowableWeaponBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	WeaponType = EWeaponType::Granade; // 무기 타입 설정
+	TrajectoryComp = CreateDefaultSubobject<UTrajectoryComponent>(TEXT("TrajectoryComponent"));
 }
 
 void AThrowableWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
 	WeaponInitFromData();
+	
+	if(TrajectoryComp)
+	{
+		TrajectoryComp->InitializeTrajectory(ProjectileClass);
+	}
 }
 
 void AThrowableWeaponBase::OnConstruction(const FTransform& Transform)
@@ -54,7 +62,7 @@ void AThrowableWeaponBase::ThrowWeapon()
 
 	// 플레이어의 시점에 따라 투사체의 초기 회전을 설정
 	FRotator SpawnRotation;							 // 주석이 깨져요 ㅠㅠ
-	if (OwnerCharacter)  //�ѱ�� - ���� �κ��� ����ĳ���ͷ� �Ǿ��־ APawn���� �����߽��ϴ�
+	if (OwnerCharacter)
 	{
 		SpawnRotation = OwnerCharacter->GetControlRotation();
 	}
@@ -75,6 +83,13 @@ void AThrowableWeaponBase::ThrowWeapon()
 		SpawnRotation,
 		SpawnParams
 	);
+	OwnerCharacter->UnEquipWeapon(); // 투척 후 무기 해제
+}	
 
-	Destroy();
+void AThrowableWeaponBase::EnableTrajectory(bool bEnable)
+{
+	if (TrajectoryComp)
+	{
+		TrajectoryComp->EnableTrajectory(bEnable);
+	}
 }

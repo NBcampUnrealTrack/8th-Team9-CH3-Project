@@ -12,6 +12,7 @@ enum class EItemCategory : uint8
 	Ranged       UMETA(DisplayName = "Ranged Weapon"),
 	Throwable    UMETA(DisplayName = "Throwable"),
 	Consumable   UMETA(DisplayName = "Item"),
+	Ammo		 UMETA(DisplayName = "Ammo"),
 	ETC          UMETA(DisplayName = "Etc")
 };
 
@@ -36,6 +37,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawn")
 	TSubclassOf<class ABaseItemActor> ItemActorClass;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
+	TObjectPtr<UTexture2D> ItemIcon;
+	
 	
 	// --- 추가: 메쉬 위치/회전 보정값 ---
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
@@ -46,5 +50,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
 	float MeshScale = 1.0f; 
-	;
+	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Info")
+	int32 MaxStackSize = 999;
 };

@@ -4,7 +4,7 @@
 #include "BattleLogic/Weapon/MeleeWeaponBase.h"
 #include "WeaponDataAsset.h"
 #include "Kismet/GameplayStatics.h"
-#include "BattleLogic/Weapon/WeaponProjectileBase.h"
+#include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -13,8 +13,8 @@
 AMeleeWeaponBase::AMeleeWeaponBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	WeaponType = EWeaponType::TwoHandedMelee; // 무기 타입 설정
 	SwingSpeed = 1.f; // 휘두르는 속도
-	AttackDuration = 1.f; // 공격 지속 시간
 	AttackCooldown = .5f; // 공격 간격
 	bIsAttacking = false; // 공격 중인지 여부
 	bIsPressingAttack = false; // 공격 버튼이 눌려있는지 여부 (자동 공격 관리용)
@@ -91,27 +91,18 @@ void AMeleeWeaponBase::StopWeaponAttack()
 
 void AMeleeWeaponBase::ExcuteAttack()
 {
-	// 현재는 타이머 기반으로 동작하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.
+	// 공격이 시작될 때 공격 애니메이션 재생
+	OwnerCharacter->PlayAttackMontage_1();
+
 	// 공격이 시작될 때 타이머를 초기화
-	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 	GetWorldTimerManager().ClearTimer(AttackIntervalTimerHandle);
 
 	bIsAttacking = true;		// 공격 중 상태로 설정
 	SetActorTickEnabled(true);	// 틱을 활성화해 타격 판정 시작
-
-	// 공격 판정이 끝나는 시점을 관리하기 위해 타이머 설정
-	GetWorldTimerManager().SetTimer(
-		AttackTimerHandle,
-		this,
-		&AMeleeWeaponBase::EndAttack,
-		AttackDuration,
-		false
-	);
 }
 
 void AMeleeWeaponBase::AttackTrace()
 {
-	// 공격 범위에 대한 충돌 검사 수행 (현재는 Tick에서 처리하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
 	// 날의 시작과 끝 위치
 	FVector Start = Mesh->GetSocketLocation(FName("Root"));
 	FVector End = Mesh->GetSocketLocation(FName("Tip"));
@@ -191,4 +182,11 @@ void AMeleeWeaponBase::WeaponInitFromData()
 		}
 		*/
 	}
+}
+
+void AMeleeWeaponBase::AnimNotify_EndAttack_1()
+{
+	Super::AnimNotify_EndAttack_1();
+	EndAttack(); // 공격 종료 처리
+	
 }

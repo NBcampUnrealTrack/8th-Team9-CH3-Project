@@ -7,6 +7,8 @@
 #include "InventoryComponent.generated.h"
 
 class UItemDataAsset;
+class UInventoryWidget;
+class UCraftRecipe;
 
 USTRUCT(BlueprintType)
 struct FItemSlot
@@ -33,7 +35,7 @@ public:
 	UInventoryComponent();
     
 	UFUNCTION(BlueprintCallable)
-	bool AddItem(UItemDataAsset* NewItem);
+	bool AddItem(UItemDataAsset* NewItem, int32 Amount = 1);
     
 	UFUNCTION(BlueprintCallable)
 	void UseItem(int32 Index);
@@ -44,6 +46,25 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ShowInventoryOnScreen();
+	
+	UFUNCTION()
+	void DisplayUI();
+	
+	UFUNCTION()
+	int32 GetItemQuantity(UItemDataAsset* TargetItem);
+	
+	UFUNCTION()
+	void RemoveItemQuantity(UItemDataAsset* TargetItem, int32 Amount);
+	
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UUserWidget> CraftingWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> CraftingWidget;
+
+	// 제작 전용 UI 토글 함수
+	void ToggleCraftingUI(bool bShow);
+	
     
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FItemSlot> Inventory;
@@ -51,10 +72,30 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	TArray<FItemSlot>& GetActualInventory();
 	
+	UPROPERTY()
+	bool bInventoryVisible = false;
+	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
+	TArray<TObjectPtr<UCraftRecipe>> KnownRecipes;
        
 protected:
 	UPROPERTY()
 	TObjectPtr<ACharacter> OwnerCharacter;
+	
+	UPROPERTY()
+	TObjectPtr<UInventoryWidget> InventoryWidget;
     
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+	
+	UPROPERTY()
+	TArray<FItemSlot> CurrentStageAcquiredItems;
+	
+public:
+	UFUNCTION()
+	TArray<FItemSlot> GetItemList() const { return CurrentStageAcquiredItems; }
+	
+	
 	virtual void BeginPlay() override;
 };

@@ -19,9 +19,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
 	float SwingSpeed; // 휘두르는 속도
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
-	float AttackDuration; // 공격 지속 시간
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
 	bool bIsAttacking; // 공격 중인지 여부
 
@@ -34,7 +31,6 @@ protected:
 	// 공격 속도에 따라 공격이 끝나는 시점을 관리하기 위한 타이머 핸들
 	// 추후 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.
 	// 현재는 AttackDuration에 따라 타이머의 시간 간격을 조절하여 공격이 끝나는 시점을 관리할 수 있습니다.
-	FTimerHandle AttackTimerHandle;
 	FTimerHandle AttackIntervalTimerHandle; // 자동 공격 관리 타이머 핸들
 	bool bIsPressingAttack; // 공격 버튼이 눌려있는지 여부 (자동 공격 관리용)
 
@@ -54,5 +50,10 @@ public:
 	void AttackTrace();						// 공격 범위에 대한 충돌 검사 수행
 	void ProcessHitResults(const TArray<FHitResult>& HitResults); // 공격 결과 처리 (타격한 액터에 데미지 적용 등)
 	void FinishCooldown();					// 공격 쿨다운 종료 시 호출
+
+	// 애니메이션 노티파이
+	virtual void AnimNotify_EndAttack_1() override;	// 일반 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)	
+	//virtual void AnimNotify_EndAttack_2();	// 조준 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
+	//virtual void AnimNotify_EndReload() override;	// 재장전 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
 	
 };
