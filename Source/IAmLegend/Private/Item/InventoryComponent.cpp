@@ -5,6 +5,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Item/InventoryWidget.h"
 #include "Item/InventorySlotWidget.h"
+#include "Gamemode/MainGameStateBase.h"
 #include "Gamemode/MainGameInstance.h"
 #include "WeaponDataAsset.h"
 
@@ -97,24 +98,20 @@ bool UInventoryComponent::AddItem(UItemDataAsset* NewItem, int32 Amount)
 		Inv.Add(FItemSlot(NewItem, Amount));
 	}
 
-	// 이번 스테이지 획득 아이템 목록 업데이트 (결과창 등에 활용)
-	bool bFoundInStage = false;
-	for (FItemSlot& Slot : CurrentStageAcquiredItems)
+	//Gamestate 장부에 추가
+	if (GetWorld())
 	{
-		if (Slot.ItemData == NewItem)
+		AMainGameStateBase* GameState = GetWorld()->GetGameState<AMainGameStateBase>();
+		if (GameState)
 		{
-			Slot.Quantity += Amount; // 여기도 Amount 적용
-			bFoundInStage = true;
-			break;
+			// GameState에 새로 만든 장부 기록 함수를 호출합니다.
+			GameState->AddStageAcquiredItem(NewItem, Amount);
+          
+			UE_LOG(LogTemp, Log, TEXT("%s 정보를 GameState 장부에 등록 완료!"), *NewItem->ItemName);
 		}
 	}
 
-	if (!bFoundInStage)
-	{
-		CurrentStageAcquiredItems.Add(FItemSlot(NewItem, Amount));
-	}
-
-	return true; 
+	return true;
 }
 
 void UInventoryComponent::UseItem(int32 Index)
