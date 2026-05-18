@@ -9,6 +9,7 @@
 #include "UI/GameOverWidget.h"
 #include "PlayerHealthWidget.h"
 #include "UI/CrosshairWidget.h"
+#include "UI/WeaponInstallationWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 void AMainHUD::BeginPlay()
@@ -30,6 +31,7 @@ void AMainHUD::BeginPlay()
 	{
 		ShowPlayerHealthHUD();
 		ShowCrosshairHUD();
+		ShowWeaponHUD();
 
 		APlayerController* PC = GetOwningPlayerController();
 
@@ -246,5 +248,27 @@ void AMainHUD::HideCrosshairHUD()
 	{
 		CrosshairWidget->RemoveFromParent();
 		CrosshairWidget = nullptr;
+	}
+}
+
+// 무가 UI 함수
+void AMainHUD::ShowWeaponHUD()
+{
+	if (WeaponHUDClass && !WeaponHUDWidget)
+	{
+		WeaponHUDWidget = CreateWidget<UWeaponInstallationWidget>(GetWorld(), WeaponHUDClass);
+		if (WeaponHUDWidget)
+		{
+			WeaponHUDWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideWeaponHUD()
+{
+	if (WeaponHUDWidget)
+	{
+		WeaponHUDWidget->RemoveFromParent();
+		WeaponHUDWidget = nullptr;
 	}
 }

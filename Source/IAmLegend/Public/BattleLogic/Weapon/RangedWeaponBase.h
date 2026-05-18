@@ -71,6 +71,9 @@ protected:
 
 public:
 	ARangedWeaponBase();
+
+	// 김민성 - 총알 개수 확인을 위해 추가
+	int32 GetCurrentAmmo() const { return CurrentAmmo; }
 	
 	virtual void StartWeaponAttack() override;		// 기본 공격 (발사)
 	virtual void StopWeaponAttack() override;		// 기본 공격 종료 (발사 중지)

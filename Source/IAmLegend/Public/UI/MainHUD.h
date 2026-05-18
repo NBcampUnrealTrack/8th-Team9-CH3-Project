@@ -6,7 +6,8 @@
 
 class UPauseMenuWidget; // 전방 선언 (일시정지 메뉴)
 class UPlayerHealthWidget; // 전방 선언(체력바)
-class UCrosshairWidget; // 조준점
+class UCrosshairWidget; // 전방 선언(조준점)
+class UWeaponInstallationWidget; // 전방 선언(무기 상태)
 
 UCLASS()
 class IAMLEGEND_API AMainHUD : public AHUD
@@ -53,7 +54,11 @@ public:
 	// Crosshair UI 관리
 	void ShowCrosshairHUD();
 	void HideCrosshairHUD();
-	
+
+	// 무기 UI 관리
+	void ShowWeaponHUD();
+	void HideWeaponHUD();
+
 protected:
 	//사용할 Widget 클래스 설정
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
@@ -76,6 +81,8 @@ protected:
 	TSubclassOf<UUserWidget> StageResultHUDClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UCrosshairWidget> CrosshairClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UWeaponInstallationWidget> WeaponHUDClass;
 	
 private:
 	
@@ -94,4 +101,6 @@ private:
 	UUserWidget* StageResultHUDWidget;
 	UPROPERTY()
 	UCrosshairWidget* CrosshairWidget;
+	UPROPERTY()
+	UWeaponInstallationWidget* WeaponHUDWidget;
 };

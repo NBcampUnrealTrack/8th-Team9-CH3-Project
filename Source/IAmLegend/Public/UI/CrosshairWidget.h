@@ -11,9 +11,15 @@ UCLASS()
 class IAMLEGEND_API UCrosshairWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	// 히트 마커 함수 선언
+	void ShowHitMarker();
 	
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	virtual void NativeConstruct() override;
 
 	// 크로스헤어 상하좌우 파츠 바인딩
 	UPROPERTY(meta = (BindWidget))
@@ -28,6 +34,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* RightLine;
 
+	// 히트마커 바인딩
+	UPROPERTY(meta = (BindWidget))
+	class UWidget* HitMarker;
+
 private:
 	// 현재 벌어짐 정도와 목표 벌어짐 정도
 	float CurrentSpread = 0.0f;
@@ -35,4 +45,10 @@ private:
 
 	// 기본 벌어짐 수치
 	float BaseSpread = 5.0f;
+
+	// 히트마커를 다시 숨기는 함수
+	void HideHitMarker();
+
+	// 히트마커 표시 후 사라지는 타이머 관리
+	FTimerHandle HitMarkerTimerHandle;
 };
