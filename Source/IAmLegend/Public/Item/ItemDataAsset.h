@@ -8,12 +8,15 @@
 UENUM(BlueprintType)
 enum class EItemCategory : uint8
 {
+	Recovery	 UMETA(DisplayName = "Recovery"),
+	Buff		 UMETA(DisplayName = "Buff"),
+	Gun          UMETA(DisplayName = "Weapon"),
 	Melee        UMETA(DisplayName = "Melee Weapon"),
-	Ranged       UMETA(DisplayName = "Ranged Weapon"),
 	Throwable    UMETA(DisplayName = "Throwable"),
-	Consumable   UMETA(DisplayName = "Item"),
 	Ammo		 UMETA(DisplayName = "Ammo"),
-	ETC          UMETA(DisplayName = "Etc")
+	CraftItem	 UMETA(DisplayName = "Craft Item"),
+	ResultItem   UMETA(DisplayName = "Result Item"),
+	Mission      UMETA(DisplayName = "Mission")
 };
 
 UCLASS(BlueprintType)

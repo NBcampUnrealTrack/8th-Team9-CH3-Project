@@ -35,7 +35,11 @@ void UInventoryComponent::ToggleCraftingUI(bool bShow)
             
 			// 마우스 커서 활성화 및 입력 모드 변경
 			PC->bShowMouseCursor = true;
-			FInputModeGameAndUI InputMode;
+			FInputModeUIOnly InputMode;
+			
+			InputMode.SetWidgetToFocus(CraftingWidget->TakeWidget()); 
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            
 			PC->SetInputMode(InputMode);
 		}
 	}

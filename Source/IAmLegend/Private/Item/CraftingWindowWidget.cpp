@@ -6,7 +6,28 @@
 void UCraftingWindowWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+	
+	bIsFocusable = true;
+	
 	RefreshRecipeList(); // 위젯이 켜질 때 목록 갱신
+}
+
+FReply UCraftingWindowWidget::NativeOnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.GetKey() == EKeys::Escape)
+	{
+		APawn* PlayerPawn = GetOwningPlayerPawn();
+		if (PlayerPawn)
+		{
+			UInventoryComponent* InvenComp = PlayerPawn->FindComponentByClass<UInventoryComponent>();
+			if (InvenComp)
+			{
+				InvenComp->ToggleCraftingUI(false);
+				return FReply::Handled();
+			}
+		}
+	}
+	return Super::NativeOnKeyDown(MyGeometry, InKeyEvent);
 }
 
 void UCraftingWindowWidget::RefreshRecipeList()

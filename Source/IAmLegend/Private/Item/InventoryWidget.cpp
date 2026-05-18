@@ -9,8 +9,8 @@ void UInventoryWidget::RefreshInventory(const TArray<FItemSlot>& Inventory)
 {
 	InventoryGrid->ClearChildren();
 
-	const int32 ColumnCount = 5;
-	const int32 MaxSlotCount = 25;
+	const int32 ColumnCount = 8;
+	const int32 MaxSlotCount = 64;
 
 	for (int32 i = 0; i < MaxSlotCount; i++)
 	{
