@@ -45,11 +45,22 @@ void AShotgunBase::FinishReload()
 	CurrentAmmo = FMath::Min(CurrentAmmo + AmmoPerReload, MaxAmmo);	// 탄약 추가
 	UE_LOG(LogTemp, Warning, TEXT("Shotgun Reloading... Current Ammo: %d / %d"), CurrentAmmo, MaxAmmo);
 
-	// 장전 완료
-	if (CurrentAmmo >= MaxAmmo)
+	UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (!AnimInstance) return;
+
+	UAnimMontage* CurrentMontage = AnimInstance->GetCurrentActiveMontage();
+	if (!CurrentMontage) return;
+
+	if (CurrentAmmo < MaxAmmo)
 	{
-		bIsReloading = false; // 재장전 완료
-		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Current Ammo: %d"), CurrentAmmo);
+		AnimInstance->Montage_SetNextSection(FName("Loop"), FName("Loop"), CurrentMontage);
+		UE_LOG(LogTemp, Log, TEXT("Keep Reloading... Next: Loop"));
+	}
+	else
+	{
+		AnimInstance->Montage_SetNextSection(FName("Loop"), FName("End"), CurrentMontage);
+		bIsReloading = false;
+		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Next: End"));
 	}
 }
 
