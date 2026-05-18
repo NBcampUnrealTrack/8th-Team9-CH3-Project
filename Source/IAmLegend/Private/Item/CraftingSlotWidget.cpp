@@ -12,10 +12,13 @@ void UCraftingSlotWidget::NativeConstruct()
 
 	if (CraftButton)
 	{
+		// [수정] 혹시라도 이미 등록되어 있을지 모를 델리게이트를 안전하게 먼저 제거합니다.
+		CraftButton->OnClicked.RemoveDynamic(this, &UCraftingSlotWidget::OnCraftButtonClicked);
+       
+		// 그 다음 새로 등록합니다.
 		CraftButton->OnClicked.AddDynamic(this, &UCraftingSlotWidget::OnCraftButtonClicked);
 	}
 }
-
 void UCraftingSlotWidget::InitSlot(UCraftRecipe* InRecipe)
 {
 	if (!InRecipe || !InRecipe->ResultItem) return;

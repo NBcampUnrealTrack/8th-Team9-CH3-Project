@@ -79,19 +79,16 @@ void AEscapingPoint::OnCollisionEndOverlap(
 	{
 		//탈출 타이머 초기화
 		GetWorldTimerManager().ClearTimer(EscapeTimer);
-	}
-	
-	//탈출지점 UI 출력
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (PC)
-	{
-		//AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-		//if (HUD)
-		//{
-		//	UE_LOG(LogTemp, Warning, TEXT("탈출 지점 이탈"));
-		//	HUD->HideExtractionHUD();
-		//	
-		//}
+		//탈출지점 UI 제거
+		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+		if (PC)
+		{
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->HideExtractionHUD();
+			}
+		}
 	}
 	
 }
@@ -126,4 +123,9 @@ void AEscapingPoint::RunLogTimer()
 float AEscapingPoint::GetRemainingEscapingTime() const
 {
 	return GetWorldTimerManager().GetTimerRemaining(EscapeTimer);
+}
+
+float AEscapingPoint::GetMaxEscapingDuration() const
+{
+	return EscapeDuration;
 }

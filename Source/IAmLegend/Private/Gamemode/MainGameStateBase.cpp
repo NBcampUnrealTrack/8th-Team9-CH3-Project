@@ -3,11 +3,15 @@
 
 AMainGameStateBase::AMainGameStateBase()
 {
-	KillScore = 0;
-	CurrentStage = 0;
+	KillCount = 0;
 }
-
-void AMainGameStateBase::BeginPlay()
+//플레이어 킬 카운트 증가
+void AMainGameStateBase::AddPlayerKillCount()
 {
-	Super::BeginPlay();
+	++KillCount;
+}
+//플레이어 킬 카운트 반환
+int32 AMainGameStateBase::GetPlayerKillCount() const
+{
+	return KillCount;
 }

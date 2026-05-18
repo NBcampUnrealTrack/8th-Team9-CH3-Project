@@ -5,6 +5,7 @@
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameMode/MainGameModeBase.h"
+#include "Gamemode/MainGameStateBase.h"
 
 void UStageChoiceWidget::NativeConstruct()
 {
@@ -29,7 +30,7 @@ void UStageChoiceWidget::OnHospitalClicked()
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode) 
 	{
-		GameMode->EnterStage(0);
+		GameMode->EnterStage(EStageType::Hospital);
 	}
 	
 }
@@ -47,7 +48,7 @@ void UStageChoiceWidget::OnSchoolClicked()
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode) 
 	{
-		GameMode->EnterStage(1);
+		GameMode->EnterStage(EStageType::School);
 	}
 }
 
@@ -64,7 +65,7 @@ void UStageChoiceWidget::OnPoliceClicked()
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode) 
 	{
-		GameMode->EnterStage(2);
+		GameMode->EnterStage(EStageType::PoliceStation);
 	}
 }
 
@@ -94,6 +95,6 @@ void UStageChoiceWidget::OnBossClicked()
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode)
 	{
-		GameMode->EnterStage(3);
+		GameMode->EnterStage(EStageType::Boss);
 	}
 }

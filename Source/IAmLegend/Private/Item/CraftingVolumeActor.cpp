@@ -3,82 +3,121 @@
 #include "Item/InventoryComponent.h" 
 #include "Components/WidgetComponent.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Character/HanPlayerCharacter.h" // 캐릭터 참조를 위해 필요
+#include "Character/HanPlayerCharacter.h"
 
 ACraftingVolumeActor::ACraftingVolumeActor()
 {
     PrimaryActorTick.bCanEverTick = false;
 
-    // 콜라이더 설정
+    // 콜라이더 및 메쉬 설정
     InteractionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("InteractionSphere"));
     RootComponent = InteractionSphere;
     InteractionSphere->SetSphereRadius(150.f);
     InteractionSphere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 
-    // 메쉬 설정
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
     Mesh->SetupAttachment(RootComponent);
 
-	InteractionWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
-	InteractionWidget->SetupAttachment(RootComponent);
-	InteractionWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
-	InteractionWidget->SetWidgetSpace(EWidgetSpace::Screen);
-	InteractionWidget->SetDrawAtDesiredSize(true);
-	InteractionWidget->SetVisibility(false);
+    // 위젯 설정
+    InteractionWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
+    InteractionWidget->SetupAttachment(RootComponent);
+    InteractionWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
+    InteractionWidget->SetWidgetSpace(EWidgetSpace::Screen);
+    InteractionWidget->SetDrawAtDesiredSize(true);
+    InteractionWidget->SetVisibility(false);
 
- 
+    // 아이템과 동일한 UI 위젯 에셋 바인딩
+    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Item/WBP_interaction.WBP_interaction_C"));
+    if (WidgetClassFinder.Succeeded())
+    {
+        InteractionWidget->SetWidgetClass(WidgetClassFinder.Class);
+    }
 }
 
 void ACraftingVolumeActor::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 오버랩 이벤트 바인딩
     InteractionSphere->OnComponentBeginOverlap.AddDynamic(this, &ACraftingVolumeActor::OnOverlapBegin);
     InteractionSphere->OnComponentEndOverlap.AddDynamic(this, &ACraftingVolumeActor::OnOverlapEnd);
 }
 
 void ACraftingVolumeActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(OtherActor))
-	{
-		// 위젯 띄우기 
-		if (InteractionWidget) InteractionWidget->SetVisibility(true);
-        
-		// 인벤토리 컴포넌트를 찾아서 제작대 UI 실행
-		if (UInventoryComponent* InvComp = Player->FindComponentByClass<UInventoryComponent>())
-		{
-			// true를 전달하여 제작창을 활성화
-			InvComp->ToggleCraftingUI(true);
-			UE_LOG(LogTemp, Log, TEXT("제작대 접촉: 제작 UI 자동 활성화"));
-		}
-	}
+    if (ACharacter* Player = Cast<ACharacter>(OtherActor))
+    {
+        // 인터페이스 기능 호출
+        OnPlayerEntered(Player);
+    }
 }
 
 void ACraftingVolumeActor::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(OtherActor))
-	{
-		// 위젯 숨기기
-		if (InteractionWidget) InteractionWidget->SetVisibility(false);
-        
-		// 제작대를 벗어나면 제작 UI 자동으로 닫기
-		if (UInventoryComponent* InvComp = Player->FindComponentByClass<UInventoryComponent>())
-		{
-			// false를 전달하여 제작창을 비활성화
-			InvComp->ToggleCraftingUI(false);
-			UE_LOG(LogTemp, Log, TEXT("제작대 이탈: 제작 UI 자동 비활성화"));
-		}
-	}
+    if (ACharacter* Player = Cast<ACharacter>(OtherActor))
+    {
+        // 인터페이스 기능 호출
+        OnPlayerExited(Player);
+    }
 }
 
+// 기존 캐릭터가 호출하던 OnInteract를 인터페이스 함수인 Interact로 토스해줍니다.
 void ACraftingVolumeActor::OnInteract(AActor* Interactor)
 {
-    if (!Interactor) return;
-
-    if (UInventoryComponent* InvComp = Interactor->FindComponentByClass<UInventoryComponent>())
+    if (ACharacter* Player = Cast<ACharacter>(Interactor))
     {
-       InvComp->ToggleCraftingUI(true);
-       UE_LOG(LogTemp, Log, TEXT("제작대 상호작용: 제작 UI 호출"));
+        Interact(Player);
+    }
+}
+
+// --- 인터페이스 실제 구현부 ---
+
+// F키를 눌렀을 때 실행될 제작대 본연의 기능
+void ACraftingVolumeActor::Interact(ACharacter* Player)
+{
+    if (!Player) return;
+
+    if (UInventoryComponent* InvComp = Player->FindComponentByClass<UInventoryComponent>())
+    {
+        InvComp->ToggleCraftingUI(true);
+        UE_LOG(LogTemp, Log, TEXT("제작대 상호작용 인터페이스 호출 성공: 제작 UI 활성화"));
+    }
+}
+
+FString ACraftingVolumeActor::InteractionText() const
+{
+    return TEXT("제작대 열기 (F)");
+}
+
+void ACraftingVolumeActor::OnPlayerEntered(ACharacter* Player)
+{
+    if (InteractionWidget)
+    {
+        InteractionWidget->SetVisibility(true);
+    }
+
+    if (AHanPlayerCharacter* HanChar = Cast<AHanPlayerCharacter>(Player))
+    {
+        HanChar->SetTargetItem(this);
+        UE_LOG(LogTemp, Log, TEXT("인터페이스 - 제작대 타겟 설정 완료"));
+    }
+}
+
+void ACraftingVolumeActor::OnPlayerExited(ACharacter* Player)
+{
+    if (InteractionWidget)
+    {
+        InteractionWidget->SetVisibility(false);
+    }
+
+    if (AHanPlayerCharacter* HanChar = Cast<AHanPlayerCharacter>(Player))
+    {
+        HanChar->SetTargetItem(nullptr);
+        UE_LOG(LogTemp, Log, TEXT("인터페이스 - 제작대 타겟 해제"));
+
+        // 멀어지면 UI 닫기
+        if (UInventoryComponent* InvComp = HanChar->FindComponentByClass<UInventoryComponent>())
+        {
+            InvComp->ToggleCraftingUI(false);
+        }
     }
 }

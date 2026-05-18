@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
@@ -35,7 +35,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UInputAction> Aim;
 
-	//ÀÎº¥Åä¸®, »óÈ£ÀÛ¿ë
+	//ì¸ë²¤í† ë¦¬, ìƒí˜¸ì‘ìš©
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UInputAction> Inven;
 
@@ -44,4 +44,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UInputAction> Reload;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UInputAction> ChangeWeapon;
 };

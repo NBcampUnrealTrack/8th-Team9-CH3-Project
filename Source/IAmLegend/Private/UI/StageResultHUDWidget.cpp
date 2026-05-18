@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Gamemode/MainGameStateBase.h"
 
 void UStageResultHUDWidget::NativeConstruct()
 {
@@ -22,7 +23,9 @@ void UStageResultHUDWidget::OnReturnButtonClicked()
 {
 	UGameplayStatics::SetGamePaused(GetWorld(), false);
 	
-	UGameplayStatics::OpenLevel(GetWorld(), FName("Shelter"));
+	AMainGameModeBase* GM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	if (!GM) return;
+	GM->LoadStageLevel(EStageType::Shelter);
 }
 
 void UStageResultHUDWidget::UpdateStageRemainingTime()
@@ -41,10 +44,10 @@ void UStageResultHUDWidget::UpdateStageRemainingTime()
 void UStageResultHUDWidget::UpdateKillCount()
 {
 	
-	AMainGameModeBase* GM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
-	if (GM && Text_KillCount)
+	AMainGameStateBase* GS = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
+	if (GS && Text_KillCount)
 	{
-		FString String = FString::Printf(TEXT("총 처치 수 : %d"), GM->GetPlayerKillCount());
+		FString String = FString::Printf(TEXT("총 처치 수 : %d"), GS->GetPlayerKillCount());
 		Text_KillCount->SetText(FText::FromString(String));
 	}
 	

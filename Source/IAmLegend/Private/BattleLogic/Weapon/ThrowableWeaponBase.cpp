@@ -83,7 +83,7 @@ void AThrowableWeaponBase::ThrowWeapon()
 		SpawnRotation,
 		SpawnParams
 	);
-	OwnerCharacter->UnEquipWeapon(); // 투척 후 무기 해제
+	OwnerCharacter->UnEquipWeapon(WeaponSlot); // 투척 후 무기 해제
 }	
 
 void AThrowableWeaponBase::EnableTrajectory(bool bEnable)

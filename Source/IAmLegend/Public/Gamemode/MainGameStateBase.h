@@ -4,7 +4,6 @@
 #include "GameFramework/GameStateBase.h"
 #include "MainGameStateBase.generated.h"
 
-
 UCLASS()
 class IAMLEGEND_API AMainGameStateBase : public AGameStateBase
 {
@@ -14,10 +13,13 @@ class IAMLEGEND_API AMainGameStateBase : public AGameStateBase
 public:
 	AMainGameStateBase();
 	
-	virtual void BeginPlay() override;
+	//플레이어 킬 카운트 설정 및 전달
+	int32 GetPlayerKillCount() const;
+	void AddPlayerKillCount();
+
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Score")
-	int32 KillScore;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stage")
-	int32 CurrentStage;
+private:
+	int32 KillCount;
+
+	
 };
