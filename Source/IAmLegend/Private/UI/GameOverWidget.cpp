@@ -27,7 +27,7 @@ void UGameOverWidget::NativeConstruct()
 	// 점수 UI 업데이트
 	if (TotalScore && GS)
 	{
-		FString ScoreString = FString::Printf(TEXT("Total Score : % d"), GS->KillScore);
+		FString ScoreString = FString::Printf(TEXT("Total Score : %d"), GS->GetPlayerKillCount());
 		TotalScore->SetText(FText::FromString(ScoreString));
 	}
 

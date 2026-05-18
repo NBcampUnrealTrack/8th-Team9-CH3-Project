@@ -2,6 +2,7 @@
 
 #include "Components/TextBlock.h"
 #include "Gamemode/MainGameModeBase.h"
+#include "Gamemode/MainGameStateBase.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -42,10 +43,10 @@ void UStageHUDWidget::UpdateRemainingTime(float RemainingSeconds)
 
 void UStageHUDWidget::UpdateKillCount()
 {
-	AMainGameModeBase* GM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	AMainGameStateBase* GS = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
 	
-	if (GM)
+	if (GS)
 	{
-		Text_KillCount->SetText(FText::FromString(FString::FromInt(GM->GetPlayerKillCount())));
+		Text_KillCount->SetText(FText::FromString(FString::FromInt(GS->GetPlayerKillCount())));
 	}
 }
