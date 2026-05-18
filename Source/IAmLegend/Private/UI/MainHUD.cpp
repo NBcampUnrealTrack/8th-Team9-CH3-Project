@@ -82,6 +82,14 @@ void AMainHUD::ShowStageHUD()
 	}
 }
 
+void AMainHUD::HideStageHUD()
+{
+	if (StageHUDWidget)
+	{
+		StageHUDWidget->RemoveFromParent();
+	}
+}
+
 void AMainHUD::ShowPlayerHealthHUD()
 {
 	if (PlayerHealthClass && !PlayerHealthWidget)
