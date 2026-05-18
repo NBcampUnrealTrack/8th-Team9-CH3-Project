@@ -7,7 +7,8 @@
 #include "UI/StageHUDWidget.h"
 #include "UI/PauseMenuWidget.h"
 #include "UI/GameOverWidget.h"
-//#include "PlayerHealthWidget.h"
+#include "PlayerHealthWidget.h"
+#include "UI/CrosshairWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 void AMainHUD::BeginPlay()
@@ -28,6 +29,7 @@ void AMainHUD::BeginPlay()
 	else
 	{
 		ShowPlayerHealthHUD();
+		ShowCrosshairHUD();
 
 		APlayerController* PC = GetOwningPlayerController();
 
@@ -62,7 +64,7 @@ void AMainHUD::ShowTitleHUD()
 
 void AMainHUD::HideTitleHUD()
 {
-	TitleHUDWidget->RemoveFromViewport();
+	// TitleHUDWidget->RemoveFromViewport();
 }
 
 void AMainHUD::ShowStageHUD()
@@ -80,39 +82,47 @@ void AMainHUD::ShowStageHUD()
 	}
 }
 
+void AMainHUD::HideStageHUD()
+{
+	if (StageHUDWidget)
+	{
+		StageHUDWidget->RemoveFromParent();
+	}
+}
+
 void AMainHUD::ShowPlayerHealthHUD()
 {
-	////if (PlayerHealthClass && !PlayerHealthWidget)
-	//{
-	//	PlayerHealthWidget = CreateWidget<UPlayerHealthWidget>(GetWorld(), PlayerHealthClass);
-	//	if (PlayerHealthWidget)
-	//	{
-	//		PlayerHealthWidget->AddToViewport();
-	//	}
-	//}
+	if (PlayerHealthClass && !PlayerHealthWidget)
+	{
+		PlayerHealthWidget = CreateWidget<UPlayerHealthWidget>(GetWorld(), PlayerHealthClass);
+		if (PlayerHealthWidget)
+		{
+			PlayerHealthWidget->AddToViewport();
+		}
+	}
 }
 
 void AMainHUD::ShowExtractionHUD()
 {
-	//if (!ExtractionHUDClass) return;
-	//
-	////if (ExtractionHUDWidget == nullptr)
-	//{
-	//	ExtractionHUDWidget = CreateWidget<UUserWidget>(GetWorld(), ExtractionHUDClass);
-	//}
-	//
-	//if (ExtractionHUDWidget)
-	//{
-	//	ExtractionHUDWidget->AddToViewport();
-	//}
+	if (!ExtractionHUDClass) return;
+	
+	if (ExtractionHUDWidget == nullptr)
+	{
+		ExtractionHUDWidget = CreateWidget<UUserWidget>(GetWorld(), ExtractionHUDClass);
+	}
+	
+	if (ExtractionHUDWidget)
+	{
+		ExtractionHUDWidget->AddToViewport();
+	}
 }
 
 void AMainHUD::HideExtractionHUD()
 {
-	//if (ExtractionHUDWidget)
-	//{
-	//	ExtractionHUDWidget->RemoveFromParent();
-	//}
+	if (ExtractionHUDWidget)
+	{
+		ExtractionHUDWidget->RemoveFromParent();
+	}
 }
 
 void AMainHUD::TogglePauseMenu()
@@ -191,5 +201,50 @@ void AMainHUD::ShowGameOverHUD()
 				UGameplayStatics::SetGamePaused(GetWorld(), true); // 게임 일시 정지
 			}
 		}
+	}
+}
+
+void AMainHUD::ShowStageResultHUD()
+{
+	if (!StageResultHUDClass) return;
+	
+	if (StageResultHUDWidget == nullptr)
+	{
+		StageResultHUDWidget = CreateWidget<UUserWidget>(GetWorld(), StageResultHUDClass);
+	}
+	
+	if (StageResultHUDWidget)
+	{
+		StageResultHUDWidget->AddToViewport();
+	}
+}
+
+void AMainHUD::HideStageResultHUD()
+{
+	if (StageResultHUDWidget)
+	{
+		StageResultHUDWidget->RemoveFromParent();
+	}
+}
+
+// 조준점 함수
+void AMainHUD::ShowCrosshairHUD()
+{
+	if (CrosshairClass && !CrosshairWidget)
+	{
+		CrosshairWidget = CreateWidget<UCrosshairWidget>(GetWorld(), CrosshairClass);
+		if (CrosshairWidget)
+		{
+			CrosshairWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideCrosshairHUD()
+{
+	if (CrosshairWidget)
+	{
+		CrosshairWidget->RemoveFromParent();
+		CrosshairWidget = nullptr;
 	}
 }

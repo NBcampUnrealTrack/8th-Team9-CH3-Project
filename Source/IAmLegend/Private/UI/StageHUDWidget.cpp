@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "UI/StageHUDWidget.h"
 
 #include "Components/TextBlock.h"
@@ -24,7 +21,7 @@ void UStageHUDWidget::UpdateStageHUD()
 	
 	if (GM)
 	{
-//		CurrentRemainingTime = GM->GetRemainingStageTime();
+		CurrentRemainingTime = GM->GetRemainingStageTime();
 	}
 	
 	if (Text_RemainingTime)
@@ -32,7 +29,7 @@ void UStageHUDWidget::UpdateStageHUD()
 		Text_RemainingTime->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), FMath::Max(CurrentRemainingTime, 0.0f))));
 	}
 }
-/*
+
 void UStageHUDWidget::UpdateRemainingTime(float RemainingSeconds)
 {
 	CurrentRemainingTime = RemainingSeconds;
@@ -42,13 +39,13 @@ void UStageHUDWidget::UpdateRemainingTime(float RemainingSeconds)
 		Text_RemainingTime->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), FMath::Max(CurrentRemainingTime, 0.0f))));
 	}
 }
-*/
+
 void UStageHUDWidget::UpdateKillCount()
 {
 	AMainGameModeBase* GM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
 	
 	if (GM)
 	{
-		//Text_KillCount->SetText(FText::FromString(FString::FromInt(GM->GetPlayerKillCount())));
+		Text_KillCount->SetText(FText::FromString(FString::FromInt(GM->GetPlayerKillCount())));
 	}
 }
