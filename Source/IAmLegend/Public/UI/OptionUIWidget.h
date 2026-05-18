@@ -10,6 +10,16 @@ UCLASS()
 class IAMLEGEND_API UOptionUIWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+public:
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* VolumeText;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Audio")
+	class USoundMix* MasterSoundMix;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Audio")
+	class USoundClass* MasterSoundClass;
 	
 protected:
 	virtual void NativeConstruct() override;

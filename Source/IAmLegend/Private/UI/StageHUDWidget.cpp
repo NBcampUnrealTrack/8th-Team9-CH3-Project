@@ -32,17 +32,17 @@ void UStageHUDWidget::UpdateStageHUD()
 		Text_RemainingTime->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), FMath::Max(CurrentRemainingTime, 0.0f))));
 	}
 }
-/*
+
 void UStageHUDWidget::UpdateRemainingTime(float RemainingSeconds)
 {
-	CurrentRemainingTime = RemainingSeconds;
+	//CurrentRemainingTime = RemainingSeconds;
 	
-	if (Text_RemainingTime)
-	{
-		Text_RemainingTime->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), FMath::Max(CurrentRemainingTime, 0.0f))));
-	}
+	//if (Text_RemainingTime)
+	//{
+	//	Text_RemainingTime->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), FMath::Max(CurrentRemainingTime, 0.0f))));
+	//}
 }
-*/
+
 void UStageHUDWidget::UpdateKillCount()
 {
 	AMainGameModeBase* GM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));

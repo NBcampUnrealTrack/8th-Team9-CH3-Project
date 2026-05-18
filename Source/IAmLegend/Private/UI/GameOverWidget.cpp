@@ -27,14 +27,14 @@ void UGameOverWidget::NativeConstruct()
 	// 점수 UI 업데이트
 	if (TotalScore && GS)
 	{
-		FString ScoreString = FString::Printf(TEXT("총 점수 : %d"), GS->KillScore);
+		FString ScoreString = FString::Printf(TEXT("Total Score : % d"), GS->KillScore);
 		TotalScore->SetText(FText::FromString(ScoreString));
 	}
 
 	// 좀비 Kill 수 UI 업데이트
 	if (KillCount && GM)
 	{
-	//	FString KillString = FString::Printf(TEXT("처치한 좀비 : %d"), GM->GetPlayerKillCount());
+	//	FString KillString = FString::Printf(TEXT("Total Kill : %d"), GM->GetPlayerKillCount());
 	//	KillCount->SetText(FText::FromString(KillString));
 	}
 }
