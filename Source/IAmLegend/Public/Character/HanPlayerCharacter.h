@@ -47,6 +47,17 @@ public:
 	// PossessedBy는 캐릭터가 컨트롤러에 의해 제어될 때 호출되는 함수이다. 
 	virtual void PossessedBy(AController* NewController) override;
 	
+	// 현재 은신 중인지 상태를 나타내는 센서 플래그 (좀비 AI 시야 차단용)
+	UPROPERTY(BlueprintReadOnly, Category = "Character | Stealth")
+	bool bIsStealth = false;
+
+	// 실시간으로 부드럽게 변할 현재 디더링 수치
+	UPROPERTY(BlueprintReadOnly, Category = "Character | Stealth")
+	float CurrentDitherAlpha = 1.0f;
+
+	// 은신이 켜졌을 때 도달해야하는 목표 디더링 수치 (은신 시 0.1f, 평소 1.0f)
+	float TargetDitherAlpha = 1.0f;
+
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
@@ -150,6 +161,26 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category = "Character | Camera")
 	void PlayCameraZoomOut();
+
+	// 은신 모드 함수 - Q키 키 바인딩 예정
+	UFUNCTION(BlueprintCallable, Category = "Character | Stealth")
+	void ToggleStealthMode();
+
+	// 5초 지났을 때 자동으로 은신을 꺼줄 전용 함수
+	void DisableStealthMode();
+
+	// 쿨타임이 완전히 끝났을 때 스킬을 해제해 줄 전용 함수
+	void ResetStealthCooldown();
+
+	// 5초 뒤에 은신이 알아서 종료되게끔 타이머 핸들
+	FTimerHandle StealthTimerHandle;
+
+	// 은신 종료 후 쿨타임 시간을 관리하는 핸들
+	FTimerHandle StealthCooldownTimerHandle;
+
+	// 현재 쿨타임 도중인지 감시하는 센서 (true면 Q키 차단)
+	bool bIsStealthCooldown = false;
+
 #pragma endregion
 
 #pragma region Input
