@@ -619,6 +619,12 @@ void AHanPlayerCharacter::ChangeWeapon(EWeaponSlot NewSlot)
 
 void AHanPlayerCharacter::StartAttack()
 {
+	if (GetCharacterMovement() && GetCharacterMovement()->IsFalling())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("C++ 시스템: 점프(공중) 상태이므로 사격 입력을 무시합니다."));
+		return;
+	}
+
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
