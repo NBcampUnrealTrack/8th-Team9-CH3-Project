@@ -53,7 +53,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
 	FName MuzzleSocketName; // 총구 소켓 이름
-	
+
+	//----애니메이션----
+	UPROPERTY(EditAnywhere, Category = "Weapon|Ranged|Animation")
+	class UAnimSequence* FireAnimSequence;
+
+
 	bool bIsPressingAttack; // 공격 버튼이 눌려있는지 여부 (자동 발사 관리용)
 	float FireInterval;		// 발사 간격 (초) - FireRate를 기반으로 계산
 	float CoolDownTime;		// 발사 후 쿨다운 시간 (초) - FireRate를 기반으로 계산
