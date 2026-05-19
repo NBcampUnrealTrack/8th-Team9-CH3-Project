@@ -22,7 +22,7 @@ enum class EItemCategory : uint8
 UCLASS(BlueprintType)
 class IAMLEGEND_API UItemDataAsset : public UDataAsset
 {
-	GENERATED_BODY()
+	GENERATED_BODY()  
     
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Info")

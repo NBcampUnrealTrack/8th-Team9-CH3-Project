@@ -41,3 +41,8 @@ void AMainGameStateBase::ClearStageAcquiredItems()
 	// 다음 판을 위해 장부 깔끔하게 비우기
 	StageAcquiredItems.Empty();
 }
+
+TArray<FItemSlot> AMainGameStateBase::GetAcquiredItems() const
+{
+	return StageAcquiredItems;
+}
