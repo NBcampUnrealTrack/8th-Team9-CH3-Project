@@ -22,7 +22,7 @@ ABaseItemActor::ABaseItemActor()
 	InteractionWidget->SetupAttachment(RootComponent); // 루트에 붙임
     
 	// UI 위치 설정 (아이템 살짝 위)
-	InteractionWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f)); 
+	InteractionWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 10.0f)); 
 	
 	
 	//UI 모니터 정면을 향해 그려진다
