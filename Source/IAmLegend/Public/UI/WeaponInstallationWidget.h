@@ -1,4 +1,4 @@
-// WeaponInstallationWidget.h
+ï»¿// WeaponInstallationWidget.h
 
 #pragma once
 
@@ -14,7 +14,7 @@ class IAMLEGEND_API UWeaponInstallationWidget : public UUserWidget
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-	// UI À§Á¬ ¹ÙÀÎµù
+	// UI ìœ„ì ¯ ë°”ì¸ë”©
 	UPROPERTY(meta = (BindWidget))
 	class UImage* WeaponImage;
 

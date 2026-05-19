@@ -5,6 +5,8 @@
 #include "WeaponDataAsset.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Item/InventoryComponent.h"
+#include "Item/ItemDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
@@ -121,6 +123,20 @@ void ARangedWeaponBase::Reload()
 
 	if (!OwnerCharacter || bIsReloading || CurrentAmmo >= MaxAmmo) return; // 이미 재장전 중이거나 탄약이 가득 차 있으면 무시
 
+	// 인벤토리에서 총알 가져와서 사용하기 - 김민성
+	int32 TotalAmmo = 0;
+	TArray<FItemSlot>& Inventory = OwnerCharacter->GetInventoryComponent()->GetActualInventory();
+	for (const FItemSlot& Slot : Inventory)
+	{
+		if (Slot.ItemData && Slot.ItemData->Category == EItemCategory::Ammo)
+		{
+			TotalAmmo += Slot.Quantity;
+		}
+	}
+
+	// 총알 = 0일 시 장전 취소 - 김민성
+	if (TotalAmmo <= 0) return;
+
 	// 재장전 애니메이션 재생
 	OwnerCharacter->PlayReloadMontage();
 	bIsReloading = true;
@@ -130,8 +146,44 @@ void ARangedWeaponBase::Reload()
 
 void ARangedWeaponBase::FinishReload()
 {
-	CurrentAmmo = MaxAmmo; // 탄약 수 초기화
+	if (!OwnerCharacter) return;
+	// ------코드 추가 [김민성]-----------
+	// 채워야 할 총알 개수 계산 및 인벤토리에서 실제 차감
+	int32 AmmoNeeded = MaxAmmo - CurrentAmmo;
+	int32 AmmoToReload = 0;
+
+	TArray<FItemSlot>& Inventory = OwnerCharacter->GetInventoryComponent()->GetActualInventory();
+
+	// 인벤토리 뒤에서부터 검색하여 총알 차감
+	for (int32 i = Inventory.Num() - 1; i >= 0; i--)
+	{
+		if (Inventory[i].ItemData && Inventory[i].ItemData->Category == EItemCategory::Ammo)
+		{
+			// 슬롯에 있는 총알이 필요량보다 많을 때
+			if (Inventory[i].Quantity > AmmoNeeded)
+			{
+				Inventory[i].Quantity -= AmmoNeeded;
+				AmmoToReload += AmmoNeeded;
+				AmmoNeeded = 0;
+				break;
+			}
+			// 슬롯에 있는 총알이 부족하거나 딱 맞을 때 (남은거 다 긁어모으고 슬롯 삭제)
+			else
+			{
+				AmmoToReload += Inventory[i].Quantity;
+				AmmoNeeded -= Inventory[i].Quantity;
+				Inventory.RemoveAt(i);
+			}
+		}
+	}
+
+	// 가방에서 꺼내온 총알 수만큼만 탄창에 추가
+	CurrentAmmo += AmmoToReload;
 	bIsReloading = false;
+	// -----------------
+
+	// CurrentAmmo = MaxAmmo; // 탄약 수 초기화
+	// bIsReloading = false;
 
 	UE_LOG(LogTemp, Log, TEXT("Finished reloading weapon: %s, Current Ammo: %d"), *GetName(), CurrentAmmo);
 }
