@@ -24,5 +24,7 @@ public:
 	
 	void SetSlotData(const FItemSlot& SlotData);
 	
+	void ClearSlot();
+	
 	
 };

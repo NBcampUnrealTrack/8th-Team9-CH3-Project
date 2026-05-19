@@ -4,6 +4,8 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Gamemode/MainGameStateBase.h"
+#include "UI/ItemResultEntryWidget.h"
+#include "Components/HorizontalBox.h"
 
 void UStageResultHUDWidget::NativeConstruct()
 {
@@ -17,6 +19,8 @@ void UStageResultHUDWidget::NativeConstruct()
 	UpdateStageRemainingTime();
 	//죽인 좀비 수 초기화
 	UpdateKillCount();
+	//아이템 목록 출력
+	PopulateAcquiredItems();
 }
 
 void UStageResultHUDWidget::OnReturnButtonClicked()
@@ -35,7 +39,7 @@ void UStageResultHUDWidget::UpdateStageRemainingTime()
 	if (GM && Text_StageRemainingTime)
 	{
 		float CurrentRemainingTime = GM->GetRemainingStageTime();
-		
+		UE_LOG(LogTemp, Warning, TEXT("%f"), CurrentRemainingTime);
 		FString String = FString::Printf(TEXT("스테이지 남은 시간 : %.1f"), FMath::Max(CurrentRemainingTime, 0.0f));
 		Text_StageRemainingTime->SetText(FText::FromString(String));
 	}
@@ -51,4 +55,28 @@ void UStageResultHUDWidget::UpdateKillCount()
 		Text_KillCount->SetText(FText::FromString(String));
 	}
 	
+}
+
+void UStageResultHUDWidget::PopulateAcquiredItems()
+{
+	if (!HB_AcquiredItems || !ItemEntryWidgetClass) return;
+	
+	//기존 항목 초기화
+	HB_AcquiredItems->ClearChildren();
+	
+	AMainGameStateBase* GS = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
+	if (!GS) return;
+	
+	for (const FItemSlot& ItemSlot : GS->GetAcquiredItems())
+	{
+		if (!ItemSlot.ItemData) continue;
+		
+		UItemResultEntryWidget* ItemEntryWidget = CreateWidget<UItemResultEntryWidget>(GetWorld(), ItemEntryWidgetClass);
+		
+		if (ItemEntryWidget)
+		{
+			ItemEntryWidget->InitEntry(ItemSlot.ItemData, ItemSlot.Quantity);
+			HB_AcquiredItems->AddChild(ItemEntryWidget);
+		}
+	}
 }

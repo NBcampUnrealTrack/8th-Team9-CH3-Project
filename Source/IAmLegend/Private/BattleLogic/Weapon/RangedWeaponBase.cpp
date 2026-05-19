@@ -43,8 +43,6 @@ ARangedWeaponBase::ARangedWeaponBase()
 void ARangedWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
-
 	FireInterval = 60.f / FireRate;			// 발사 간격 계산
 	CoolDownTime = FireInterval - 0.015f;	// 발사 후 쿨다운 시간 계산 (오토와 시간이 완전히 동일하면 타이머가 제대로 작동하지 않을 수 있으므로 약간의 여유를 둡니다.)
 	CurrentAmmo = MaxAmmo;					// 초기 탄약 수 설정
@@ -123,8 +121,8 @@ void ARangedWeaponBase::Reload()
 
 	if (!OwnerCharacter || bIsReloading || CurrentAmmo >= MaxAmmo) return; // 이미 재장전 중이거나 탄약이 가득 차 있으면 무시
 
-	OwnerCharacter->PlayAnimMontage(Reload_Montage);
-
+	// 재장전 애니메이션 재생
+	OwnerCharacter->PlayReloadMontage();
 	bIsReloading = true;
 
 	UE_LOG(LogTemp, Log, TEXT("Started reloading weapon: %s"), *GetName());
@@ -165,16 +163,19 @@ void ARangedWeaponBase::HandleFire()
 
 void ARangedWeaponBase::Fire()
 {
-	// 테스트로 무기에서 발사 시 애니메이션 몽타주 재생하는 부분을 추가해봤습니다. 
-	// 추후에 캐릭터에서 발사 시 애니메이션 재생하는 것으로 변경할 예정입니다.
+	if (!OwnerCharacter || !SkeletalMesh) return;
+
+	// 무기에서 발사 시 애니메이션 몽타주 재생하는 부분을 추가했습니다. 
 	OwnerCharacter->PlayAttackMontage_2();
+	if(FireAnimSequence && SkeletalMesh)
+	{
+		SkeletalMesh->PlayAnimation(FireAnimSequence, false);
+	}
 
 	CurrentAmmo--;
 	bIsCoolDown = true;
 	GetWorldTimerManager().SetTimer(CoolDownTimerHandle, this, &ARangedWeaponBase::FinishCooldown, CoolDownTime, false);
 
-	if (!OwnerCharacter) return;
-	
 	// 탄 발사 시 트레이스 계산
 	FVector Start, End;
 	CalculateTrace(Start, End);
