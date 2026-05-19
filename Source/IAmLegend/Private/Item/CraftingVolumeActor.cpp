@@ -27,7 +27,7 @@ ACraftingVolumeActor::ACraftingVolumeActor()
     InteractionWidget->SetVisibility(false);
 
     // 아이템과 동일한 UI 위젯 에셋 바인딩
-    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Item/WBP_interaction.WBP_interaction_C"));
+    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Item/Blueprint/WBP_interaction.WBP_interaction_C"));
     if (WidgetClassFinder.Succeeded())
     {
         InteractionWidget->SetWidgetClass(WidgetClassFinder.Class);
