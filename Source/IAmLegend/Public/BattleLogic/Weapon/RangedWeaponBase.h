@@ -102,7 +102,7 @@ public:
 	bool CanMeleeAttack() const;		// 근접 공격 가능한지 여부 체크
 
 	// 애니메이션 노티파이
-	virtual void AnimNotify_EndAttack_1();	// 일반 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)	
+	virtual void AnimNotify_EndAttack_1() override;	// 일반 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)	
 	//virtual void AnimNotify_EndAttack_2() override;	// 조준 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
 	virtual void AnimNotify_EndReload() override;	// 재장전 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
 };

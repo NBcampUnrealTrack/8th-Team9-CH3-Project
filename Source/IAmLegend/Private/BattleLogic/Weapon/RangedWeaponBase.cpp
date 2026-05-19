@@ -56,7 +56,7 @@ void ARangedWeaponBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!Mesh || !OwnerCharacter) return;
+	if (!SkeletalMesh || !OwnerCharacter) return;
 
 	if (bIsMeleeAttacking)
 	{

@@ -26,12 +26,12 @@ void ATwoHandRangedWeaponBase::BeginPlay()
 
 void ATwoHandRangedWeaponBase::MeleeAttackTrace()
 {
-	if (!OwnerCharacter || !Mesh) return;
+	if (!OwnerCharacter || !SkeletalMesh) return;
 
 	// 찌르기 공격 판정 수행 (현재는 Tick에서 처리하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
 	// 범위 공격 벡터
 	FVector ForwardVector = OwnerCharacter->GetActorForwardVector();
-	float ForwardOffset = FVector::DotProduct(ForwardVector, OwnerCharacter->GetActorLocation() - Mesh->GetComponentLocation());
+	float ForwardOffset = FVector::DotProduct(ForwardVector, OwnerCharacter->GetActorLocation() - SkeletalMesh->GetComponentLocation());
 	FVector Start = OwnerCharacter->GetActorLocation() + ForwardVector * ForwardOffset; // 무기의 위치에서 플레이어의 앞쪽으로 시작 위치 설정
 	FVector End = Start + ForwardVector * MeleeAttackRange; 
 
