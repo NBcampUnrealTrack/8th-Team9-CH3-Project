@@ -10,18 +10,25 @@ void UInventorySlotWidget::SetSlotData(const FItemSlot& SlotData)
 {
 	if (SlotData.ItemData)
 	{
-		ItemIcon->SetBrushFromTexture(
-			SlotData.ItemData->ItemIcon
-		);
+		
+		ItemIcon->SetVisibility(ESlateVisibility::Visible);
+		Quantity->SetVisibility(ESlateVisibility::HitTestInvisible);
 
-		Quantity->SetText(
-			FText::AsNumber(SlotData.Quantity)
-		);
+		ItemIcon->SetBrushFromTexture(SlotData.ItemData->ItemIcon);
+		Quantity->SetText(FText::AsNumber(SlotData.Quantity));
 	}
 	else
 	{
-		ItemIcon->SetBrushFromTexture(nullptr);
-
-		Quantity->SetText(FText::GetEmpty());
+		ClearSlot();
 	}
+}
+
+void UInventorySlotWidget::ClearSlot()
+{
+	ItemIcon->SetBrushFromTexture(nullptr);
+	Quantity->SetText(FText::GetEmpty());
+    
+	
+	ItemIcon->SetVisibility(ESlateVisibility::Collapsed);
+	Quantity->SetVisibility(ESlateVisibility::Collapsed);
 }

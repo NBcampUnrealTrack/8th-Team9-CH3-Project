@@ -21,7 +21,7 @@ ACraftingVolumeActor::ACraftingVolumeActor()
     // 위젯 설정
     InteractionWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("InteractionWidget"));
     InteractionWidget->SetupAttachment(RootComponent);
-    InteractionWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
+    InteractionWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 20.0f));
     InteractionWidget->SetWidgetSpace(EWidgetSpace::Screen);
     InteractionWidget->SetDrawAtDesiredSize(true);
     InteractionWidget->SetVisibility(false);
