@@ -55,10 +55,10 @@ void AThrowableWeaponBase::StartWeaponAttack()
 // 투척 공격
 void AThrowableWeaponBase::ThrowWeapon()
 {
-	if (!ProjectileClass || !OwnerCharacter) return;
+	if (!ProjectileClass || !OwnerCharacter || !SkeletalMesh) return;
 
 	// 칼날의 끝 위치에서 투사체를 생성
-	FVector SpawnLocation = Mesh->GetSocketLocation(FName("Tip"));
+	FVector SpawnLocation = SkeletalMesh->GetSocketLocation(FName("Tip"));
 
 	// 플레이어의 시점에 따라 투사체의 초기 회전을 설정
 	FRotator SpawnRotation;							 // 주석이 깨져요 ㅠㅠ

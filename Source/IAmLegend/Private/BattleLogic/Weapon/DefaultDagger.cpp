@@ -44,7 +44,7 @@ void ADefaultDagger::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!Mesh || !OwnerCharacter) return;
+	if (!SkeletalMesh || !OwnerCharacter) return;
 
 	if (bIsStabbing)
 	{
@@ -109,7 +109,7 @@ void ADefaultDagger::EndStab()
 // 주석 처리된 메쉬 기준 벡터를 사용하면 메쉬의 특정 소켓 위치를 기준으로 찌르기 공격 판정을 수행할 수 있습니다.
 void ADefaultDagger::StabTrace()
 {
-	if (!Mesh || !OwnerCharacter) return;
+	if (!SkeletalMesh || !OwnerCharacter) return;
 
 	// 찌르기 공격 판정 수행 (현재는 Tick에서 처리하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
 	// 범위 공격 벡터

@@ -37,7 +37,7 @@ void AMeleeWeaponBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!Mesh || !OwnerCharacter) return;
+	if (!SkeletalMesh || !OwnerCharacter) return;
 
 	if (bIsAttacking)
 	{
@@ -105,8 +105,8 @@ void AMeleeWeaponBase::ExcuteAttack()
 void AMeleeWeaponBase::AttackTrace()
 {
 	// 날의 시작과 끝 위치
-	FVector Start = Mesh->GetSocketLocation(FName("Root"));
-	FVector End = Mesh->GetSocketLocation(FName("Tip"));
+	FVector Start = SkeletalMesh->GetSocketLocation(FName("Root"));
+	FVector End = SkeletalMesh->GetSocketLocation(FName("Tip"));
 
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams Params;
