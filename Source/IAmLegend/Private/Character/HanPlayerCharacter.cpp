@@ -664,6 +664,17 @@ void AHanPlayerCharacter::StopAim()
 	}
 }
 
+void AHanPlayerCharacter::PlayCameraZoomIn()
+{
+	TargetFOV = AimingFOV;
+}
+
+void AHanPlayerCharacter::PlayCameraZoomOut()
+{
+	TargetFOV = DefaultFOV;
+}
+
+
 // 조준 상태 반환 함수를 추가했습니다.
 bool AHanPlayerCharacter::IsAiming() const
 {
