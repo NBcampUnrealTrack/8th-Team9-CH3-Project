@@ -144,6 +144,12 @@ protected:
 	void StartAim();
 	void StopAim();
 
+	// 연출용 카메라 줌인 함수
+	UFUNCTION(BlueprintCallable, Category = "Character | Camera")
+	void PlayCameraZoomIn();
+
+	UFUNCTION(BlueprintCallable, Category = "Character | Camera")
+	void PlayCameraZoomOut();
 #pragma endregion
 
 #pragma region Input
