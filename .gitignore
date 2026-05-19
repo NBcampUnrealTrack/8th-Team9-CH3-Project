@@ -37,3 +37,5 @@ Saved/
 # --- 시스템 파일 ---
 .DS_Store
 Thumbs.db
+
+Content/BattleLogic/Survival/

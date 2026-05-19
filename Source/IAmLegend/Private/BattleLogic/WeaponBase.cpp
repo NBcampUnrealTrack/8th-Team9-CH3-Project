@@ -11,8 +11,17 @@ AWeaponBase::AWeaponBase()
 	PrimaryActorTick.bStartWithTickEnabled = false; // 시작하자마자 틱이 도는 것을 방지
 	WeaponSlot = EWeaponSlot::None; // 기본 무기 슬롯 설정
 
+	// 무기는 메시를 사용하지 않습니다.
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 평소엔 충돌 없음
 	Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);       // 모든 채널 무시
+	Mesh->SetHiddenInGame(true); // 게임에서는 메시 숨김
+	
+	
+	// 무기는 SkeletalMeshComponent를 사용합니다
+	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
+	SkeletalMesh->SetupAttachment(RootComponent);
+	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 평소엔 충돌 없음
+	SkeletalMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); // 모든 채널 무시
 
 	// 추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.
 	Range = 0.f;
