@@ -235,3 +235,9 @@ void AMainGameModeBase::LoadStageLevel(EStageType StageType)
 	UGameplayStatics::OpenLevel(GetWorld(), *LevelName);
 
 }
+
+//스테이지 제한 시간 전달
+float AMainGameModeBase::GetMaxStageDuration() const
+{
+	return MaxStageDuration;
+}
