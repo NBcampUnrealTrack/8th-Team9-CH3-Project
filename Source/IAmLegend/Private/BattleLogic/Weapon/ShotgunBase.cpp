@@ -26,7 +26,6 @@ AShotgunBase::AShotgunBase()
 void AShotgunBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
 }
 
 void AShotgunBase::StartWeaponAttack()
@@ -45,20 +44,20 @@ void AShotgunBase::FinishReload()
 	CurrentAmmo = FMath::Min(CurrentAmmo + AmmoPerReload, MaxAmmo);	// 탄약 추가
 	UE_LOG(LogTemp, Warning, TEXT("Shotgun Reloading... Current Ammo: %d / %d"), CurrentAmmo, MaxAmmo);
 
-	UAnimInstance* AnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (!AnimInstance) return;
+	UAnimInstance* OwnerAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (!OwnerAnimInstance) return;
 
-	UAnimMontage* CurrentMontage = AnimInstance->GetCurrentActiveMontage();
+	UAnimMontage* CurrentMontage = OwnerAnimInstance->GetCurrentActiveMontage();
 	if (!CurrentMontage) return;
 
 	if (CurrentAmmo < MaxAmmo)
 	{
-		AnimInstance->Montage_SetNextSection(FName("Loop"), FName("Loop"), CurrentMontage);
+		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("Loop"), CurrentMontage);
 		UE_LOG(LogTemp, Log, TEXT("Keep Reloading... Next: Loop"));
 	}
 	else
 	{
-		AnimInstance->Montage_SetNextSection(FName("Loop"), FName("End"), CurrentMontage);
+		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("End"), CurrentMontage);
 		bIsReloading = false;
 		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Next: End"));
 	}
@@ -66,9 +65,13 @@ void AShotgunBase::FinishReload()
 
 void AShotgunBase::Fire()
 {
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter || !SkeletalMesh) return;
 
 	OwnerCharacter->PlayAnimMontage(Attack_2_Montage);
+	if (FireAnimSequence && SkeletalMesh)
+	{
+		SkeletalMesh->PlayAnimation(FireAnimSequence, false);
+	}
 
 	CurrentAmmo--;
 	bIsCoolDown = true;
