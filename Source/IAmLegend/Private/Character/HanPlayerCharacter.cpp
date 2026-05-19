@@ -126,6 +126,14 @@ void AHanPlayerCharacter::Tick(float DeltaTime)
 
 		bLastRotationState = bShouldLookCamera;
 	}
+
+	// 은신 디더링 효과 천천히	 
+	CurrentDitherAlpha = FMath::FInterpTo(CurrentDitherAlpha, TargetDitherAlpha, DeltaTime, 5.0f);
+	UMaterialInstanceDynamic* DynamicMaterial = Cast<UMaterialInstanceDynamic>(GetMesh()->GetMaterial(0));
+	if (DynamicMaterial)
+	{
+		DynamicMaterial->SetScalarParameterValue(FName("Alpha"), CurrentDitherAlpha);
+	}
 }
 
 
@@ -148,7 +156,7 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			PlayerCharacterInputConfig->Move,
 			ETriggerEvent::Triggered,
 			this,
-			&AHanPlayerCharacter::InputMove 
+			&AHanPlayerCharacter::InputMove
 		);
 
 		EnhancedInputComponent->BindAction(
@@ -160,31 +168,31 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		// 달리기 입력 바인딩
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Sprint, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Sprint,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::InputSprintStart
 		);
 
 		EnhancedInputComponent->BindAction(
 			PlayerCharacterInputConfig->Sprint,
-			ETriggerEvent::Completed, 
-			this, 
+			ETriggerEvent::Completed,
+			this,
 			&AHanPlayerCharacter::InputSprintEnd
 		);
 
 		// 점프 입력 바인딩
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Jump, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Jump,
+			ETriggerEvent::Started,
+			this,
 			&ACharacter::Jump
 		);
-		
+
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Jump, 
-			ETriggerEvent::Completed, 
-			this, 
+			PlayerCharacterInputConfig->Jump,
+			ETriggerEvent::Completed,
+			this,
 			&ACharacter::StopJumping
 		);
 
@@ -192,7 +200,7 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			PlayerCharacterInputConfig->Crouch,
 			ETriggerEvent::Started,
 			this,
-			&AHanPlayerCharacter::InputCrouchToggle 
+			&AHanPlayerCharacter::InputCrouchToggle
 		);
 
 		// 공격 
@@ -212,40 +220,40 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		// 조준 
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Aim, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Aim,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::StartAim
 		);
 
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Aim, 
-			ETriggerEvent::Completed, 
-			this, 
+			PlayerCharacterInputConfig->Aim,
+			ETriggerEvent::Completed,
+			this,
 			&AHanPlayerCharacter::StopAim
 		);
 
 		// 인벤토리, 상호작용
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Inven, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Inven,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::InventoryShow
 		);
 
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Interact, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Interact,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::InputInteract
 		);
 
 		// 장전
 		EnhancedInputComponent->BindAction(
 			PlayerCharacterInputConfig->Reload,
-			ETriggerEvent::Started,              
+			ETriggerEvent::Started,
 			this,
-			&AHanPlayerCharacter::InputReload   
+			&AHanPlayerCharacter::InputReload
 		);
 
 		EnhancedInputComponent->BindAction(
@@ -253,6 +261,14 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			ETriggerEvent::Triggered,
 			this,
 			&AHanPlayerCharacter::InputChangeWeapon
+		);
+
+		// 은신
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Stealth,
+			ETriggerEvent::Started,
+			this,
+			&AHanPlayerCharacter::ToggleStealthMode
 		);
 	}
 }
@@ -674,6 +690,38 @@ void AHanPlayerCharacter::PlayCameraZoomOut()
 	TargetFOV = DefaultFOV;
 }
 
+// 은신 스킬 관련 함수들
+void AHanPlayerCharacter::ToggleStealthMode()
+{
+	if (bIsStealth == true) return; // 이미 은신 중이면 리턴
+	if (bIsStealthCooldown == true) return; // 은신이 풀려도 아직 쿨타임 도중이라면 리턴
+
+	bIsStealth = true;
+	TargetDitherAlpha = 0.1f; // 은신이 켜지면 투명화(0.1) 목표 설정
+
+	UE_LOG(LogTemp, Warning, TEXT("은신이 켜짐"));
+
+	// 5초 뒤에 자동으로 은신을 꺼주는 'DisableStealthMode' 함수 예약.
+	GetWorldTimerManager().SetTimer(StealthTimerHandle, this, &AHanPlayerCharacter::DisableStealthMode, 5.0f, false);
+}
+
+void AHanPlayerCharacter::DisableStealthMode()
+{
+	bIsStealth = false;
+	TargetDitherAlpha = 1.0f; // 부드럽게 은신이 풀리기 시작 (Tick에서 InterpTo 처리)
+
+	UE_LOG(LogTemp, Warning, TEXT("은신이 꺼짐. 10초 쿨타임 적용"));
+
+	// 은신이 풀림과 동시에 쿨타임 함수를 실행 해서 10초 동안은 다시 은신 모드로 들어가지 못하게 막음
+	bIsStealthCooldown = true;
+	GetWorldTimerManager().SetTimer(StealthCooldownTimerHandle, this, &AHanPlayerCharacter::ResetStealthCooldown, 10.0f, false);
+}
+
+void AHanPlayerCharacter::ResetStealthCooldown()
+{
+	bIsStealthCooldown = false; // 쿨타임 끝. 다시 은신 가능
+	UE_LOG(LogTemp, Warning, TEXT("다시 은신 사용 가능"));
+}
 
 // 조준 상태 반환 함수를 추가했습니다.
 bool AHanPlayerCharacter::IsAiming() const
