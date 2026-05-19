@@ -50,7 +50,7 @@ public:
 	UFUNCTION()
 	void DisplayUI();
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Ammo")
 	int32 GetItemQuantity(UItemDataAsset* TargetItem);
 	
 	UFUNCTION()
