@@ -23,6 +23,13 @@ public:
 	// 쉘터 복귀 버튼
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Btn_Return;
+	
+	//아이템 목록 담을 공간
+	UPROPERTY(meta = (BindWidget))
+	class UHorizontalBox* HB_AcquiredItems;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UItemResultEntryWidget> ItemEntryWidgetClass;
 
 private:
 	// 쉘터 복귀 버튼 클릭 이벤트
@@ -32,6 +39,7 @@ private:
 	void UpdateStageRemainingTime();
 	// 죽은 좀비 수 업데이트
 	void UpdateKillCount();
-	
+	//아이템 목록 출력
+	void PopulateAcquiredItems();
 
 };

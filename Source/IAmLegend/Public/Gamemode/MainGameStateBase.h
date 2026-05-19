@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "Item/InventoryComponent.h"
 #include "MainGameStateBase.generated.h"
 
 class UItemDataAsset;
@@ -29,6 +30,9 @@ public:
 
 	// 새 스테이지 시작 시 장부를 깨끗하게 비워줄 초기화 함수
 	void ClearStageAcquiredItems();
+	
+	//획득한 아이템 가져가기
+	TArray<FItemSlot> GetAcquiredItems() const;
 	
 private:
 	int32 KillCount;
