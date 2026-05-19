@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "StageHUDWidget.generated.h"
 
+class AMainGameModeBase;
 
 UCLASS()
 class IAMLEGEND_API UStageHUDWidget : public UUserWidget
@@ -30,6 +31,11 @@ private:
 	void UpdateRemainingTime(float RemainingSeconds);
 	//플레이어 킬 정보 업데이트
 	void UpdateKillCount();
+	//시간 포멧 변환
+	FString ConvertToClockTime(float RemainingSeconds) const;
+	//GameMode 캐싱
+	UPROPERTY()
+	AMainGameModeBase* CachedGM;
 	
 	FTimerHandle UpdateTimerHandle;
 };

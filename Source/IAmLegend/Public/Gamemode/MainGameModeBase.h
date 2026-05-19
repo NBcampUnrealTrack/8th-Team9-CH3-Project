@@ -34,6 +34,8 @@ public:
 	bool GetIsStageTimeUp() const;
 	//레벨 불러오기
 	void LoadStageLevel(EStageType StageType);
+	//스테이지 제한 시간 가져오기
+	float GetMaxStageDuration() const;
 
 private:
 	//스테이지 시작
