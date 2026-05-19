@@ -179,6 +179,10 @@ public:
 	void PlayAttackMontage_2();
 	void PlayReloadMontage();
 
+	// 현재 무기, 탄약 개수를 알기위해 Getter 추가 - 김민성
+	class AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
+	class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
 protected:
 	/// 현재 시점 모드
 	EViewMode CurrentViewMode = EViewMode::None;

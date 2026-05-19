@@ -4,6 +4,41 @@
 #include "Components/Image.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Character/HanPlayerCharacter.h"
+#include "TimerManager.h"
+
+void UCrosshairWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	// 게임 시작 시 히트마커는 보이지 않게 숨김 처리
+	if (HitMarker)
+	{
+		HitMarker->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void UCrosshairWidget::ShowHitMarker()
+{
+	if (HitMarker)
+	{
+		// 히트마커 표시
+		HitMarker->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+		// 이전에 작동 중인 타이머가 있다면 초기화 (연속으로 맞출 경우 타이머 갱신)
+		GetWorld()->GetTimerManager().ClearTimer(HitMarkerTimerHandle);
+
+		// 0.2초 후에 HideHitMarker 함수를 실행하여 마커를 숨김 (원하는 시간으로 조절 가능)
+		GetWorld()->GetTimerManager().SetTimer(HitMarkerTimerHandle, this, &UCrosshairWidget::HideHitMarker, 0.2f, false);
+	}
+}
+
+void UCrosshairWidget::HideHitMarker()
+{
+	if (HitMarker)
+	{
+		HitMarker->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
 
 void UCrosshairWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
