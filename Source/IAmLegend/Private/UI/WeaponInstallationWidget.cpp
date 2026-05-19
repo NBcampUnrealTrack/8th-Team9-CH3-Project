@@ -7,7 +7,7 @@
 #include "Character/HanPlayerCharacter.h"
 #include "BattleLogic/Weapon/RangedWeaponBase.h"
 #include "WeaponDataAsset.h"
-// #include "InventoryComponent.h" // 인벤토리 컴포넌트 헤더
+#include "Item/InventoryComponent.h" // 인벤토리 컴포넌트 헤더
 
 void UWeaponInstallationWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
@@ -22,12 +22,12 @@ void UWeaponInstallationWidget::NativeTick(const FGeometry& MyGeometry, float In
 		if (EquippedWeapon)
 		{
 			// 무기 이미지 업데이트 (WeaponDataAsset에 아이콘 정보가 있다면 연결)
-			/* UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(EquippedWeapon->ItemData);
+			UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(EquippedWeapon->ItemData);
 			if (WeaponData && WeaponData->ItemIcon)
 			{
 				WeaponImage->SetBrushFromTexture(WeaponData->ItemIcon);
 			}
-			*/
+			
 
 			// 2. 사격 무기일 경우 총알 수치 업데이트
 			if (ARangedWeaponBase* RangedWeapon = Cast<ARangedWeaponBase>(EquippedWeapon))
@@ -38,9 +38,9 @@ void UWeaponInstallationWidget::NativeTick(const FGeometry& MyGeometry, float In
 				// 현재 장전된 총알
 				CurrentAmmoText->SetText(FText::AsNumber(RangedWeapon->GetCurrentAmmo()));
 
-				// 전체 남은 총알 (인벤토리에서 RequiredAmmoItem의 개수를 가져오는 로직 연결 필요)
-				// int32 TotalAmmo = PlayerCharacter->GetInventoryComponent()->GetItemCount(WeaponData->RequiredAmmoItem);
-				// TotalAmmoText->SetText(FText::AsNumber(TotalAmmo));
+				// 전체 남은 총알
+				int32 TotalAmmo = PlayerCharacter->GetInventoryComponent()->GetItemQuantity(WeaponData->RequiredAmmoItem);
+				TotalAmmoText->SetText(FText::AsNumber(TotalAmmo));
 			}
 			else
 			{
