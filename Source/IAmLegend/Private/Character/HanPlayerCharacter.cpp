@@ -830,3 +830,15 @@ void AHanPlayerCharacter::PlayReloadMontage()
 		PlayAnimMontage(CurrentReloadMontage);
 	}
 }
+
+void AHanPlayerCharacter::SetBaseWalkSpeed(float NewSpeed)
+{
+	BaseWalkSpeed = NewSpeed;
+    
+	// 언리얼 무브먼트 컴포넌트 실시간 속도 변경
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
+}
+
