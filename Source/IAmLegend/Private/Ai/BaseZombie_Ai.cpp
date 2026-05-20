@@ -2,6 +2,7 @@
 
 
 #include "Ai/BaseZombie_Ai.h"
+#include "Character/HanPlayerCharacter.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -60,10 +61,15 @@ void ABaseZombie_Ai::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
 {
     // 본 대상의 태그가 "Player"인지 확인합니다. (플레이어 블루프린트의 Tag에 Player를 추가해야 함)
     if (!BlackboardComp || !Actor) return;
-
+    
     if (Actor->ActorHasTag(TEXT("Player")))
     {
-        if (Stimulus.WasSuccessfullySensed()) // 성공적으로 보였을 때
+        // 플레이어 캐릭터로 형변환(Cast)하여 은신 상태 변수 가져오기 - 한기담
+        AHanPlayerCharacter* PlayerChar = Cast<AHanPlayerCharacter>(Actor);
+
+        // 성공적으로 보였고, '은신 상태가 아닐 때'만 타겟으로 등록합니다. 
+        // 이 부분 조건을 은신 상태도 추가하는걸로 수정했습니다. - 한기담
+        if (Stimulus.WasSuccessfullySensed() && PlayerChar && !PlayerChar->bIsStealth)
         {
             // 블랙보드에 추격할 대상을 기록합니다.
             BlackboardComp->SetValueAsObject(TEXT("TargetActor"), Actor);
