@@ -10,6 +10,7 @@
 #include "PlayerHealthWidget.h"
 #include "UI/CrosshairWidget.h"
 #include "UI/WeaponInstallationWidget.h"
+#include "UI/WeaponSlotWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 void AMainHUD::BeginPlay()
@@ -32,6 +33,7 @@ void AMainHUD::BeginPlay()
 		ShowPlayerHealthHUD();
 		ShowCrosshairHUD();
 		ShowWeaponHUD();
+		ShowWeaponSlotHUD();
 
 		APlayerController* PC = GetOwningPlayerController();
 
@@ -270,5 +272,27 @@ void AMainHUD::HideWeaponHUD()
 	{
 		WeaponHUDWidget->RemoveFromParent();
 		WeaponHUDWidget = nullptr;
+	}
+}
+
+// 무기 슬롯 UI 함수
+void AMainHUD::ShowWeaponSlotHUD()
+{
+	if (WeaponSlotClass && !WeaponSlotWidget)
+	{
+		WeaponSlotWidget = CreateWidget<UWeaponSlotWidget>(GetWorld(), WeaponSlotClass);
+		if (WeaponSlotWidget)
+		{
+			WeaponSlotWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideWeaponSlotHUD()
+{
+	if (WeaponSlotWidget)
+	{
+		WeaponSlotWidget->RemoveFromParent();
+		WeaponSlotWidget = nullptr;
 	}
 }

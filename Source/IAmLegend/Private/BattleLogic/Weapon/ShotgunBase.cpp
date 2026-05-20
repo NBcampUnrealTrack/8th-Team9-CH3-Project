@@ -4,6 +4,8 @@
 #include "BattleLogic/Weapon/ShotgunBase.h"
 #include "WeaponDataAsset.h"
 #include "Character/HanPlayerCharacter.h"
+#include "Item/InventoryComponent.h"
+#include "Item/ItemDataAsset.h"
 #include "Kismet/GameplayStatics.h"
 
 AShotgunBase::AShotgunBase()
@@ -41,6 +43,55 @@ void AShotgunBase::StartWeaponAttack()
 
 void AShotgunBase::FinishReload()
 {
+	// ------코드 추가 [김민성]-----------
+	if (!OwnerCharacter) return;
+
+	// 인벤토리에서 1발(AmmoPerReload)만 빼오기 
+	int32 AmmoToReload = 0;
+	TArray<FItemSlot>& Inventory = OwnerCharacter->GetInventoryComponent()->GetActualInventory();
+
+	for (int32 i = Inventory.Num() - 1; i >= 0; i--)
+	{
+		if (Inventory[i].ItemData && Inventory[i].ItemData->Category == EItemCategory::Ammo)
+		{
+			if (Inventory[i].Quantity >= AmmoPerReload)
+			{
+				Inventory[i].Quantity -= AmmoPerReload;
+				AmmoToReload = AmmoPerReload;
+				break;
+			}
+			else
+			{
+				AmmoToReload = Inventory[i].Quantity;
+				Inventory.RemoveAt(i);
+				break;
+			}
+		}
+	}
+
+	CurrentAmmo += AmmoToReload; // 탄약 추가
+	UE_LOG(LogTemp, Warning, TEXT("Shotgun Reloading... Current Ammo: %d / %d"), CurrentAmmo, MaxAmmo);
+
+	UAnimInstance* OwnerAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (!OwnerAnimInstance) return;
+
+	UAnimMontage* CurrentMontage = OwnerAnimInstance->GetCurrentActiveMontage();
+	if (!CurrentMontage) return;
+
+	if (CurrentAmmo < MaxAmmo && AmmoToReload > 0)
+	{
+		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("Loop"), CurrentMontage);
+		UE_LOG(LogTemp, Log, TEXT("Keep Reloading... Next: Loop"));
+	}
+	else // 탄창이 꽉 찼거나 가방에 더 이상 여분 총알이 없으면 장전 강제 종료
+	{
+		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("End"), CurrentMontage);
+		bIsReloading = false;
+		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Next: End"));
+	}
+	// -----------------
+
+	/*
 	CurrentAmmo = FMath::Min(CurrentAmmo + AmmoPerReload, MaxAmmo);	// 탄약 추가
 	UE_LOG(LogTemp, Warning, TEXT("Shotgun Reloading... Current Ammo: %d / %d"), CurrentAmmo, MaxAmmo);
 
@@ -60,7 +111,7 @@ void AShotgunBase::FinishReload()
 		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("End"), CurrentMontage);
 		bIsReloading = false;
 		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Next: End"));
-	}
+	}*/
 }
 
 void AShotgunBase::Fire()

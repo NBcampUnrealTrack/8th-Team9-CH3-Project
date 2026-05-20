@@ -52,17 +52,17 @@ void AEscapingPoint::OnCollisionOverlap(
 		//탈출 대기 시간 타이머 작동 & 로그 타이머 작동
 		GetWorldTimerManager().SetTimer(EscapeTimer, this, &AEscapingPoint::PlayerEscaped, EscapeDuration, false);
 		GetWorldTimerManager().SetTimer(LogTimer, this, &AEscapingPoint::RunLogTimer, 0.1f, true);
-	}
-	
-	//탈출지점 UI 출력
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (PC)
-	{
-		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-		if (HUD)
+		
+		//탈출지점 UI 출력
+		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+		if (PC)
 		{
-			HUD->ShowExtractionHUD();
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->ShowExtractionHUD();
 			
+			}
 		}
 	}
 }
