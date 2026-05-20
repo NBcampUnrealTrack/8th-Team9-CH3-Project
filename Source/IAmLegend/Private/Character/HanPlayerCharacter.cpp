@@ -443,7 +443,6 @@ void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
 	//  이미 앉아있는 상태라면 무조건 일어서기 시도
 	if (bIsCrouched)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Executing UnCrouch()!"));
 		UnCrouch();
 	}
 	// 서 있는 상태라면 '앉을 수 있는지' 확인 후 앉기
@@ -451,7 +450,6 @@ void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
 	{
 		if (CanCrouch() == true)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Executing Crouch()!"));
 			Crouch();
 		}
 		else
@@ -654,10 +652,8 @@ void AHanPlayerCharacter::ChangeWeapon(EWeaponSlot NewSlot)
 
 void AHanPlayerCharacter::StartAttack()
 {
-	if (GetCharacterMovement() && GetCharacterMovement()->IsFalling())
-	{
-		return;
-	}
+	if (GetCharacterMovement() && GetCharacterMovement()->IsFalling()) return; // 점프중이면 리턴
+	if (bIsCrouched) return; //앉아있는 상태면 리턴
 
 	if (EquippedWeapon)
 	{
