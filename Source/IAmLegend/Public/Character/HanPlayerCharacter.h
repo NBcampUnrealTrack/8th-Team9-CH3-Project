@@ -58,6 +58,9 @@ public:
 	// 은신이 켜졌을 때 도달해야하는 목표 디더링 수치 (은신 시 0.1f, 평소 1.0f)
 	float TargetDitherAlpha = 1.0f;
 
+	// 기본 무기 세팅 Getter 함수
+	TMap<EWeaponSlot, TSubclassOf<AWeaponBase>> GetDefaultWeaponClasses() const { return DefaultWeaponClasses; }
+
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 

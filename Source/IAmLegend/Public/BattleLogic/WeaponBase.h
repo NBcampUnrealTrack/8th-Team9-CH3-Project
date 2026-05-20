@@ -99,4 +99,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Animation")
 	virtual void AnimNotify_EndReload();	// 재장전 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
+
+	// 무기 UI 아이콘 - 김민성
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
+	class UTexture2D* WeaponIcon;
 };
