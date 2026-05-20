@@ -103,4 +103,8 @@ public:
 	// 무기 UI 아이콘 - 김민성
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
 	class UTexture2D* WeaponIcon;
+	
+	// 인벤토리에서 데미지 관련해서 버프주는 아이템에 사용할 겟터 셋터 만들었습니다 - 김준수
+    float GetDamage() const { return Damage; } 
+    void SetDamage(float NewDamage) { Damage = NewDamage; }
 };

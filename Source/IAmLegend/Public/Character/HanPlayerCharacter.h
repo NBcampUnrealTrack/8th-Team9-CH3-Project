@@ -61,10 +61,15 @@ public:
 	// 무기 장착 데이터 맵 반환 Getter 함수
 	const TMap<EWeaponSlot, class AWeaponBase*>& GetWeaponSlots() const { return WeaponSlots; }
 	
-	// 인벤토리에서 쓸 체력 겟터셋터
+	// 인벤토리에서 쓸 체력 및 이속 겟터셋터 
 	float GetHealth() const { return Health; }
 	float GetMaxHealth() const { return MaxHealth; }
 	void SetHealth(float NewHealth) { Health = NewHealth; }
+	float GetBaseWalkSpeed() const { return BaseWalkSpeed; }
+	void SetBaseWalkSpeed(float NewSpeed);
+	float MeleeDamageModifier = 1.0f;
+	TMap<EWeaponSlot, AWeaponBase*>& GetWeaponSlots() { return WeaponSlots; }
+	
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
