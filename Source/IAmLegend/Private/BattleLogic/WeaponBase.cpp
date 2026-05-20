@@ -16,29 +16,26 @@ AWeaponBase::AWeaponBase()
 	Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);       // 모든 채널 무시
 	Mesh->SetHiddenInGame(true); // 게임에서는 메시 숨김
 	
-	
 	// 무기는 SkeletalMeshComponent를 사용합니다
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	SkeletalMesh->SetupAttachment(RootComponent);
 	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 평소엔 충돌 없음
 	SkeletalMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore); // 모든 채널 무시
 
-	// 추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.
-	Range = 0.f;
+	OwnerCharacter = nullptr;
+	WeaponIcon = nullptr;
+
+	// 기본값 설정
+	Damage = 10.0f; 
+	Range = 1000.0f;
+	WeaponType = EWeaponType::None;
+	WeaponSlot = EWeaponSlot::None;
+
 }
 
 void AWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
-
-	// BeginPlay에서 소유자 캐릭터를 미리 캐스팅하여 저장합니다.
-	OwnerCharacter = Cast<AHanPlayerCharacter>(GetOwner());
-
-	if (!OwnerCharacter)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Weapon equipped by a non-player character!"));
-	}
 
 }
 
@@ -46,26 +43,58 @@ void AWeaponBase::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	WeaponInitFromData();
 }
 
 void AWeaponBase::WeaponInitFromData()
 {
-	if (!ItemData) return;
-
 	InitFromData();
 
-	// WeaponDataAsset에서 추가로 초기화할 부분을 여기에 작성하면 됩니다.
-	// 현재는 WeaponDataAsset에 Damage만 작성되어 있어 Damage를 초기화하는 부분만 작성했습니다.
+	// 오너 캐릭터는 이제 WeaponInitFromData에서 설정합니다.
+	OwnerCharacter = Cast<AHanPlayerCharacter>(GetOwner());
+
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Weapon equipped by a non-player character!"));
+	}
+
+	if (!ItemData) return;
+
 	if(UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(ItemData))
 	{
-		if (WeaponData->Damage > 0.f) 
+		Damage = WeaponData->Damage;
+		Range = WeaponData->Range;
+		WeaponType = WeaponData->WeaponType;
+		WeaponSlot = WeaponData->WeaponSlot;
+		
+		if (!WeaponData->WeaponSkeletalMesh.IsNull())
 		{
-			Damage = WeaponData->Damage;
+			USkeletalMesh* LoadedMesh = WeaponData->WeaponSkeletalMesh.LoadSynchronous();
+			if (LoadedMesh)
+			{
+				SkeletalMesh->SetSkeletalMesh(LoadedMesh);
+			}
+
+		}
+		if (WeaponData->Attack_1_Montage)
+		{
+			Attack_1_Montage = WeaponData->Attack_1_Montage;
 		}
 		
+		if(WeaponData->Attack_2_Montage)
+		{
+			Attack_2_Montage = WeaponData->Attack_2_Montage;
+		}
+
+		if(WeaponData->Reload_Montage)
+		{
+			Reload_Montage = WeaponData->Reload_Montage;
+		}
+
+		if(WeaponData->WeaponIcon)
+		{
+			WeaponIcon = WeaponData->WeaponIcon;
+		}
 	}
-	
 }
 
 void AWeaponBase::StartWeaponAttack()

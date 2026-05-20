@@ -5,23 +5,23 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "BattleLogic/Weapon/DataAssets/ThrowableWeaponDataAsset.h"
 
 // Sets default values
 AWeaponProjectileBase::AWeaponProjectileBase()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	
 	PrimaryActorTick.bCanEverTick = false;
 
+	// 기본값 설정
 	CollisionComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("SphereComp"));
-	CollisionRadius = 5.f;
-	CollisionHalfHeight = 50.f;
-	CollisionComp->SetCapsuleSize(CollisionRadius, CollisionHalfHeight);
+	CollisionComp->SetCapsuleSize(5.f, 50.f);
 	CollisionComp->SetCollisionProfileName(TEXT("Projectile"));
 	CollisionComp->SetNotifyRigidBodyCollision(true);
 	CollisionComp->OnComponentHit.AddDynamic(this, &AWeaponProjectileBase::OnHit);
 	RootComponent = CollisionComp;
 
-	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh"));
+	ProjectileMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ProjectileMesh"));
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -41,8 +41,6 @@ AWeaponProjectileBase::AWeaponProjectileBase()
 	LifeSpan = 5.0f;
 
 	bHasHit = false;
-
-	SetLifeSpan(LifeSpan);
 }
 
 // Called when the game starts or when spawned
@@ -55,7 +53,6 @@ void AWeaponProjectileBase::BeginPlay()
 void AWeaponProjectileBase::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	CollisionComp->SetCapsuleSize(CollisionRadius, CollisionHalfHeight);
 }
 
 void AWeaponProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -63,3 +60,48 @@ void AWeaponProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherAct
 	UE_LOG(LogTemp, Warning, TEXT("Projectile hit: %s"), *OtherActor->GetName());
 }
 
+void AWeaponProjectileBase::InitProjectileFromData(UThrowableWeaponDataAsset* ThrowableWeaponData)
+{
+	if (!ThrowableWeaponData) return;
+
+	if (!ThrowableWeaponData->WeaponSkeletalMesh.IsNull())
+	{
+		if (USkeletalMesh* LoadedMesh = ThrowableWeaponData->WeaponSkeletalMesh.LoadSynchronous())
+		{
+			if (ProjectileMesh)
+			{
+				ProjectileMesh->SetSkeletalMesh(LoadedMesh);
+			}
+		}
+	}
+
+	if (ProjectileMesh && CollisionComp)
+	{
+		FBoxSphereBounds MeshBounds = ProjectileMesh->GetSkeletalMeshAsset()->GetBounds();
+		FVector MeshSize = MeshBounds.BoxExtent;
+
+		float AutoRadius = FMath::Max(MeshSize.X, MeshSize.Y);
+		float AutoHalfHeight = MeshSize.Z;
+
+		AutoRadius = FMath::Clamp(AutoRadius, 5.f, 200.f);
+		AutoHalfHeight = FMath::Clamp(AutoHalfHeight, 5.f, 200.f);
+
+		CollisionComp->SetCapsuleSize(AutoRadius, AutoHalfHeight, true);
+	}
+
+	GravityScale = ThrowableWeaponData->GravityScale;
+	InitialSpeed = ThrowableWeaponData->InitialSpeed;
+	MaxSpeed = ThrowableWeaponData->MaxSpeed;
+	bRotationFollowsVelocity = ThrowableWeaponData->bRotationFollowsVelocity;
+	Damage = ThrowableWeaponData->Damage;
+	LifeSpan = ThrowableWeaponData->ProjectileLifeSpan;
+
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->ProjectileGravityScale = GravityScale;
+		ProjectileMovement->InitialSpeed = InitialSpeed;
+		ProjectileMovement->MaxSpeed = MaxSpeed;
+		ProjectileMovement->bRotationFollowsVelocity = bRotationFollowsVelocity;
+	}
+	SetLifeSpan(LifeSpan);
+}

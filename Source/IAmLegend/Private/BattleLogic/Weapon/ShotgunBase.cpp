@@ -7,12 +7,12 @@
 #include "Item/InventoryComponent.h"
 #include "Item/ItemDataAsset.h"
 #include "Kismet/GameplayStatics.h"
+#include "BattleLogic/Weapon/DataAssets/ShotgunDataAsset.h"
 
 AShotgunBase::AShotgunBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
 	WeaponType = EWeaponType::Shotgun; // 무기 타입 설정
-	Range = 10000.f;	// 사거리 10000
 	FireRate = 75.f;	// 분당 75발, 0.8초마다 발사
 	MaxAmmo = 5;
 	RecoilAmount = 0.1f;	// 현재 반동은 자동으로 회복되지 않으므로 고민을 좀 해봐야 할 것 같습니다.
@@ -157,4 +157,17 @@ void AShotgunBase::Fire()
 	GetWorldTimerManager().SetTimer(SpreadRecoveryTimerHandle, this, &ARangedWeaponBase::RecoverSpread, 0.01f, true);
 
 	UE_LOG(LogTemp, Warning, TEXT("Fired weapon: %s, Current Ammo: %d, Current Spread: %f"), *GetName(), CurrentAmmo, CurrentSpreadAngle);
+}
+
+// --------------------------------------------------------
+// 데이터 에셋에서 초기화
+void AShotgunBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (UShotgunDataAsset* ShotgunData = Cast<UShotgunDataAsset>(ItemData))
+	{
+		PelletsPerShot = ShotgunData->PelletsPerShot;
+		AmmoPerReload = ShotgunData->AmmoPerReload;
+	}
 }

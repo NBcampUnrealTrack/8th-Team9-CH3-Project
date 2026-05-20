@@ -5,12 +5,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "BattleLogic/Weapon/DataAssets/ThrowableWeaponDataAsset.h"
 
 ABluntProjectile::ABluntProjectile()
 {
 	LinearDamping = 1.0f;	// 이동 저항 기본값
 	AngularDamping = 2.0f;	// 회전 저항 기본값
-	ImpactDamping = 0.2f;	// 충돌 시 속도 감쇠 계수 기본값
 
 	CollisionComp->SetLinearDamping(LinearDamping);
 	CollisionComp->SetAngularDamping(AngularDamping);
@@ -47,4 +47,22 @@ void ABluntProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 		UGameplayStatics::ApplyDamage(OtherActor, Damage, GetOwner()->GetInstigatorController(), GetOwner(), nullptr);
 	}
 
+}
+
+void ABluntProjectile::InitProjectileFromData(UThrowableWeaponDataAsset* ThrowableWeaponData)
+{
+	Super::InitProjectileFromData(ThrowableWeaponData);
+
+	if(!ThrowableWeaponData)
+	{
+		return;
+	}
+
+	// 데이터 에셋에서 저항 값 설정
+	LinearDamping = ThrowableWeaponData->LinearDamping;
+	AngularDamping = ThrowableWeaponData->AngularDamping;
+	ImpactDamping = ThrowableWeaponData->ImpactDamping;
+
+	CollisionComp->SetLinearDamping(LinearDamping);
+	CollisionComp->SetAngularDamping(AngularDamping);
 }
