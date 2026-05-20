@@ -97,6 +97,26 @@ void AHanPlayerCharacter::BeginPlay()
 			Subsystem->AddMappingContext(PlayerCharacterInputMappingContext, 0);
 		}
 	}
+
+	// 카메라의 포스트 프로세스 머티리얼을 동적 인스턴스로 승격
+	if (CameraComponent)
+	{
+		// 카메라에 등록된 포스트 프로세스 머티리얼 배열(WeightedBlendables)을 가져옴.
+		TArray<FWeightedBlendable> Blendables = CameraComponent->PostProcessSettings.WeightedBlendables.Array;
+
+		if (Blendables.Num() > 0 && Blendables[0].Object)
+		{
+			// 등록된 0번째 머티리얼 에셋을 기반으로 동적 머티리얼(Dynamic)을 생성.
+			UMaterialInterface* BaseMat = Cast<UMaterialInterface>(Blendables[0].Object);
+			if (BaseMat)
+			{
+				PPStealthDynamicMat = UMaterialInstanceDynamic::Create(BaseMat, this);
+
+				// 생성된 동적 머티리얼을 카메라에 다시 꽂아줌
+				CameraComponent->PostProcessSettings.WeightedBlendables.Array[0].Object = PPStealthDynamicMat;
+			}
+		}
+	}
 }
 
 void AHanPlayerCharacter::Tick(float DeltaTime)
@@ -107,7 +127,25 @@ void AHanPlayerCharacter::Tick(float DeltaTime)
 	if (CameraComponent)
 	{
 		CurrentFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, FOVInterpSpeed);
-		CameraComponent->SetFieldOfView(CurrentFOV);
+		// 기본 박동 오프셋은 0으로 초기화
+		float HeartBeatFOVOffset = 0.0f;
+
+		// 은신 카메라 연출을 위한 로직 
+		// TargetDitherAlpha가 0.1f라는 것은 현재 은신중이라는 뜻.
+		if (FMath::IsNearlyEqual(TargetDitherAlpha, 0.1f, 0.01f))
+		{
+			// 4 * x * (1 - x) 공식을 활용한 펄스 생성
+			float HeartBeatPulse = 4.0f * CurrentDitherAlpha * (1.0f - CurrentDitherAlpha);
+
+			// 펄스 값 범위 보정
+			HeartBeatPulse = FMath::Clamp(HeartBeatPulse - 0.3f, 0.0f, 1.0f);
+
+			// 카메라가 순간적으로 좁혀질 강도 설정
+			HeartBeatFOVOffset = HeartBeatPulse * -20.0f;
+		}
+
+		// 최종 FOV 적용 (기본 보간 FOV + 심장 박동 오프셋)
+		CameraComponent->SetFieldOfView(CurrentFOV + HeartBeatFOVOffset);
 	}
 
 	// 현재 속도 및 상태 체크
@@ -165,6 +203,18 @@ void AHanPlayerCharacter::Tick(float DeltaTime)
 				}
 			}
 		}
+	}
+
+	// 포스트 프로세스 머티리얼 파라미터 실시간 제어
+	if (PPStealthDynamicMat)
+	{
+		// CurrentDitherAlpha를 뒤집어서 흑백 강도로 사용.
+		// - 평상시 (CurrentDitherAlpha = 1.0) -> PP_Saturation = 0.0 (원래 컬러 화면)
+		// - 은신시 (CurrentDitherAlpha = 0.1) -> PP_Saturation = 0.9 (90% 흑백 회색조)
+		float TargetPPSaturation = 1.0f - CurrentDitherAlpha;
+
+		// 머티리얼에서 만든 파라미터 이름("PP_Saturation")에 값을 꽂아준다.
+		PPStealthDynamicMat->SetScalarParameterValue(FName("PP_Saturation"), TargetPPSaturation);
 	}
 }
 
@@ -745,7 +795,8 @@ void AHanPlayerCharacter::ToggleStealthMode()
 	if (bIsStealthCooldown == true) return; // 은신이 풀려도 아직 쿨타임 도중이라면 리턴
 
 	bIsStealth = true;
-	TargetDitherAlpha = 0.1f; // 은신이 켜지면 투명화(0.1) 목표 설정
+	TargetDitherAlpha = 0.1f; // 은신이 켜지면 캐릭터, 무기 메시 투명화(0.1) 목표 설정
+	TargetSaturation = 0.1f; // 은신이 켜지면 카메라 채도를 흑백(0.1) 목표 설정
 
 	// 은신을 켰다면 주변 AI들의 타겟을 강제로 초기화해줍니다.
 	if (bIsStealth)
@@ -769,7 +820,8 @@ void AHanPlayerCharacter::ToggleStealthMode()
 void AHanPlayerCharacter::DisableStealthMode()
 {
 	bIsStealth = false;
-	TargetDitherAlpha = 1.0f; // 부드럽게 은신이 풀리기 시작 (Tick에서 InterpTo 처리)
+	TargetDitherAlpha = 1.0f; // 부드럽게 캐릭터와 무기 메시의 은신이 풀리기 시작 (Tick에서 InterpTo 처리)
+	TargetSaturation = 1.0f; // 은신 풀리면 카메라 채도를 정상 채도(1.0) 목표 설정
 
 	UE_LOG(LogTemp, Warning, TEXT("은신이 꺼짐. 10초 쿨타임 적용"));
 
