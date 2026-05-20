@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "BattleLogic/Weapon/DataAssets/PistolDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
@@ -37,11 +38,6 @@ void APistolBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(OwnerCharacter)
-	{
-		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-		DaggerMesh->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, DaggerSocketName);
-	}
 }
 
 // 단검의 찌르기 로직과 동일합니다.
@@ -113,4 +109,36 @@ void APistolBase::ProcessMeleeHits(const TArray<FHitResult>& HitResults)
 			HitActors.Add(HitActor); // 이미 타격한 액터를 추가하여 중복 타격 방지
 		}
 	}
+}
+
+// --------------------------------------------------------
+// 데이터 에셋에서 초기화
+void APistolBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (UPistolDataAsset* PistolData = Cast<UPistolDataAsset>(ItemData))
+	{	
+		MeleeDamage = PistolData->MeleeDamage;
+		DaggerSocketName = PistolData->DaggerSocketName;
+
+		if (!PistolData->DaggerSkeletalMesh.IsNull())
+		{
+			USkeletalMesh* LoadedMesh = PistolData->WeaponSkeletalMesh.LoadSynchronous();
+			if (LoadedMesh)
+			{
+				DaggerMesh->SetSkeletalMesh(LoadedMesh);
+
+				if (OwnerCharacter)
+				{
+					FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+					DaggerMesh->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, DaggerSocketName);
+				}
+			}
+		}
+
+	}
+	
 }

@@ -21,6 +21,8 @@ enum class EWeaponType : uint8
 	TwoHandedMelee,	// 양손 근접 무기
 	OneHandedRanged,	// 한손 원거리 무기
 	TwoHandedRanged,	// 양손 원거리 무기
+
+	None
 };
 
 // 무기 슬롯

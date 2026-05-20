@@ -7,12 +7,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "Item/InventoryComponent.h"
 #include "Item/ItemDataAsset.h"
+#include "BattleLogic/Weapon/DataAssets/RangedWeaponDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 ARangedWeaponBase::ARangedWeaponBase()
 {
-	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	// 기본 값 설정
 	WeaponType = EWeaponType::TwoHandedRanged; // 무기 타입 설정
 	WeaponSlot = EWeaponSlot::Ranged; // 무기 슬롯 설정
 	Range = 10000.f;	// 사거리 10000
@@ -23,20 +24,19 @@ ARangedWeaponBase::ARangedWeaponBase()
 	MaxSpreadAngle = 3.f;
 	SpreadPerShot = 0.4f;		// 탄 퍼짐과 회복 속도는 두 배 정도가 적당한 것 같습니다. 추후 UI에서 확인 하면서 조정하면 좋을 것 같습니다.
 	RecoverySpreadSpeed = 0.8f;	// 무기 별로 다르게 설정가능 합니다
-
 	MuzzleSocketName = "MuzzleSocket";
+	MeleeAttackCooldown = 1.0f;
+	MeleeAttackBoxExtent = FVector(1.f, 40.f, 90.f);
+	MeleeAttackRange = 100.f;
+
 	bIsReloading = false;
 	bIsCoolDown = false;
 	bIsPressingAttack = false;
 	bIsMeleeAttacking = false;
 
-	MeleeAttackCooldown = 1.0f;
-	MeleeAttackBoxExtent = FVector(1.f, 40.f, 90.f);
-	MeleeAttackRange = 100.f;
-
-	// BeginPlay에서 초기화하는 값들
+	// WeaponInitFromData()에서 다시 계산
 	FireInterval = 60.f / FireRate;
-	CoolDownTime = FireInterval - 0.01f; 
+	CoolDownTime = FireInterval - 0.015f; 
 	CurrentAmmo = MaxAmmo;
 	CurrentSpreadAngle = BaseSpreadAngle;
 	
@@ -45,10 +45,6 @@ ARangedWeaponBase::ARangedWeaponBase()
 void ARangedWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	FireInterval = 60.f / FireRate;			// 발사 간격 계산
-	CoolDownTime = FireInterval - 0.015f;	// 발사 후 쿨다운 시간 계산 (오토와 시간이 완전히 동일하면 타이머가 제대로 작동하지 않을 수 있으므로 약간의 여유를 둡니다.)
-	CurrentAmmo = MaxAmmo;					// 초기 탄약 수 설정
-	CurrentSpreadAngle = BaseSpreadAngle;	// 초기 퍼짐 각도 설정
 	
 }
 
@@ -63,18 +59,6 @@ void ARangedWeaponBase::Tick(float DeltaTime)
 		MeleeAttackTrace(); // 근접 공격 판정 수행
 	}
 }
-
-void ARangedWeaponBase::WeaponInitFromData()
-{
-	Super::WeaponInitFromData();
-
-	// WeaponDataAsset에서 추가로 초기화할 부분을 여기에 작성하면 됩니다.
-	if(UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(ItemData))
-	{
-		
-	}
-}
-
 
 void ARangedWeaponBase::StartWeaponAttack()
 {
@@ -421,4 +405,35 @@ void ARangedWeaponBase::AnimNotify_EndReload()
 {
 	Super::AnimNotify_EndReload();
 	FinishReload();
+}
+
+// --------------------------------------------------------
+// 데이터 에셋에서 초기화
+void ARangedWeaponBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (URangedWeaponDataAsset* RangedWeaponData = Cast<URangedWeaponDataAsset>(ItemData))
+	{
+		FireRate = RangedWeaponData->FireRate;
+		MaxAmmo = RangedWeaponData->MaxAmmo;
+		RecoilAmount = RangedWeaponData->RecoilAmount;
+		SpreadPerShot = RangedWeaponData->SpreadPerShot;
+		BaseSpreadAngle = RangedWeaponData->BaseSpreadAngle;
+		MaxSpreadAngle = RangedWeaponData->MaxSpreadAngle;
+		RecoverySpreadSpeed = RangedWeaponData->RecoverySpreadSpeed;
+		MeleeAttackCooldown = RangedWeaponData->MeleeAttackCooldown;
+		MeleeAttackBoxExtent = RangedWeaponData->MeleeAttackBoxExtent;
+		MeleeAttackRange = RangedWeaponData->MeleeAttackRange;
+		MuzzleSocketName = RangedWeaponData->MuzzleSocketName;
+		FireAnimSequence = RangedWeaponData->FireAnimSequence;
+
+		// 데이터 에셋에서 불러온 값으로 발사 간격과 쿨다운 시간 계산
+		FireInterval = 60.f / FireRate;
+		CoolDownTime = FireInterval - 0.015f;
+		CurrentAmmo = MaxAmmo;
+		CurrentSpreadAngle = BaseSpreadAngle;
+	}
 }

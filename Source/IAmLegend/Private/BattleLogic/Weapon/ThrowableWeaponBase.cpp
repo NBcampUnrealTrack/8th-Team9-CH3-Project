@@ -6,6 +6,7 @@
 #include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
 #include "BattleLogic/TrajectoryComponent.h"
+#include "BattleLogic/Weapon/DataAssets/ThrowableWeaponDataAsset.h"
 
 AThrowableWeaponBase::AThrowableWeaponBase()
 {
@@ -17,7 +18,6 @@ AThrowableWeaponBase::AThrowableWeaponBase()
 void AThrowableWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
 	
 	if(TrajectoryComp)
 	{
@@ -28,16 +28,6 @@ void AThrowableWeaponBase::BeginPlay()
 void AThrowableWeaponBase::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-}
-
-void AThrowableWeaponBase::WeaponInitFromData()
-{
-	Super::WeaponInitFromData();
-	// WeaponDataAsset에서 추가로 초기화할 부분을 여기에 작성하면 됩니다.
-	if(UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(ItemData))
-	{
-		
-	}
 }
 
 void AThrowableWeaponBase::StartWeaponAttack()
@@ -91,5 +81,17 @@ void AThrowableWeaponBase::EnableTrajectory(bool bEnable)
 	if (TrajectoryComp)
 	{
 		TrajectoryComp->EnableTrajectory(bEnable);
+	}
+}
+
+void AThrowableWeaponBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (UThrowableWeaponDataAsset* ThrowableWeaponData = Cast<UThrowableWeaponDataAsset>(ItemData))
+	{
+		ProjectileClass = ThrowableWeaponData->ProjectileClass;
 	}
 }
