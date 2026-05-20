@@ -14,35 +14,36 @@ void UWeaponSlotWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 	if (!PlayerCharacter) return;
 
 	// 내부 람다 함수 (CDO에서 아이콘 추출)
-	auto UpdateSlotIcon = [](UImage* TargetImage, TSubclassOf<AWeaponBase> WeaponClass)
+	auto UpdateSlotIcon = [](UImage* TargetImage, AWeaponBase* WeaponActor)
 		{
 			if (TargetImage)
 			{
-				if (WeaponClass)
+				// 무기 액터가 실제로 존재하고(nullptr 방어), 그 무기에 아이콘 이미지가 등록되어 있다면
+				if (WeaponActor && WeaponActor->WeaponIcon)
 				{
-					// 스폰되지 않은 클래스 원본(CDO)에서 직접 아이콘 변수에 접근
-					AWeaponBase* CDO = WeaponClass->GetDefaultObject<AWeaponBase>();
-					if (CDO && CDO->WeaponIcon)
-					{
-						TargetImage->SetBrushFromTexture(CDO->WeaponIcon);
-						TargetImage->SetVisibility(ESlateVisibility::Visible);
-						return;
-					}
+					TargetImage->SetBrushFromTexture(WeaponActor->WeaponIcon);
+					TargetImage->SetVisibility(ESlateVisibility::Visible);
 				}
-				// 무기가 비어있으면 투명하게 처리
-				TargetImage->SetVisibility(ESlateVisibility::Hidden);
+				else
+				{
+					// 해당 슬롯에 무기가 없으면 슬롯 이미지를 숨김 처리
+					TargetImage->SetVisibility(ESlateVisibility::Hidden);
+				}
 			}
 		};
 
 	// 캐릭터의 기본 무기 세팅 목록 가져와서 등록
-	TMap<EWeaponSlot, TSubclassOf<AWeaponBase>> WeaponClasses = PlayerCharacter->GetDefaultWeaponClasses();
+	const TMap<EWeaponSlot, AWeaponBase*>& ActiveWeaponSlots = PlayerCharacter->GetWeaponSlots();
 
-	if (WeaponClasses.Contains(EWeaponSlot::Melee))
-		UpdateSlotIcon(Slot1_Image, WeaponClasses[EWeaponSlot::Melee]);
+	// 1번 근접 무기 슬롯 실시간 체크 및 UI 업데이트
+	AWeaponBase* MeleeWeapon = ActiveWeaponSlots.Contains(EWeaponSlot::Melee) ? ActiveWeaponSlots[EWeaponSlot::Melee] : nullptr;
+	UpdateSlotIcon(Slot1_Image, MeleeWeapon);
 
-	if (WeaponClasses.Contains(EWeaponSlot::Ranged))
-		UpdateSlotIcon(Slot2_Image, WeaponClasses[EWeaponSlot::Ranged]);
+	// 2번 원거리 무기 슬롯 실시간 체크 및 UI 업데이트
+	AWeaponBase* RangedWeapon = ActiveWeaponSlots.Contains(EWeaponSlot::Ranged) ? ActiveWeaponSlots[EWeaponSlot::Ranged] : nullptr;
+	UpdateSlotIcon(Slot2_Image, RangedWeapon);
 
-	if (WeaponClasses.Contains(EWeaponSlot::Dagger))
-		UpdateSlotIcon(Slot3_Image, WeaponClasses[EWeaponSlot::Dagger]);
+	// 3번 단검 무기 슬롯 실시간 체크 및 UI 업데이트
+	AWeaponBase* DaggerWeapon = ActiveWeaponSlots.Contains(EWeaponSlot::Dagger) ? ActiveWeaponSlots[EWeaponSlot::Dagger] : nullptr;
+	UpdateSlotIcon(Slot3_Image, DaggerWeapon);
 }
