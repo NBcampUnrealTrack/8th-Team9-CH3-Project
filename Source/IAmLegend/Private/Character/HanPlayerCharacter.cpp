@@ -13,9 +13,7 @@
 #include "UI/MainHUD.h"
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 #include "BattleLogic/Weapon/RangedWeaponBase.h"
-#include "Ai/BaseZombie_Ai.h"
-#include "EngineUtils.h"
-#include "BehaviorTree/BlackboardComponent.h"
+#include "WeaponDataAsset.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -72,12 +70,12 @@ void AHanPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	// 시작 시 무기 장착
-	for (const TPair<EWeaponSlot, TSubclassOf<AWeaponBase>>& Elem : DefaultWeaponClasses)
+	for (const TPair<EWeaponSlot, UItemDataAsset*>& Elem : DefaultWeaponDataAssets)
 	{
-		TSubclassOf<AWeaponBase> WeaponClass = Elem.Value;
-		if (IsValid(WeaponClass))
+		UItemDataAsset* WeaponData = Elem.Value;
+		if (IsValid(WeaponData))
 		{
-			EquipWeapon(WeaponClass);
+			EquipWeapon(WeaponData);
 		}
 	}
 
@@ -539,24 +537,23 @@ void AHanPlayerCharacter::Die()
 	Destroy();
 }
 
-void AHanPlayerCharacter::EquipWeapon(TSubclassOf<AWeaponBase> NewWeaponClass)
+void AHanPlayerCharacter::EquipWeapon(UItemDataAsset* NewWeaponData)
 {
-	if (!NewWeaponClass)
+	if (!NewWeaponData)
 	{
 		return;
 	}
 	
-	// 무기 클래스의 CDO를 가져와서 슬롯 정보를 확인
-	const AWeaponBase* WeaponCDO = GetDefault<AWeaponBase>(NewWeaponClass);
-	if (!WeaponCDO) return;
+	UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(NewWeaponData);
+	TSubclassOf<AWeaponBase> NewWeaponClass = WeaponData->WeaponActorClass;
+
+	if (!NewWeaponClass) return;
 
 	// 이미 해당 슬롯에 무기가 존재한다면 기존 무기를 제거
-	EWeaponSlot NewSlot = WeaponCDO->GetWeaponSlot();
+	EWeaponSlot NewSlot = WeaponData->WeaponSlot;
 	if (WeaponSlots.Contains(NewSlot))
 	{
-		// 차재현
-		// 현재는 액터를 파괴합니다.
-		// 추후에 인벤토리에 다시 넣는 방식으로 변경할 수 있습니다.
+		// 기존 무기는 인벤토리에 추가됩니다.
 		UnEquipWeapon(NewSlot);
 	}
 
@@ -564,10 +561,22 @@ void AHanPlayerCharacter::EquipWeapon(TSubclassOf<AWeaponBase> NewWeaponClass)
 	SpawnParams.Owner = this;
 	SpawnParams.Instigator = GetInstigator();
 
-	// 무기 생성
-	AWeaponBase* SpawnedWeapon = GetWorld()->SpawnActor<AWeaponBase>(NewWeaponClass, SpawnParams);
+	// 무기 생성 (데이터 에셋을 등록하기 위해 지연 스폰을 사용)
+	AWeaponBase* SpawnedWeapon = GetWorld()->SpawnActorDeferred<AWeaponBase>(
+		NewWeaponClass,
+		FTransform::Identity,
+		this,
+		GetInstigator(),
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+	);
+
 	if (SpawnedWeapon)
 	{
+		// 생성된 무기에 데이터 에셋의 정보를 전달 및 초기화
+		SpawnedWeapon->ItemData = NewWeaponData;
+		SpawnedWeapon->WeaponInitFromData();
+		SpawnedWeapon->FinishSpawning(FTransform::Identity);
+
 		WeaponSlots.Add(NewSlot, SpawnedWeapon);
 
 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
@@ -580,7 +589,7 @@ void AHanPlayerCharacter::EquipWeapon(TSubclassOf<AWeaponBase> NewWeaponClass)
 		// 현재 장착된 무기가 없을 때만 새로 장착한 무기로 변경
 		if (CurrentWeaponSlot == EWeaponSlot::None)
 		{
-			//ChangeWeapon(NewSlot);
+			ChangeWeapon(NewSlot);
 		}
 	}
 }
@@ -610,6 +619,9 @@ void AHanPlayerCharacter::UnEquipWeapon(EWeaponSlot RemoveSlot)
 				CurrentReloadMontage = nullptr;
 			}
 		}
+
+		// 무기 해제 시 인벤토리에 아이템 데이터 추가
+		InventoryComponent->AddItem(WeaponToRemove->ItemData);
 
 		WeaponToRemove->DestroyWeapon(); 
 		WeaponSlots.Remove(RemoveSlot);
@@ -732,28 +744,14 @@ void AHanPlayerCharacter::PlayCameraZoomOut()
 // 은신 스킬 관련 함수들
 void AHanPlayerCharacter::ToggleStealthMode()
 {
-	UE_LOG(LogTemp, Warning, TEXT("은신이 켜짐"));
 	if (bIsStealth == true) return; // 이미 은신 중이면 리턴
 	if (bIsStealthCooldown == true) return; // 은신이 풀려도 아직 쿨타임 도중이라면 리턴
 
 	bIsStealth = true;
 	TargetDitherAlpha = 0.1f; // 은신이 켜지면 투명화(0.1) 목표 설정
-	
-	// 은신을 켰다면 주변 AI들의 타겟을 강제로 초기화해줍니다.
-	if (bIsStealth)
-	{
-		// 월드에 있는 모든 좀비 AI 컨트롤러를 찾아서 TargetActor를 비웁니다.
-		for (TActorIterator<ABaseZombie_Ai> It(GetWorld()); It; ++It)
-		{
-			ABaseZombie_Ai* ZombieAI = *It;
-			if (ZombieAI && ZombieAI->GetBlackboardComponent())
-			{
-				// 은신을 켰으므로 좀비들의 타겟에서 나를 지워버립니다.
-				ZombieAI->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), nullptr);
-			}
-		}
-	}
-	
+
+	UE_LOG(LogTemp, Warning, TEXT("은신이 켜짐"));
+
 	// 5초 뒤에 자동으로 은신을 꺼주는 'DisableStealthMode' 함수 예약.
 	GetWorldTimerManager().SetTimer(StealthTimerHandle, this, &AHanPlayerCharacter::DisableStealthMode, 5.0f, false);
 }
@@ -847,3 +845,15 @@ void AHanPlayerCharacter::PlayReloadMontage()
 		PlayAnimMontage(CurrentReloadMontage);
 	}
 }
+
+void AHanPlayerCharacter::SetBaseWalkSpeed(float NewSpeed)
+{
+	BaseWalkSpeed = NewSpeed;
+    
+	// 언리얼 무브먼트 컴포넌트 실시간 속도 변경
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
+}
+

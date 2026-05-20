@@ -25,19 +25,6 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UCraftRecipe> TargetRecipe;
 	
-	// --- 재료 1 ---
-	UPROPERTY(meta = (BindWidget))
-	class UImage* Ingredient_1_Icon;
-
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Ingredient_1_Count;
-
-	// --- 재료 2 ---
-	UPROPERTY(meta = (BindWidget))
-	class UImage* Ingredient_2_Icon;
-
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* Ingredient_2_Count;
 
 	// --- 결과물 및 버튼 ---
 	UPROPERTY(meta = (BindWidget))
@@ -49,6 +36,15 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* CraftButton;
 
+	
+	// 재료 위젯들이 동적으로 추가될 컨테이너 (Horizontal Box 추천)
+	UPROPERTY(meta = (BindWidget))
+	class UHorizontalBox* IngredientContainer;
+	
+	// 생성할 개별 재료 위젯의 클래스 (에디터에서 지정)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	TSubclassOf<class UIngredientSlotWidget> IngredientWidgetClass;
+	
 	// 제작 버튼 클릭 시 실행될 함수
 	UFUNCTION()
 	void OnCraftButtonClicked();

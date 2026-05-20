@@ -62,3 +62,8 @@ void ASharpProjectile::AttachToHitActor(AActor* OtherActor, UPrimitiveComponent*
 		UGameplayStatics::ApplyDamage(OtherActor, Damage, GetOwner()->GetInstigatorController(), GetOwner(), nullptr);
 	}
 }
+
+void ASharpProjectile::InitProjectileFromData(UThrowableWeaponDataAsset* ThrowableWeaponData)
+{
+	Super::InitProjectileFromData(ThrowableWeaponData);
+}

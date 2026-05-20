@@ -60,6 +60,16 @@ public:
 
 	// 무기 장착 데이터 맵 반환 Getter 함수
 	const TMap<EWeaponSlot, class AWeaponBase*>& GetWeaponSlots() const { return WeaponSlots; }
+	
+	// 인벤토리에서 쓸 체력 및 이속 겟터셋터 
+	float GetHealth() const { return Health; }
+	float GetMaxHealth() const { return MaxHealth; }
+	void SetHealth(float NewHealth) { Health = NewHealth; }
+	float GetBaseWalkSpeed() const { return BaseWalkSpeed; }
+	void SetBaseWalkSpeed(float NewSpeed);
+	float MeleeDamageModifier = 1.0f;
+	TMap<EWeaponSlot, AWeaponBase*>& GetWeaponSlots() { return WeaponSlots; }
+	
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -102,14 +112,20 @@ protected:
 	float MaxHealth = 100.f;
 
 	// --- 무기 관련 변수 ---
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
 	TMap<EWeaponSlot, class AWeaponBase*> WeaponSlots;
 
-	// 기본 제공 무기
+	// 기본 제공 무기, 이제 무기 장착은 에셋을 통해서 이루어집니다.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
-	TMap<EWeaponSlot, TSubclassOf<AWeaponBase>> DefaultWeaponClasses;
+	TMap<EWeaponSlot, UItemDataAsset*> DefaultWeaponDataAssets;
 
 	EWeaponSlot CurrentWeaponSlot;
+
+	// 차재현 
+	// 해당 맵은 더 이상 사용하지 않습니다.
+	// UI와의 충돌로 인해 코드는 남겨두었습니다.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
+	TMap<EWeaponSlot, TSubclassOf<AWeaponBase>> DefaultWeaponClasses;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;
@@ -210,7 +226,7 @@ public:
 	bool IsAiming() const;
 
 	// 무기 관련 입력 함수를 퍼블릭으로 이동했습니다.
-	void EquipWeapon(TSubclassOf<AWeaponBase> NewWeaponClass);
+	void EquipWeapon(UItemDataAsset* NewWeaponData);
 	void UnEquipWeapon(EWeaponSlot Slot);
 	void ChangeWeapon(EWeaponSlot NewSlot);
 

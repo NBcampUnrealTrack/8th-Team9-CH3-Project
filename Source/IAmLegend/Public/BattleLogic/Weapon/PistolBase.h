@@ -36,4 +36,6 @@ public:
 	void MeleeAttackTrace() override;	// 근접 공격 트레이스 계산 및 타격 판정
 	void ProcessMeleeHits(const TArray<FHitResult>& HitResults) override;	// 근접 공격 타격 처리
 
+	virtual void WeaponInitFromData() override;	// 데이터 에셋에서 초기화
+
 };

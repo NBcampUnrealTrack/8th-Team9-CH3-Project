@@ -5,6 +5,8 @@
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 #include "Item/ItemDataAsset.h" 
+#include "Components/HorizontalBox.h"       
+#include "Item/IngredientSlotWidget.h"
 
 void UCraftingSlotWidget::NativeConstruct()
 {
@@ -24,37 +26,34 @@ void UCraftingSlotWidget::InitSlot(UCraftRecipe* InRecipe)
 	if (!InRecipe || !InRecipe->ResultItem) return;
 	TargetRecipe = InRecipe;
 
-	// 모든 재료 UI를 일단 숨김 처리 (재료가 1개일 수도 있으므로)
-	Ingredient_1_Icon->SetVisibility(ESlateVisibility::Collapsed);
-	Ingredient_1_Count->SetVisibility(ESlateVisibility::Collapsed);
-	Ingredient_2_Icon->SetVisibility(ESlateVisibility::Collapsed);
-	Ingredient_2_Count->SetVisibility(ESlateVisibility::Collapsed);
-
-	// 1. 재료 데이터 채우기
-	for (int32 i = 0; i < InRecipe->Ingredients.Num(); ++i)
+	// 1. 기존에 생성되어 있던 재료 자식 위젯들을 싹 비워줍니다 (초기화)
+	if (IngredientContainer)
 	{
-		const FCraftingIngredient& Ing = InRecipe->Ingredients[i];
-		if (!Ing.ItemData) continue;
+		IngredientContainer->ClearChildren();
+	}
 
-		if (i == 0) // 첫 번째 재료
+	// 2. 레시피가 가진 재료 개수만큼 반복하며 동적 생성 (1개든, 3개든, 5개든 모두 대응 가능!)
+	if (IngredientContainer && IngredientWidgetClass)
+	{
+		for (const FCraftingIngredient& Ing : InRecipe->Ingredients)
 		{
-			Ingredient_1_Icon->SetBrushFromTexture(Ing.ItemData->ItemIcon);
-			Ingredient_1_Count->SetText(FText::AsNumber(Ing.Quantity));
-			Ingredient_1_Icon->SetVisibility(ESlateVisibility::Visible);
-			Ingredient_1_Count->SetVisibility(ESlateVisibility::Visible);
-		}
-		else if (i == 1) // 두 번째 재료
-		{
-			Ingredient_2_Icon->SetBrushFromTexture(Ing.ItemData->ItemIcon);
-			Ingredient_2_Count->SetText(FText::AsNumber(Ing.Quantity));
-			Ingredient_2_Icon->SetVisibility(ESlateVisibility::Visible);
-			Ingredient_2_Count->SetVisibility(ESlateVisibility::Visible);
+			if (!Ing.ItemData) continue;
+
+			// 개별 재료 위젯 동적 생성
+			UIngredientSlotWidget* NewIngredientWidget = CreateWidget<UIngredientSlotWidget>(this, IngredientWidgetClass);
+			if (NewIngredientWidget)
+			{
+				// 데이터 세팅
+				NewIngredientWidget->InitIngredient(Ing.ItemData, Ing.Quantity);
+				// 컨테이너(Horizontal Box)에 자식으로 등록
+				IngredientContainer->AddChild(NewIngredientWidget);
+			}
 		}
 	}
 
-	// 2. 결과물 설정
-	ResultIcon->SetBrushFromTexture(InRecipe->ResultItem->ItemIcon);
-	ResultNameText->SetText(FText::FromString(InRecipe->ResultItem->ItemName));
+	// 3. 결과물 설정 (기존과 동일)
+	if (ResultIcon) ResultIcon->SetBrushFromTexture(InRecipe->ResultItem->ItemIcon);
+	if (ResultNameText) ResultNameText->SetText(FText::FromString(InRecipe->ResultItem->ItemName));
 }
 
 void UCraftingSlotWidget::OnCraftButtonClicked()

@@ -16,9 +16,6 @@ class IAMLEGEND_API AMeleeWeaponBase : public AThrowableWeaponBase
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
-	float SwingSpeed; // 휘두르는 속도
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
 	bool bIsAttacking; // 공격 중인지 여부
 

@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "BattleLogic/Weapon/DataAssets/ThrowableWeaponDataAsset.h"
 
 AExplosiveProjectile::AExplosiveProjectile()
 {
@@ -24,12 +25,9 @@ AExplosiveProjectile::AExplosiveProjectile()
 void AExplosiveProjectile::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	ProjectileMovement->Bounciness = Bounciness;
-	ProjectileMovement->Friction = Friction;
-	ProjectileMovement->bShouldBounce = bIsBouncing;
-	ProjectileMovement->BounceVelocityStopSimulatingThreshold = BounceVelocityThreshold;
 
 }
+
 void AExplosiveProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if(EndPlayReason == EEndPlayReason::Destroyed || EndPlayReason == EEndPlayReason::RemovedFromWorld)
@@ -72,4 +70,24 @@ void AExplosiveProjectile::Explode()
 
 	// 디버그용
 	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f);
+}
+
+void AExplosiveProjectile::InitProjectileFromData(UThrowableWeaponDataAsset* ThrowableWeaponData)
+{
+	Super::InitProjectileFromData(ThrowableWeaponData);
+
+	if (!ThrowableWeaponData) return;
+
+	ExplosionRadius = ThrowableWeaponData->ExplosionRadius;
+	Damage = ThrowableWeaponData->Damage;
+	Friction = ThrowableWeaponData->Friction;
+	bIsBouncing = ThrowableWeaponData->bIsBouncing;
+	Bounciness = ThrowableWeaponData->Bounciness;
+	BounceVelocityThreshold = ThrowableWeaponData->BounceVelocityThreshold;
+
+	ProjectileMovement->Bounciness = Bounciness;
+	ProjectileMovement->Friction = Friction;
+	ProjectileMovement->bShouldBounce = bIsBouncing;
+	ProjectileMovement->BounceVelocityStopSimulatingThreshold = BounceVelocityThreshold;
+
 }
