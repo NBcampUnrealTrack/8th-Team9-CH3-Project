@@ -9,7 +9,8 @@ UENUM(BlueprintType)
 enum class EItemType : uint8
 {
 	Escape,
-	Heal
+	Heal,
+	Buff
 };
 
 UCLASS()

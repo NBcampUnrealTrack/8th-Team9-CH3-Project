@@ -22,9 +22,27 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Quantity;
 	
+	UPROPERTY(meta = (BindWidget))
+	class UButton* SlotButton;
+
+	// 에디터에서 할당할 팝업 위젯 클래스
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UItemActionPopUpWidget> PopupWidgetClass;
+	
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Inventory Slot")
+	int32 SlotIndex = INDEX_NONE;
+	
 	void SetSlotData(const FItemSlot& SlotData);
 	
 	void ClearSlot();
 	
-	
+protected:
+	virtual void NativeConstruct() override;
+
+	UFUNCTION()
+	void OnSlotClicked();
+private:
+	// 현재 슬롯이 들고 있는 데이터 백업용
+	FItemSlot CurrentSlotData;
 };
