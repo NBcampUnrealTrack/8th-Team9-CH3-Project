@@ -39,8 +39,12 @@ void UStageResultHUDWidget::UpdateStageRemainingTime()
 	if (GM && Text_StageRemainingTime)
 	{
 		float CurrentRemainingTime = GM->GetRemainingStageTime();
-		UE_LOG(LogTemp, Warning, TEXT("%f"), CurrentRemainingTime);
-		FString String = FString::Printf(TEXT("스테이지 남은 시간 : %.1f"), FMath::Max(CurrentRemainingTime, 0.0f));
+		
+		float ClampedTime = FMath::Max(CurrentRemainingTime, 0.0f);
+		int32 Minutes = FMath::FloorToInt(ClampedTime/60.0f);
+		int32 Seconds = FMath::FloorToInt(FMath::Fmod(ClampedTime, 60.0f));
+		
+		FString String = FString::Printf(TEXT("Survival Time : %2d:%2d"), Minutes, Seconds);
 		Text_StageRemainingTime->SetText(FText::FromString(String));
 	}
 }
