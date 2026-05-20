@@ -40,7 +40,7 @@ ABaseItemActor::ABaseItemActor()
 	// EndOverlap도 연결해줘야 나갈 때 꺼집니다!
 	Collider->OnComponentEndOverlap.AddDynamic(this, &ABaseItemActor::OnEndOverlap); 
 	
-	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Item/WBP_interaction.WBP_interaction_C"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Item/Blueprint/WBP_interaction.WBP_interaction_C"));
     
 	if (WidgetClassFinder.Succeeded())
 	{
