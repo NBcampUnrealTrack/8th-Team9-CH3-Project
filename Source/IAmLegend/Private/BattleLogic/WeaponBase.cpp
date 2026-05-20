@@ -37,14 +37,6 @@ void AWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// BeginPlay에서 소유자 캐릭터를 미리 캐스팅하여 저장합니다.
-	OwnerCharacter = Cast<AHanPlayerCharacter>(GetOwner());
-
-	if (!OwnerCharacter)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Weapon equipped by a non-player character!"));
-	}
-
 }
 
 void AWeaponBase::OnConstruction(const FTransform& Transform)
@@ -56,6 +48,14 @@ void AWeaponBase::OnConstruction(const FTransform& Transform)
 void AWeaponBase::WeaponInitFromData()
 {
 	InitFromData();
+
+	// 오너 캐릭터는 이제 WeaponInitFromData에서 설정합니다.
+	OwnerCharacter = Cast<AHanPlayerCharacter>(GetOwner());
+
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Weapon equipped by a non-player character!"));
+	}
 
 	if (!ItemData) return;
 

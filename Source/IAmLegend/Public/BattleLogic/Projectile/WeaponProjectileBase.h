@@ -17,19 +17,13 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class UCapsuleComponent* CollisionComp;
+	TObjectPtr<class UCapsuleComponent> CollisionComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class UStaticMeshComponent* ProjectileMesh;
+	TObjectPtr<USkeletalMeshComponent> ProjectileMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class UProjectileMovementComponent* ProjectileMovement;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Collision")
-	float CollisionRadius;
-
-	UPROPERTY(EditAnywhere, Category = "Collision")
-	float CollisionHalfHeight;
+	TObjectPtr<class UProjectileMovementComponent> ProjectileMovement;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float GravityScale;	// 중력의 영향을 얼마나 받을지 (1.0f = 기본 중력, 0.0f = 중력 영향 없음)
@@ -59,7 +53,6 @@ protected:
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
-
 public:	
-
+	virtual void InitProjectileFromData(class UThrowableWeaponDataAsset* ThrowableWeaponData);
 };

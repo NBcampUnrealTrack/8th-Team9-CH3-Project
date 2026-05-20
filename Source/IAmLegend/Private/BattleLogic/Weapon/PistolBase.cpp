@@ -126,7 +126,7 @@ void APistolBase::WeaponInitFromData()
 
 		if (!PistolData->DaggerSkeletalMesh.IsNull())
 		{
-			USkeletalMesh* LoadedMesh = PistolData->WeaponSkeletalMesh.LoadSynchronous();
+			USkeletalMesh* LoadedMesh = PistolData->DaggerSkeletalMesh.LoadSynchronous();
 			if (LoadedMesh)
 			{
 				DaggerMesh->SetSkeletalMesh(LoadedMesh);
