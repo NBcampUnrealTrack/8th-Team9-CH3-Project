@@ -19,6 +19,7 @@ public:
 	
 	
 	//게임 시작
+	UFUNCTION(BlueprintCallable, Category = "Game")
 	void StartGame();
 	//스테이지 진입
 	void EnterStage(EStageType StageType);
