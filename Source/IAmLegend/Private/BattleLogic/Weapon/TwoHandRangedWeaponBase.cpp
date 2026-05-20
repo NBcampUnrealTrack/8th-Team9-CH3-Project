@@ -6,12 +6,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "BattleLogic/Weapon/DataAssets/TwoHandRangedWeaponDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 ATwoHandRangedWeaponBase::ATwoHandRangedWeaponBase()
 {
-	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	// 기본 값 설정
 	WeaponType = EWeaponType::TwoHandedRanged; // 무기 타입 설정
 	LeftHandIKSocketName = "LeftHandIKSocket"; // 왼손 IK 소켓 이름 설정
 	MeleeAttackRange = 10.f;	// 근접 공격 사거리
@@ -21,7 +22,6 @@ ATwoHandRangedWeaponBase::ATwoHandRangedWeaponBase()
 void ATwoHandRangedWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
 }
 
 void ATwoHandRangedWeaponBase::MeleeAttackTrace()
@@ -100,5 +100,20 @@ void ATwoHandRangedWeaponBase::ProcessMeleeHits(const TArray<FHitResult>& HitRes
 			
 			HitActors.Add(HitActor); // 이미 타격한 액터를 추가하여 중복 타격 방지
 		}
+	}
+}
+
+// --------------------------------------------------------
+// 데이터 에셋에서 초기화
+void ATwoHandRangedWeaponBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+	
+	if (!ItemData) return;
+
+	if (UTwoHandRangedWeaponDataAsset* TwoHandRangedWeaponData = Cast<UTwoHandRangedWeaponDataAsset>(ItemData))
+	{
+		LeftHandIKSocketName = TwoHandRangedWeaponData->LeftHandIKSocketName;
+		PushForce = TwoHandRangedWeaponData->PushForce;
 	}
 }

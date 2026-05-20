@@ -21,7 +21,7 @@ protected:
 	class UNiagaraComponent* NiagaraVisualizer;
 
 	UPROPERTY(EditAnywhere, Category = "Trajectory")
-	class UNiagaraSystem* TrajectorySystemAsset;
+	TSoftObjectPtr<class UNiagaraSystem> TrajectorySystemAsset;
 
 	class AThrowableWeaponBase* OwnerWeapon; // 투척 무기 참조
 
@@ -44,7 +44,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	void InitializeTrajectory(TSubclassOf<class AWeaponProjectileBase> ProjectileClass); // 투사체의 초기 궤적 설정
+	void InitializeTrajectory(class UItemDataAsset* ThrowableData); // 투사체의 초기 궤적 설정
 
 	void EnableTrajectory(bool bEnable);
 

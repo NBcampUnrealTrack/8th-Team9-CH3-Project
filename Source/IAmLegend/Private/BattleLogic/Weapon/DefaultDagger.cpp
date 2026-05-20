@@ -7,6 +7,7 @@
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "BattleLogic/TrajectoryComponent.h"
+#include "BattleLogic/Weapon/DataAssets/DaggerDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
@@ -19,6 +20,7 @@ ADefaultDagger::ADefaultDagger()
 	StabCooldown = 1.0f; // 찌르기 공격의 쿨다운 시간
 	StabRange = 100.f; // 찌르기 공격의 최대 사거리
 	StabBoxExtent = FVector(1.f, 40.f, 90.f); // 찌르기 공격의 범위 (박스 형태)
+
 	bIsStabbing = false; // 찌르기 공격 중인지 여부
 
 	// 단검은 투척이 불가능하므로 궤적 컴포넌트를 비활성화
@@ -160,23 +162,23 @@ void ADefaultDagger::StabTrace()
 	ProcessHitResults(HitResults); // 타격 결과 처리 (데미지 적용 등)
 }
 
-void ADefaultDagger::WeaponInitFromData()
-{
-	Super::WeaponInitFromData();
-
-	if (UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(ItemData))
-	{
-		/* 
-		if (WeaponData->StabDamage  > 0.f)
-		{
-			StabDamage  = WeaponData->StabDamage ;
-		}
-		*/
-	}
-}
-
 void ADefaultDagger::AnimNotify_EndAttack_2()
 {
 	Super::AnimNotify_EndAttack_2();
 	EndStab(); // 찌르기 공격 종료 처리
+}
+
+void ADefaultDagger::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (UDaggerDataAsset* DaggerData = Cast<UDaggerDataAsset>(ItemData))
+	{
+		StabDamage = DaggerData->StabDamage;
+		StabCooldown = DaggerData->StabCooldown;
+		StabRange = DaggerData->StabRange;
+		StabBoxExtent = DaggerData->StabBoxExtent;
+	}
 }

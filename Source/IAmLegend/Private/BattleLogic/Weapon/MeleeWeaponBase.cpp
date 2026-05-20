@@ -7,16 +7,17 @@
 #include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "BattleLogic/Weapon/DataAssets/MeleeWeaponDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 AMeleeWeaponBase::AMeleeWeaponBase()
 {
-	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	// 기본 값 설정
 	WeaponType = EWeaponType::TwoHandedMelee; // 무기 타입 설정
 	WeaponSlot = EWeaponSlot::Melee; // 무기 슬롯 설정
-	SwingSpeed = 1.f; // 휘두르는 속도
 	AttackCooldown = .5f; // 공격 간격
+
 	bIsAttacking = false; // 공격 중인지 여부
 	bIsPressingAttack = false; // 공격 버튼이 눌려있는지 여부 (자동 공격 관리용)
 	bIsCooldown = false; // 공격 쿨다운 중인지 여부
@@ -168,26 +169,21 @@ void AMeleeWeaponBase::FinishCooldown()
 	}
 }
 
-
-void AMeleeWeaponBase::WeaponInitFromData()
-{
-	Super::WeaponInitFromData();
-
-	if (UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(ItemData))
-	{	
-		/* 현재 WeaponDataAsset에는 Damage만 작성되어 있어 SwingSpeed 초기화 부분은 작성하지 않았습니다.
-		 추후에 WeaponDataAsset에 SwingSpeed가 작성되면 아래 주석 부분을 참고하여 SwingSpeed 초기화 부분을 작성하면 됩니다.
-		if (WeaponData->SwingSpeed > 0.f)
-		{
-			SwingSpeed = WeaponData->SwingSpeed;
-		}
-		*/
-	}
-}
-
 void AMeleeWeaponBase::AnimNotify_EndAttack_1()
 {
 	Super::AnimNotify_EndAttack_1();
 	EndAttack(); // 공격 종료 처리
 	
+}
+
+void AMeleeWeaponBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (UMeleeWeaponDataAsset* MeleeWeaponData = Cast<UMeleeWeaponDataAsset>(ItemData))
+	{
+		AttackCooldown = MeleeWeaponData->AttackCooldown;
+	}
 }

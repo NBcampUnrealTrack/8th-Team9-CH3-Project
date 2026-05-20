@@ -10,6 +10,8 @@
 #include "Components/CapsuleComponent.h"
 #include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
+#include "BattleLogic/Weapon/DataAssets/ThrowableWeaponDataAsset.h"
 
 #define ENEMY_TRACE_CHANNEL ECC_GameTraceChannel2
 
@@ -38,17 +40,6 @@ void UTrajectoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerWeapon = Cast<AThrowableWeaponBase>(GetOwner());
-
-	if(OwnerWeapon)
-	{
-		OwnerCharacter = Cast<AHanPlayerCharacter>(OwnerWeapon->GetOwner());
-	}
-
-	if (TrajectorySystemAsset && NiagaraVisualizer)
-	{
-		NiagaraVisualizer->SetAsset(TrajectorySystemAsset);
-	}
 }
 
 
@@ -60,30 +51,51 @@ void UTrajectoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 	DrawTrajectory();
 }
 
-void UTrajectoryComponent::InitializeTrajectory(TSubclassOf<AWeaponProjectileBase> ProjectileClass)
+void UTrajectoryComponent::InitializeTrajectory(UItemDataAsset* ItemData)
 {
-	if (!OwnerCharacter || !OwnerWeapon || !ProjectileClass) return;
+	OwnerWeapon = Cast<AThrowableWeaponBase>(GetOwner());
 
-	AWeaponProjectileBase* DefaultProjectile = ProjectileClass->GetDefaultObject<AWeaponProjectileBase>();
+	if (!OwnerWeapon || !ItemData) return;
 
-	if (DefaultProjectile)
+	if (OwnerWeapon)
 	{
-		UCapsuleComponent* CollisionComp = DefaultProjectile->FindComponentByClass<UCapsuleComponent>();
-		UProjectileMovementComponent* ProjectileMovement = DefaultProjectile->FindComponentByClass<UProjectileMovementComponent>();
+		OwnerCharacter = Cast<AHanPlayerCharacter>(OwnerWeapon->GetOwner());
+	}
 
-		if(CollisionComp)
+	if (UThrowableWeaponDataAsset* ThrowableData = Cast<UThrowableWeaponDataAsset>(ItemData))
+	{
+		InitialSpeed = ThrowableData->InitialSpeed;
+		GravityScale = ThrowableData->GravityScale;
+		MaxSpeed = ThrowableData->MaxSpeed;
+
+		if (!ThrowableData->TrajectorySystemAsset.IsNull())
 		{
-			CollisionRadius = CollisionComp->GetUnscaledCapsuleRadius();
+			if (UNiagaraSystem* LoadedFX = ThrowableData->TrajectorySystemAsset.LoadSynchronous())
+			{
+				if (NiagaraVisualizer)
+				{
+					NiagaraVisualizer->SetAsset(LoadedFX);
+					NiagaraVisualizer->AttachToComponent(OwnerWeapon->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+				}
+			}
 		}
 
-		if (ProjectileMovement)
+		if (!ThrowableData->WeaponSkeletalMesh.IsNull())
 		{
-			InitialSpeed = ProjectileMovement->InitialSpeed;
-			GravityScale = ProjectileMovement->ProjectileGravityScale;
-			MaxSpeed = ProjectileMovement->MaxSpeed;
+			if (USkeletalMesh* LoadedMesh = ThrowableData->WeaponSkeletalMesh.LoadSynchronous())
+			{
+				FBoxSphereBounds MeshBounds = LoadedMesh->GetBounds();
+				FVector MeshSize = MeshBounds.BoxExtent;
+
+				float AutoRadius = FMath::Max(MeshSize.X, MeshSize.Y);
+				AutoRadius = FMath::Clamp(AutoRadius, 5.f, 200.f);
+
+				CollisionRadius = AutoRadius;
+			}
 		}
 
 		bIsTrajectoryEnabled = true;
+		EnableTrajectory(false); // 초기에는 궤적 시각화 비활성화
 	}
 }
 
@@ -102,7 +114,7 @@ void UTrajectoryComponent::EnableTrajectory(bool bEnable)
 
 void UTrajectoryComponent::UpdateTrajectory(FPredictProjectilePathParams& Params)
 {
-	Params.StartLocation = OwnerWeapon->Mesh->GetSocketLocation(FName("Tip"));
+	Params.StartLocation = OwnerCharacter->GetMesh()->GetSocketLocation(FName("WeaponSocket"));
 	Params.LaunchVelocity = OwnerCharacter->GetControlRotation().Vector() * InitialSpeed;
 	Params.OverrideGravityZ = GravityScale * GetWorld()->GetGravityZ();
 
@@ -129,7 +141,6 @@ void UTrajectoryComponent::DrawTrajectory()
 
 	TArray<FVector> PathPoints;
 	NiagaraVisualizer->ReinitializeSystem();	// 그리기 전에 지움
-	NiagaraVisualizer->SetVariableInt(FName("User.NumPoints"), PathPoints.Num());
 
 	FPredictProjectilePathResult Result;
 	UGameplayStatics::PredictProjectilePath(this, Params, Result);
