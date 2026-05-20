@@ -129,10 +129,45 @@ void AHanPlayerCharacter::Tick(float DeltaTime)
 
 	// 은신 디더링 효과 천천히	 
 	CurrentDitherAlpha = FMath::FInterpTo(CurrentDitherAlpha, TargetDitherAlpha, DeltaTime, 5.0f);
-	UMaterialInstanceDynamic* DynamicMaterial = Cast<UMaterialInstanceDynamic>(GetMesh()->GetMaterial(0));
-	if (DynamicMaterial)
+	
+	int MaterialCount = GetMesh()->GetNumMaterials();
+	for (int i = 0; i < MaterialCount; ++i)
 	{
-		DynamicMaterial->SetScalarParameterValue(FName("Alpha"), CurrentDitherAlpha);
+		// 각 슬롯에 박혀있는 머티리얼을 '동적 머티리얼(Dynamic)'로 메모리 단에서 강제 복제하여 제어권을 뺏어옵니다.
+		UMaterialInstanceDynamic* DynamicMaterial = GetMesh()->CreateDynamicMaterialInstance(i);
+		if (DynamicMaterial)
+		{
+			// 질문자님이 깎아 만든 마스크 이름인 "Alpha" 구멍에다가 C++ 부드러운 숫자를 강제로 동시 난사합니다!
+			DynamicMaterial->SetScalarParameterValue(FName("Alpha"), CurrentDitherAlpha);
+		}
+	}
+
+	if (EquippedWeapon)
+	{
+		// 무기 에셋 내부에 숨겨져 있는 모든 종류의 '컴포넌트(SkeletalMesh, Widget, StaticMesh 등)'를 싹 다 뒤집어 엎어 가져옵니다!
+		TArray<UActorComponent*> WeaponComponents;
+		EquippedWeapon->GetComponents(WeaponComponents);
+
+		for (UActorComponent* Component : WeaponComponents)
+		{
+			// 렌더링 기능이 있는 컴포넌트(MeshComponent)들만 정확하게 골라내어 필터링합니다!
+			UMeshComponent* MeshComp = Cast<UMeshComponent>(Component);
+			if (MeshComp)
+			{
+				// 이미지 속 단검의 SkeletalMesh(MI_HuntingKnife)든 InteractionWidget이든 상관없이 개수를 실시간 감시합니다.
+				int WeaponMatCount = MeshComp->GetNumMaterials();
+				for (int j = 0; j < WeaponMatCount; ++j)
+				{
+					// 메모리 단에서 동적 머티리얼 인스턴스를 강제로 복제하여 제어권을 뺏어옵니다.
+					UMaterialInstanceDynamic* WeaponDynamicMat = MeshComp->CreateDynamicMaterialInstance(j);
+					if (WeaponDynamicMat)
+					{
+						// 질문자님이 머티리얼에 심어놓은 "Alpha" 파라미터 구멍에 C++ 부드러운 수치를 일제히 동시 난사합니다!
+						WeaponDynamicMat->SetScalarParameterValue(FName("Alpha"), CurrentDitherAlpha);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -621,7 +656,6 @@ void AHanPlayerCharacter::StartAttack()
 {
 	if (GetCharacterMovement() && GetCharacterMovement()->IsFalling())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("C++ 시스템: 점프(공중) 상태이므로 사격 입력을 무시합니다."));
 		return;
 	}
 
