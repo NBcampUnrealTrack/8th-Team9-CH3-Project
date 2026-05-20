@@ -14,6 +14,9 @@
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 #include "BattleLogic/Weapon/RangedWeaponBase.h"
 #include "WeaponDataAsset.h"
+#include "EngineUtils.h"                     
+#include "Ai/BaseZombie_Ai.h"                
+#include "BehaviorTree/BlackboardComponent.h" 
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -134,36 +137,29 @@ void AHanPlayerCharacter::Tick(float DeltaTime)
 	int MaterialCount = GetMesh()->GetNumMaterials();
 	for (int i = 0; i < MaterialCount; ++i)
 	{
-		// 각 슬롯에 박혀있는 머티리얼을 '동적 머티리얼(Dynamic)'로 메모리 단에서 강제 복제하여 제어권을 뺏어옵니다.
 		UMaterialInstanceDynamic* DynamicMaterial = GetMesh()->CreateDynamicMaterialInstance(i);
 		if (DynamicMaterial)
 		{
-			// 질문자님이 깎아 만든 마스크 이름인 "Alpha" 구멍에다가 C++ 부드러운 숫자를 강제로 동시 난사합니다!
 			DynamicMaterial->SetScalarParameterValue(FName("Alpha"), CurrentDitherAlpha);
 		}
 	}
 
 	if (EquippedWeapon)
 	{
-		// 무기 에셋 내부에 숨겨져 있는 모든 종류의 '컴포넌트(SkeletalMesh, Widget, StaticMesh 등)'를 싹 다 뒤집어 엎어 가져옵니다!
 		TArray<UActorComponent*> WeaponComponents;
 		EquippedWeapon->GetComponents(WeaponComponents);
 
 		for (UActorComponent* Component : WeaponComponents)
 		{
-			// 렌더링 기능이 있는 컴포넌트(MeshComponent)들만 정확하게 골라내어 필터링합니다!
 			UMeshComponent* MeshComp = Cast<UMeshComponent>(Component);
 			if (MeshComp)
 			{
-				// 이미지 속 단검의 SkeletalMesh(MI_HuntingKnife)든 InteractionWidget이든 상관없이 개수를 실시간 감시합니다.
 				int WeaponMatCount = MeshComp->GetNumMaterials();
 				for (int j = 0; j < WeaponMatCount; ++j)
 				{
-					// 메모리 단에서 동적 머티리얼 인스턴스를 강제로 복제하여 제어권을 뺏어옵니다.
 					UMaterialInstanceDynamic* WeaponDynamicMat = MeshComp->CreateDynamicMaterialInstance(j);
 					if (WeaponDynamicMat)
 					{
-						// 질문자님이 머티리얼에 심어놓은 "Alpha" 파라미터 구멍에 C++ 부드러운 수치를 일제히 동시 난사합니다!
 						WeaponDynamicMat->SetScalarParameterValue(FName("Alpha"), CurrentDitherAlpha);
 					}
 				}
@@ -744,13 +740,27 @@ void AHanPlayerCharacter::PlayCameraZoomOut()
 // 은신 스킬 관련 함수들
 void AHanPlayerCharacter::ToggleStealthMode()
 {
+	UE_LOG(LogTemp, Warning, TEXT("은신이 켜짐"));
 	if (bIsStealth == true) return; // 이미 은신 중이면 리턴
 	if (bIsStealthCooldown == true) return; // 은신이 풀려도 아직 쿨타임 도중이라면 리턴
 
 	bIsStealth = true;
 	TargetDitherAlpha = 0.1f; // 은신이 켜지면 투명화(0.1) 목표 설정
 
-	UE_LOG(LogTemp, Warning, TEXT("은신이 켜짐"));
+	// 은신을 켰다면 주변 AI들의 타겟을 강제로 초기화해줍니다.
+	if (bIsStealth)
+	{
+		// 월드에 있는 모든 좀비 AI 컨트롤러를 찾아서 TargetActor를 비웁니다.
+		for (TActorIterator<ABaseZombie_Ai> It(GetWorld()); It; ++It)
+		{
+			ABaseZombie_Ai* ZombieAI = *It;
+			if (ZombieAI && ZombieAI->GetBlackboardComponent())
+			{
+				// 은신을 켰으므로 좀비들의 타겟에서 나를 지워버립니다.
+				ZombieAI->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), nullptr);
+			}
+		}
+	}
 
 	// 5초 뒤에 자동으로 은신을 꺼주는 'DisableStealthMode' 함수 예약.
 	GetWorldTimerManager().SetTimer(StealthTimerHandle, this, &AHanPlayerCharacter::DisableStealthMode, 5.0f, false);
