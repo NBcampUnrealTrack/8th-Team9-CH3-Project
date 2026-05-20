@@ -13,6 +13,9 @@
 #include "UI/MainHUD.h"
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 #include "BattleLogic/Weapon/RangedWeaponBase.h"
+#include "Ai/BaseZombie_Ai.h"
+#include "EngineUtils.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -729,14 +732,28 @@ void AHanPlayerCharacter::PlayCameraZoomOut()
 // 은신 스킬 관련 함수들
 void AHanPlayerCharacter::ToggleStealthMode()
 {
+	UE_LOG(LogTemp, Warning, TEXT("은신이 켜짐"));
 	if (bIsStealth == true) return; // 이미 은신 중이면 리턴
 	if (bIsStealthCooldown == true) return; // 은신이 풀려도 아직 쿨타임 도중이라면 리턴
 
 	bIsStealth = true;
 	TargetDitherAlpha = 0.1f; // 은신이 켜지면 투명화(0.1) 목표 설정
-
-	UE_LOG(LogTemp, Warning, TEXT("은신이 켜짐"));
-
+	
+	// 은신을 켰다면 주변 AI들의 타겟을 강제로 초기화해줍니다.
+	if (bIsStealth)
+	{
+		// 월드에 있는 모든 좀비 AI 컨트롤러를 찾아서 TargetActor를 비웁니다.
+		for (TActorIterator<ABaseZombie_Ai> It(GetWorld()); It; ++It)
+		{
+			ABaseZombie_Ai* ZombieAI = *It;
+			if (ZombieAI && ZombieAI->GetBlackboardComponent())
+			{
+				// 은신을 켰으므로 좀비들의 타겟에서 나를 지워버립니다.
+				ZombieAI->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), nullptr);
+			}
+		}
+	}
+	
 	// 5초 뒤에 자동으로 은신을 꺼주는 'DisableStealthMode' 함수 예약.
 	GetWorldTimerManager().SetTimer(StealthTimerHandle, this, &AHanPlayerCharacter::DisableStealthMode, 5.0f, false);
 }
