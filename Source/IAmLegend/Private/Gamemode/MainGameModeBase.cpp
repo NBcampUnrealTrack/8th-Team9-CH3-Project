@@ -15,7 +15,6 @@ AMainGameModeBase::AMainGameModeBase()
 	//초기값 세팅
 	MaxStageDuration = 5.0f;
 	PlayerKillCount = 0;
-	bIsStageTimeUp = false;
 }
 
 void AMainGameModeBase::BeginPlay()
@@ -31,9 +30,6 @@ void AMainGameModeBase::BeginPlay()
 	{
 		StartStage();
 	}
-	
-	
-	UE_LOG(LogTemp, Warning, TEXT("Is Player Escape: %s"), GI->GetbIsPlayerEscaped() ? TEXT("true") : TEXT("false"));
 }
 
 
@@ -59,7 +55,7 @@ void AMainGameModeBase::StartGame()
 }
 
 
-// 스테이지 입장 시 초기 설정, 어떤 스테이지 입장했는지 인덱스 값을 받음 
+// 스테이지 입장 시 초기 설정, 어떤 스테이지 입장했는지 Enum 값을 받음 
 void AMainGameModeBase::EnterStage(EStageType StageType)
 {
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
@@ -70,6 +66,7 @@ void AMainGameModeBase::EnterStage(EStageType StageType)
 		PC->SetInputMode(InputMode);
 	}
 	
+	//스테이지 시작 게임 인스턴스에 저장
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
 	if (!GI) return;
 	
@@ -83,12 +80,13 @@ void AMainGameModeBase::EnterStage(EStageType StageType)
 //스테이지 시작
 void AMainGameModeBase::StartStage()
 {
-	//타이머를 통해 제한 시간 설정
+	//타이머를 통해 스테이지 제한 시간 설정
 	GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
 	
 	//스테이지 UI 출력
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (!PC) return;
+	
 	AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
 	if (HUD)
 	{
@@ -104,20 +102,19 @@ void AMainGameModeBase::StartStage()
 	ASpawnManager* SpawnManager = Cast<ASpawnManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASpawnManager::StaticClass()));
 	if (SpawnManager)
 	{
-		SpawnManager->SpawnEnemyAtStage();
+		//스테이지 제한 시간 종료 여부 확인
+		SpawnManager->SpawnEnemyAtStage(false);
 	}
 }
 
 //스테이지 제한 시간 종료(몬스터 대량 스폰)
 void AMainGameModeBase::OnStageTimeUp()
 {
-	bIsStageTimeUp = true;
-	
 	//스폰 매니저에서 적 대량스폰
 	ASpawnManager* SpawnManager = Cast<ASpawnManager>(UGameplayStatics::GetActorOfClass(GetWorld(), ASpawnManager::StaticClass()));
 	if (SpawnManager)
 	{
-		SpawnManager->SpawnEnemyAtStage();
+		SpawnManager->SpawnEnemyAtStage(true);
 	}
 }
 
@@ -138,7 +135,6 @@ void AMainGameModeBase::EndStage(bool bIsPlayerEscaped)
 	if (bIsPlayerEscaped)
 	{
 		SuccessEscape();
-		GetWorldTimerManager().ClearTimer(StageTimer);
 		
 	}
 	else
@@ -212,12 +208,6 @@ void AMainGameModeBase::FailEscape()
 			HUD->ShowGameOverHUD();
 		}
 	}
-}
-
-
-bool AMainGameModeBase::GetIsStageTimeUp() const
-{
-	return bIsStageTimeUp;
 }
 
 //스테이지 레벨 열기
