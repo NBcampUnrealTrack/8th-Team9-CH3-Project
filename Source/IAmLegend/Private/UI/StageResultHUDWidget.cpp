@@ -44,7 +44,7 @@ void UStageResultHUDWidget::UpdateStageRemainingTime()
 		int32 Minutes = FMath::FloorToInt(ClampedTime/60.0f);
 		int32 Seconds = FMath::FloorToInt(FMath::Fmod(ClampedTime, 60.0f));
 		
-		FString String = FString::Printf(TEXT("Survival Time : %2d:%2d"), Minutes, Seconds);
+		FString String = FString::Printf(TEXT("%2d:%2d"), Minutes, Seconds);
 		Text_StageRemainingTime->SetText(FText::FromString(String));
 	}
 }
@@ -55,7 +55,7 @@ void UStageResultHUDWidget::UpdateKillCount()
 	AMainGameStateBase* GS = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
 	if (GS && Text_KillCount)
 	{
-		FString String = FString::Printf(TEXT("총 처치 수 : %d"), GS->GetPlayerKillCount());
+		FString String = FString::Printf(TEXT("%d"), GS->GetPlayerKillCount());
 		Text_KillCount->SetText(FText::FromString(String));
 	}
 	
