@@ -16,7 +16,8 @@ class IAMLEGEND_API ATorchItemActor : public ABaseItemActor
 	
 public:
 	ATorchItemActor();
-
+	virtual void BeginPlay() override;
+	
 protected:
 	// 불빛 역할을 할 SpotLight 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Effects")
