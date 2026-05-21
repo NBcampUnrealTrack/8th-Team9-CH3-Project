@@ -148,9 +148,16 @@ protected:
 	UPROPERTY()
 	class UAnimMontage* CurrentReloadMontage = nullptr;
 
+	// 포스트 프로세스 제어용 동적 머티리얼 인스턴스를 담을 변수
+	UPROPERTY()
+	UMaterialInstanceDynamic* PPStealthDynamicMat;
 
 	//카메라
 	bool bLastRotationState = false; // 이전 프레임의 상태를 기억
+	
+	//은신 스킬 사용시 카메라 채도 변환
+	float CurrentSaturation = 1.0f; // 현재 채도
+	float TargetSaturation = 1.0f; // 목표 채도
 
 	// --- 조준(FOV) 관련 변수 ---
 	float DefaultFOV = 90.f;
