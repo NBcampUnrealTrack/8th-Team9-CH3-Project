@@ -586,6 +586,13 @@ void AHanPlayerCharacter::EquipWeapon(UItemDataAsset* NewWeaponData)
 		SpawnedWeapon->SetActorHiddenInGame(true);
 		SpawnedWeapon->SetActorEnableCollision(false);
 
+		// 무기 슬롯에 무기 장착 시, 인벤토리에서 아이템 삭제
+		if (InventoryComponent)
+		{
+			// (※ InventoryComponent에 구현된 아이템 제거 함수명에 맞춰 수정해 주세요. 예: RemoveItem)
+			InventoryComponent->RemoveItemQuantity(NewWeaponData, 1);
+		}
+
 		// 현재 장착된 무기가 없을 때만 새로 장착한 무기로 변경
 		if (CurrentWeaponSlot == EWeaponSlot::None)
 		{
