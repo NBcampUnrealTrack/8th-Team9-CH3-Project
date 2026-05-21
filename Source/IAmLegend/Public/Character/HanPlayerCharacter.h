@@ -233,6 +233,7 @@ public:
 	bool IsAiming() const;
 
 	// 무기 관련 입력 함수를 퍼블릭으로 이동했습니다.
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void EquipWeapon(UItemDataAsset* NewWeaponData);
 	void UnEquipWeapon(EWeaponSlot Slot);
 	void ChangeWeapon(EWeaponSlot NewSlot);

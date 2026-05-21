@@ -22,7 +22,7 @@ void UWeaponSlotWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 				if (WeaponActor && WeaponActor->WeaponIcon)
 				{
 					TargetImage->SetBrushFromTexture(WeaponActor->WeaponIcon);
-					TargetImage->SetVisibility(ESlateVisibility::Visible);
+					TargetImage->SetVisibility(ESlateVisibility::HitTestInvisible);
 				}
 				else
 				{
