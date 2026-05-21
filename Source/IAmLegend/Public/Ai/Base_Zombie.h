@@ -36,6 +36,15 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "ZombieState")
     virtual void SetCurrentState(EZombieState NewState) { CurrentState = NewState; }
+
+    UFUNCTION(BlueprintCallable)
+    virtual void PlayAttackMontage();
+
+    bool bIsAttacking = false; // 공격 중일 때 중복 공격을 막기 위한 변수입니다.
+    // 공격 사거리 변수화 (좀비마다 다를 수 있음)
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float AttackRange;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -63,8 +72,7 @@ protected:
     class USoundBase* DeathSound;
 
 
-    bool bIsAttacking = false; // 공격 중일 때 중복 공격을 막기 위한 변수입니다.
-
+    
     // [에디터 설정] 공격 속도(간격)를 조절합니다. 4.0이면 4초마다 공격합니다.
     UPROPERTY(EditAnywhere, Category = "Combat")
     float AttackCooldown;
@@ -80,17 +88,13 @@ protected:
     // 소리 재개 타이머 핸들
     FTimerHandle IdleSoundTimerHandle;
     EZombieState CurrentState = EZombieState::Idle;
-
+    FTimerHandle DeathTimerHandle;
+    FTimerHandle HideTimerHandle;
+    FTimerHandle DeathFreezeTimerHandle;
     // [에디터 설정] 좀비의 체력입니다.
     UPROPERTY(EditAnywhere, Category = "Stat")
     float Health;
 
-    // 공격 사거리 변수화 (좀비마다 다를 수 있음)
-    UPROPERTY(EditAnywhere, Category = "Combat")
-    float AttackRange;
-
-    // 공격 애니메이션을 실행하는 함수입니다.
-    virtual void PlayAttackMontage();
 
     // 공격 후 쿨타임이 지나면 다시 공격 가능하게 해주는 함수입니다.
     virtual void ResetAttack();
@@ -125,5 +129,5 @@ protected:
     float LastDamageTime = 0.0f;
 
     // 잠금 시간 (예: 2초 동안은 추가 데미지 무시)
-    const float DamageLockDuration = 2.0f;
+    const float DamageLockDuration = 0.3f;
 };
