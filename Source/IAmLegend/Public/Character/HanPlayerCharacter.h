@@ -124,12 +124,6 @@ protected:
 
 	EWeaponSlot CurrentWeaponSlot;
 
-	// 차재현 
-	// 해당 맵은 더 이상 사용하지 않습니다.
-	// UI와의 충돌로 인해 코드는 남겨두었습니다.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
-	TMap<EWeaponSlot, TSubclassOf<AWeaponBase>> DefaultWeaponClasses;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;
 	

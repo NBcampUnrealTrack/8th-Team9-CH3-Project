@@ -47,6 +47,9 @@ void AThrowableWeaponBase::ThrowWeapon()
 {
 	if (!ProjectileClass || !OwnerCharacter || !SkeletalMesh) return;
 
+	// 투척 애니메이션 재생
+	OwnerCharacter->PlayAttackMontage_2();
+
 	// 캐릭터의 오른손 위치에서 투사체 생성 (무기 소켓 위치 사용)
 	FVector SpawnLocation = OwnerCharacter->GetMesh()->GetSocketLocation(FName("WeaponSocket"));
 
