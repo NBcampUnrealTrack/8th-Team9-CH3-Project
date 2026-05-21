@@ -28,4 +28,17 @@ public:
     void OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     bool bLostSightDuringScream = false;
+
+    // 스크림 이동속도 감소
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float ScreamRadius = 2000.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float ScreamSlowDuration = 5.0f;
+
+    FTimerHandle ScreamSlowTimerHandle;
+    FTimerHandle ScreamSlowTickHandle;
+
+    void ApplyScreamSlow();
+    void RestorePlayerSpeed();
 };
