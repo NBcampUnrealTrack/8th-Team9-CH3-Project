@@ -8,7 +8,9 @@ ANurseZombie::ANurseZombie()
 {
     AttackCooldown = 4.0f;
     Health = 100.0f;
-    AttackRange = 100.0f;
+    AttackRange = 200.0f;
+
+    GetCharacterMovement()->MaxWalkSpeed = 150.0f;
 }
 
 void ANurseZombie::BeginPlay()
@@ -37,18 +39,55 @@ void ANurseZombie::PlayScreamMontage()
     {
         SetCurrentState(EZombieState::Screaming);
         bLostSightDuringScream = false;
-
         if (auto* AIC = Cast<AAIController>(GetController()))
             AIC->StopMovement();
-
         PlayAnimMontage(ScreamMontage);
+
+        // 1초마다 범위 체크 및 이동속도 감소 갱신
+        GetWorld()->GetTimerManager().SetTimer(ScreamSlowTickHandle, [this]()
+            {
+                ApplyScreamSlow();
+            }, 1.0f, true);
     }
+}
+
+void ANurseZombie::ApplyScreamSlow()
+{
+    if (!PlayerCharacter) return;
+
+    float Distance = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
+    if (Distance > ScreamRadius) return;
+
+    AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(PlayerCharacter);
+    if (!Player) return;
+
+    // 원래 속도 기준으로 50% 감소
+    Player->GetCharacterMovement()->MaxWalkSpeed = Player->GetBaseWalkSpeed() * 0.5f;
+    Player->GetCharacterMovement()->MaxWalkSpeedCrouched =
+        (Player->GetBaseWalkSpeed() / 2.0f) * 0.5f;
+
+    GetWorld()->GetTimerManager().ClearTimer(ScreamSlowTimerHandle);
+    GetWorld()->GetTimerManager().SetTimer(ScreamSlowTimerHandle, [this]()
+        {
+            RestorePlayerSpeed();
+        }, ScreamSlowDuration, false);
+}
+
+void ANurseZombie::RestorePlayerSpeed()
+{
+    AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(PlayerCharacter);
+    if (!Player) return;
+
+    Player->GetCharacterMovement()->MaxWalkSpeed = Player->GetBaseWalkSpeed();
+    Player->GetCharacterMovement()->MaxWalkSpeedCrouched =
+        Player->GetBaseWalkSpeed() / 2.0f; // CrouchWalkSpeed = BaseWalkSpeed/2
 }
 
 void ANurseZombie::OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
     if (Montage != ScreamMontage) return;
     if (CurrentState != EZombieState::Screaming) return;
+    GetWorld()->GetTimerManager().ClearTimer(ScreamSlowTickHandle);
 
     if (bLostSightDuringScream)
     {

@@ -32,7 +32,6 @@ ABoss_PoliceZombie::ABoss_PoliceZombie()
     Health = 200.0f; // 좀비 체력 현재 100
     AttackRange = 250.0f; // 좀비와 플레이어간의 거리 약 15CM거리에 들어서면 공격모션을 취합니다
     MaxHealth = Health;
-    AttackSphere->SetHiddenInGame(false); // true → false
 }
 void ABoss_PoliceZombie::Tick(float DeltaTime)
 {
