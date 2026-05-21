@@ -9,6 +9,7 @@
 #include "WeaponDataAsset.h"
 #include "Item/InventoryComponent.h" // 인벤토리 컴포넌트 헤더
 #include "Item/ItemDataAsset.h"
+#include "BattleLogic/Weapon/DataAssets/ThrowableWeaponDataAsset.h"
 
 void UWeaponInstallationWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
@@ -71,8 +72,22 @@ void UWeaponInstallationWidget::NativeTick(const FGeometry& MyGeometry, float In
 			}
 		}
 
-		// 수류탄 개수 업데이트 (인벤토리에서 수류탄 아이템의 개수를 가져오는 로직 연결 필요)
-		// int32 GrenadeCount = PlayerCharacter->GetInventoryComponent()->GetItemCount(수류탄데이터에셋);
-		// GrenadeCountText->SetText(FText::AsNumber(GrenadeCount));
+		// 수류탄 개수 업데이트
+		int32 GrenadeCount = 0;
+		TArray<FItemSlot>& Inventory = PlayerCharacter->GetInventoryComponent()->GetActualInventory();
+
+		for (const FItemSlot& InSlot : Inventory)
+		{
+			// 인벤토리 아이템 중 수류탄 데이터 에셋(UThrowableWeaponDataAsset)인 것만 찾아 개수 합산
+			if (InSlot.ItemData && Cast<UThrowableWeaponDataAsset>(InSlot.ItemData))
+			{
+				GrenadeCount += InSlot.Quantity;
+			}
+		}
+
+		if (GrenadeCountText)
+		{
+			GrenadeCountText->SetText(FText::AsNumber(GrenadeCount));
+		}
 	}
 }
