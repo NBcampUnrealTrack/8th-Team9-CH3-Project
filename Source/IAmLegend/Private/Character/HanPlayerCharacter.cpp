@@ -810,6 +810,8 @@ void AHanPlayerCharacter::ToggleStealthMode()
 	// 은신 사운드 (처음 큰 박동, 후에 5초간 낮은 지속 박동)
 	if (FirstBigHeartbeatSound) { UGameplayStatics::PlaySound2D(GetWorld(), FirstBigHeartbeatSound, 2.0f, 1.0f, 0.0f); }
 	if (LoopingStealthSoundCue) { StealthAudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), LoopingStealthSoundCue, 1.0f, 1.0f, 0.0f); }
+	// 인자: 월드, 믹스에셋, 적용될때 걸리는 시간(Delay) - 은신 모드 모든 사운드 변경용 - 실험용
+	// if (StealthSoundMix){ UGameplayStatics::PushSoundMixModifier(GetWorld(), StealthSoundMix); }
 	
 	// 은신을 켰다면 주변 AI들의 타겟을 강제로 초기화해줍니다.
 	if (bIsStealth)
@@ -838,6 +840,8 @@ void AHanPlayerCharacter::DisableStealthMode()
 
 	// 0.5초에 걸쳐서 사운드가 사라짐
 	if (StealthAudioComp && StealthAudioComp->IsPlaying()) { StealthAudioComp->FadeOut(0.5f, 0.0f); }
+	// 활성화했던 사운드 믹스를 해제하여 소리를 원래대로 돌려놓음 - 실험용
+	//if (StealthSoundMix) { UGameplayStatics::PopSoundMixModifier(GetWorld(), StealthSoundMix); }
 
 	UE_LOG(LogTemp, Warning, TEXT("은신이 꺼짐. 10초 쿨타임 적용"));
 
