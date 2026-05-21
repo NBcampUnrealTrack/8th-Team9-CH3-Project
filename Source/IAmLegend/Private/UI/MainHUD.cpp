@@ -12,6 +12,7 @@
 #include "UI/WeaponInstallationWidget.h"
 #include "UI/WeaponSlotWidget.h"
 #include "UI/StealthWidget.h"
+#include "UI/BossHealthWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 void AMainHUD::BeginPlay()
@@ -36,6 +37,19 @@ void AMainHUD::BeginPlay()
 		ShowWeaponHUD();
 		ShowWeaponSlotHUD();
 		ShowStealthHUD();
+
+		// 보스 레벨에서만 보스 체력바 표시
+		if (CurrentLevelName.Contains(TEXT("BossStage")))
+		{
+			if (BossHealthClass && !BossHealthWidget)
+			{
+				BossHealthWidget = CreateWidget<UBossHealthWidget>(GetWorld(), BossHealthClass);
+				if (BossHealthWidget)
+				{
+					BossHealthWidget->AddToViewport();
+				}
+			}
+		}
 
 		APlayerController* PC = GetOwningPlayerController();
 
