@@ -5,6 +5,7 @@
 #include "Character/HanPlayerCharacter.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardData.h"
+#include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 
@@ -59,25 +60,42 @@ void ABaseZombie_Ai::OnPossess(APawn* InPawn)
 }
 void ABaseZombie_Ai::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
 {
-    // 본 대상의 태그가 "Player"인지 확인합니다. (플레이어 블루프린트의 Tag에 Player를 추가해야 함)
     if (!BlackboardComp || !Actor) return;
-    
+
     if (Actor->ActorHasTag(TEXT("Player")))
     {
-        // 플레이어 캐릭터로 형변환(Cast)하여 은신 상태 변수 가져오기 - 한기담
         AHanPlayerCharacter* PlayerChar = Cast<AHanPlayerCharacter>(Actor);
+        if (!PlayerChar) return;
 
-        // 성공적으로 보였고, '은신 상태가 아닐 때'만 타겟으로 등록합니다. 
-        // 이 부분 조건을 은신 상태도 추가하는걸로 수정했습니다. - 한기담
-        if (Stimulus.WasSuccessfullySensed() && PlayerChar && !PlayerChar->bIsStealth)
+        if (Stimulus.WasSuccessfullySensed() && !PlayerChar->bIsStealth)
         {
-            // 블랙보드에 추격할 대상을 기록합니다.
+            // 플레이어 발견 → 타겟 설정
             BlackboardComp->SetValueAsObject(TEXT("TargetActor"), Actor);
         }
-        else // 시야에서 사라졌을 때
+        else if (PlayerChar->bIsStealth)
         {
-            // 대상을 비워줍니다 (그러면 AI는 추격을 멈추거나 다음 행동을 합니다).
+            // 은신 중 → 타겟 해제
             BlackboardComp->SetValueAsObject(TEXT("TargetActor"), nullptr);
         }
+        // 은신 해제 후 시야에 다시 들어오면 자동으로 첫 번째 조건에서 타겟 재설정됨
+    }
+}
+void ABaseZombie_Ai::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    if (!BlackboardComp) return;
+
+    AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(
+        UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    if (!Player) return;
+
+    // 은신 해제 상태이고 현재 타겟이 없으면 즉시 재설정
+    AActor* CurrentTarget = Cast<AActor>(
+        BlackboardComp->GetValueAsObject(TEXT("TargetActor")));
+
+    if (!Player->bIsStealth && !CurrentTarget)
+    {
+        BlackboardComp->SetValueAsObject(TEXT("TargetActor"), Player);
     }
 }
