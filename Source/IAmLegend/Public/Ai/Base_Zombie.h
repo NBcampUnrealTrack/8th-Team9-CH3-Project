@@ -45,6 +45,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "Combat")
     float AttackRange;
 
+    // [에디터 설정] 좀비의 체력
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
+    float Health;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -92,8 +95,9 @@ protected:
     FTimerHandle HideTimerHandle;
     FTimerHandle DeathFreezeTimerHandle;
     // [에디터 설정] 좀비의 체력입니다.
-    UPROPERTY(EditAnywhere, Category = "Stat")
-    float Health;
+    // 복사해서 public로 복제했습니다 - 김민성
+    //UPROPERTY(EditAnywhere, Category = "Stat")
+    //float Health;
 
 
     // 공격 후 쿨타임이 지나면 다시 공격 가능하게 해주는 함수입니다.

@@ -5,6 +5,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "BattleLogic/Weapon/DataAssets/ThrowableWeaponDataAsset.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 AExplosiveProjectile::AExplosiveProjectile()
 {
@@ -68,6 +70,21 @@ void AExplosiveProjectile::Explode()
 		ECC_Visibility	// 가려진 경우에는 데미지를 주지 않음
 	);
 
+	if (ExplosionFX)
+	{
+		UNiagaraComponent* NiagaraComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			ExplosionFX,
+			GetActorLocation(),
+			GetActorRotation()
+		);
+
+		if (NiagaraComp)
+		{
+			NiagaraComp->SetAutoDestroy(true);
+		}
+	}
+
 	// 디버그용
 	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f);
 }
@@ -78,6 +95,7 @@ void AExplosiveProjectile::InitProjectileFromData(UThrowableWeaponDataAsset* Thr
 
 	if (!ThrowableWeaponData) return;
 
+	ExplosionFX = ThrowableWeaponData->ExplosionEffect;
 	ExplosionRadius = ThrowableWeaponData->ExplosionRadius;
 	Damage = ThrowableWeaponData->Damage;
 	Friction = ThrowableWeaponData->Friction;

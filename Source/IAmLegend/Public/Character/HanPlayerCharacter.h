@@ -70,6 +70,9 @@ public:
 	float MeleeDamageModifier = 1.0f;
 	TMap<EWeaponSlot, AWeaponBase*>& GetWeaponSlots() { return WeaponSlots; }
 	
+	// 은신 쿨타임 진행도 반환
+	UFUNCTION(BlueprintCallable, Category = "Character | Stealth")
+	float GetStealthCooldownRatio() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -120,12 +123,6 @@ protected:
 	TMap<EWeaponSlot, UItemDataAsset*> DefaultWeaponDataAssets;
 
 	EWeaponSlot CurrentWeaponSlot;
-
-	// 차재현 
-	// 해당 맵은 더 이상 사용하지 않습니다.
-	// UI와의 충돌로 인해 코드는 남겨두었습니다.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character | Weapon")
-	TMap<EWeaponSlot, TSubclassOf<AWeaponBase>> DefaultWeaponClasses;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;

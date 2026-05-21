@@ -11,6 +11,8 @@
 #include "UI/CrosshairWidget.h"
 #include "UI/WeaponInstallationWidget.h"
 #include "UI/WeaponSlotWidget.h"
+#include "UI/StealthWidget.h"
+#include "UI/BossHealthWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 void AMainHUD::BeginPlay()
@@ -34,6 +36,20 @@ void AMainHUD::BeginPlay()
 		ShowCrosshairHUD();
 		ShowWeaponHUD();
 		ShowWeaponSlotHUD();
+		ShowStealthHUD();
+
+		// 보스 레벨에서만 보스 체력바 표시
+		if (CurrentLevelName.Contains(TEXT("BossStage")))
+		{
+			if (BossHealthClass && !BossHealthWidget)
+			{
+				BossHealthWidget = CreateWidget<UBossHealthWidget>(GetWorld(), BossHealthClass);
+				if (BossHealthWidget)
+				{
+					BossHealthWidget->AddToViewport();
+				}
+			}
+		}
 
 		APlayerController* PC = GetOwningPlayerController();
 
@@ -294,5 +310,27 @@ void AMainHUD::HideWeaponSlotHUD()
 	{
 		WeaponSlotWidget->RemoveFromParent();
 		WeaponSlotWidget = nullptr;
+	}
+}
+
+// 은신 UI 함수
+void AMainHUD::ShowStealthHUD()
+{
+	if (StealthClass && !StealthWidget)
+	{
+		StealthWidget = CreateWidget<UStealthWidget>(GetWorld(), StealthClass);
+		if (StealthWidget)
+		{
+			StealthWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideStealthHUD()
+{
+	if (StealthWidget)
+	{
+		StealthWidget->RemoveFromParent();
+		StealthWidget = nullptr;
 	}
 }

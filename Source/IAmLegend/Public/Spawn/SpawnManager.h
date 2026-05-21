@@ -21,7 +21,7 @@ public:
 	//탈출 지점 액터
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Properties")
 	TSubclassOf<AActor> EscapingPointActor;
-	//
+	//탈출 지점 지정된 좌표들 중 랜덤 스폰
 	UFUNCTION()
 	void SpawnEscapingPointAtRandomPoint();
 
@@ -29,5 +29,5 @@ public:
 	//----적 스폰----
 	//스테이지에 적 스폰
 	UFUNCTION()
-	void SpawnEnemyAtStage();
+	void SpawnEnemyAtStage(bool bIsStageTimeUp);
 };

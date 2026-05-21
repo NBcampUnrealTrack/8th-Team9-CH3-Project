@@ -9,6 +9,8 @@ class UPlayerHealthWidget; // 전방 선언(체력바)
 class UCrosshairWidget; // 전방 선언(조준점)
 class UWeaponInstallationWidget; // 전방 선언(무기 상태)
 class UWeaponSlotWidget; // 전방 선언(무기 슬롯)
+class UStealthWidget; // 전방 선언(은신)
+class UBossHealthWidget; // 전방 선언(보스 체력바)
 
 UCLASS()
 class IAMLEGEND_API AMainHUD : public AHUD
@@ -64,6 +66,10 @@ public:
 	void ShowWeaponSlotHUD();
 	void HideWeaponSlotHUD();
 
+	// 은신 UI 관리
+	void ShowStealthHUD();
+	void HideStealthHUD();
+
 protected:
 	//사용할 Widget 클래스 설정
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
@@ -90,7 +96,11 @@ protected:
 	TSubclassOf<UWeaponInstallationWidget> WeaponHUDClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UWeaponSlotWidget> WeaponSlotClass;
-	
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UStealthWidget> StealthClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
+	TSubclassOf<UBossHealthWidget> BossHealthClass;
+
 private:
 	
 	//인스턴스
@@ -112,4 +122,8 @@ private:
 	UWeaponInstallationWidget* WeaponHUDWidget;
 	UPROPERTY()
 	UWeaponSlotWidget* WeaponSlotWidget;
+	UPROPERTY()
+	UStealthWidget* StealthWidget;
+	UPROPERTY()
+	UBossHealthWidget* BossHealthWidget;
 };

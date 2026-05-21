@@ -34,6 +34,11 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     float JumpAttackDamage = 30.0f; // 착지 데미지
+
+    // 김민성 작성
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
+    float MaxHealth;
+
 protected:
     virtual void ResetAttack() override;
     virtual void Tick(float DeltaTime) override;
@@ -47,8 +52,9 @@ protected:
     void OnPrologueTakeDamage();
     void StartCombat();
 
-    UPROPERTY(EditAnywhere, Category = "Stat")
-    float MaxHealth;
+    // 복사해서 public에 붙었습니다 - 김민성
+    //UPROPERTY(EditAnywhere, Category = "Stat")
+    //float MaxHealth;
 
     // 몽타주들
     UPROPERTY(EditAnywhere, Category = "Animation")

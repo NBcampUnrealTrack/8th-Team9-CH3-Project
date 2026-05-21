@@ -935,3 +935,16 @@ void AHanPlayerCharacter::SetBaseWalkSpeed(float NewSpeed)
 	}
 }
 
+// 은신 쿨타임 진행도 반환 함수
+float AHanPlayerCharacter::GetStealthCooldownRatio() const
+{
+	// 쿨타임 중 -> 진행도를 0.0 -> 1.0 으로 계산해서 반환
+	if (bIsStealthCooldown)
+	{
+		float Remaining = GetWorldTimerManager().GetTimerRemaining(StealthCooldownTimerHandle);
+		float Total = 10.0f; // 설정하신 쿨타임 10초
+		return FMath::Clamp(1.0f - (Remaining / Total), 0.0f, 1.0f);
+	}
+	// 쿨타임이 아니면 -> 꽉 찬 상태(1.0) 반환
+	return 1.0f;
+}

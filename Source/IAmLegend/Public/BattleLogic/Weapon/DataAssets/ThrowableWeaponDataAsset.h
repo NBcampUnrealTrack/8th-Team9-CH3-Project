@@ -55,6 +55,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Throwable|Projectile|Explosive")
 	bool bIsBouncing;
 
+	UPROPERTY(EditAnywhere, Category = "Weapon|Throwable|Projectile|Explosive|Effects")
+	class UNiagaraSystem* ExplosionEffect;
+
 	// 둔기형 데이터
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Throwable|Projectile|Blunt")
 	float LinearDamping;
