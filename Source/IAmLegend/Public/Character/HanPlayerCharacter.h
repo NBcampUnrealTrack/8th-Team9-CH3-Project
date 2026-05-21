@@ -70,6 +70,9 @@ public:
 	float MeleeDamageModifier = 1.0f;
 	TMap<EWeaponSlot, AWeaponBase*>& GetWeaponSlots() { return WeaponSlots; }
 	
+	// 은신 쿨타임 진행도 반환
+	UFUNCTION(BlueprintCallable, Category = "Character | Stealth")
+	float GetStealthCooldownRatio() const;
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;

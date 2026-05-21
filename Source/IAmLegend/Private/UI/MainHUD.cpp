@@ -11,6 +11,7 @@
 #include "UI/CrosshairWidget.h"
 #include "UI/WeaponInstallationWidget.h"
 #include "UI/WeaponSlotWidget.h"
+#include "UI/StealthWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 void AMainHUD::BeginPlay()
@@ -34,6 +35,7 @@ void AMainHUD::BeginPlay()
 		ShowCrosshairHUD();
 		ShowWeaponHUD();
 		ShowWeaponSlotHUD();
+		ShowStealthHUD();
 
 		APlayerController* PC = GetOwningPlayerController();
 
@@ -294,5 +296,27 @@ void AMainHUD::HideWeaponSlotHUD()
 	{
 		WeaponSlotWidget->RemoveFromParent();
 		WeaponSlotWidget = nullptr;
+	}
+}
+
+// 은신 UI 함수
+void AMainHUD::ShowStealthHUD()
+{
+	if (StealthClass && !StealthWidget)
+	{
+		StealthWidget = CreateWidget<UStealthWidget>(GetWorld(), StealthClass);
+		if (StealthWidget)
+		{
+			StealthWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideStealthHUD()
+{
+	if (StealthWidget)
+	{
+		StealthWidget->RemoveFromParent();
+		StealthWidget = nullptr;
 	}
 }
