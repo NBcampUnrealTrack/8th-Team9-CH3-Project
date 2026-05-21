@@ -289,7 +289,11 @@ void ABase_Zombie::Die()
 	{
 		SetLifeSpan(3.0f);
 	}
-	//AddPlayerKillCount();
+	AMainGameStateBase* GameState = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
+	if (GameState)
+	{
+		GameState->AddPlayerKillCount();
+	}
 }
 void ABase_Zombie::OnAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
