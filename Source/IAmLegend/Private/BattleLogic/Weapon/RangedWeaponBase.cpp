@@ -201,7 +201,7 @@ void ARangedWeaponBase::Fire()
 {
 	if (!OwnerCharacter || !SkeletalMesh) return;
 
-	// 무기에서 발사 시 애니메이션 몽타주 재생하는 부분을 추가했습니다. 
+	// 무기에서 발사 시 애니메이션 몽타주 재생
 	OwnerCharacter->PlayAttackMontage_2();
 	if(FireAnimSequence && SkeletalMesh)
 	{
@@ -232,10 +232,6 @@ void ARangedWeaponBase::Fire()
 
 	// 탄 퍼짐 회복 타이머 시작
 	GetWorldTimerManager().SetTimer(SpreadRecoveryTimerHandle, this, &ARangedWeaponBase::RecoverSpread, 0.01f, true);
-
-	// 디버그 라인
-	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.0f, 0, 1.0f);
-	UE_LOG(LogTemp, Log, TEXT("Fired weapon: %s, Current Ammo: %d, Current Spread: %f"), *GetName(), CurrentAmmo, CurrentSpreadAngle);
 }
 
 void ARangedWeaponBase::ApplyRecoil()
