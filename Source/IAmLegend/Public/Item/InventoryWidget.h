@@ -13,6 +13,8 @@
 
 class UUniformGridPanel;
 class UInventorySlotWidget;
+class UInventorySlotWidget;
+class UTextBlock;
 
 UCLASS()
 class IAMLEGEND_API UInventoryWidget : public UUserWidget
@@ -22,9 +24,18 @@ class IAMLEGEND_API UInventoryWidget : public UUserWidget
 public:
 
 	void RefreshInventory(const TArray<FItemSlot>& Inventory);
+    
+    UFUNCTION(BlueprintCallable, Category = "UI")
+    void UpdateDateTime();
 
 protected:
 
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* Date;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* Time;
+    
 	UPROPERTY(meta = (BindWidget))
 	UUniformGridPanel* InventoryGrid;
 
