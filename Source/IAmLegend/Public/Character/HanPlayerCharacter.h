@@ -195,6 +195,15 @@ protected:
 	// 쿨타임이 완전히 끝났을 때 스킬을 해제해 줄 전용 함수
 	void ResetStealthCooldown();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound")  // 은신 사운드 변수
+	class USoundBase* FirstBigHeartbeatSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound")  // 은신 중 계속 작게 반복될 사운드 큐
+	class USoundBase* LoopingStealthSoundCue;
+
+	UPROPERTY()  // 지속 사운드를 은신이 끝난 뒤에 같이 끄기 위해 기억해 둘 컴포넌트
+	class UAudioComponent* StealthAudioComp;
+
 	// 5초 뒤에 은신이 알아서 종료되게끔 타이머 핸들
 	FTimerHandle StealthTimerHandle;
 

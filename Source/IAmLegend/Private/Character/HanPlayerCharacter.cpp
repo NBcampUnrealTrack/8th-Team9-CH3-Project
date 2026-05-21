@@ -17,6 +17,8 @@
 #include "EngineUtils.h"                     
 #include "Ai/BaseZombie_Ai.h"                
 #include "BehaviorTree/BlackboardComponent.h" 
+#include "Components/AudioComponent.h"
+#include <Kismet/GameplayStatics.h>
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -805,6 +807,10 @@ void AHanPlayerCharacter::ToggleStealthMode()
 	TargetDitherAlpha = 0.1f; // 은신이 켜지면 캐릭터, 무기 메시 투명화(0.1) 목표 설정
 	TargetSaturation = 0.1f; // 은신이 켜지면 카메라 채도를 흑백(0.1) 목표 설정
 
+	// 은신 사운드 (처음 큰 박동, 후에 5초간 낮은 지속 박동)
+	if (FirstBigHeartbeatSound) { UGameplayStatics::PlaySound2D(GetWorld(), FirstBigHeartbeatSound, 2.0f, 1.0f, 0.0f); }
+	if (LoopingStealthSoundCue) { StealthAudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), LoopingStealthSoundCue, 1.0f, 1.0f, 0.0f); }
+	
 	// 은신을 켰다면 주변 AI들의 타겟을 강제로 초기화해줍니다.
 	if (bIsStealth)
 	{
@@ -829,6 +835,9 @@ void AHanPlayerCharacter::DisableStealthMode()
 	bIsStealth = false;
 	TargetDitherAlpha = 1.0f; // 부드럽게 캐릭터와 무기 메시의 은신이 풀리기 시작 (Tick에서 InterpTo 처리)
 	TargetSaturation = 1.0f; // 은신 풀리면 카메라 채도를 정상 채도(1.0) 목표 설정
+
+	// 0.5초에 걸쳐서 사운드가 사라짐
+	if (StealthAudioComp && StealthAudioComp->IsPlaying()) { StealthAudioComp->FadeOut(0.5f, 0.0f); }
 
 	UE_LOG(LogTemp, Warning, TEXT("은신이 꺼짐. 10초 쿨타임 적용"));
 
