@@ -44,9 +44,8 @@ void AEscapingPoint::OnCollisionOverlap(
 	bool bFromSweep, 
 	const FHitResult& SweepResult)
 {
-
+	//플레이어 확인
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-	//플레이어 탈출 시도
 	if (OtherActor && OtherActor == PlayerPawn)
 	{
 		//탈출 대기 시간 타이머 작동 & 로그 타이머 작동
@@ -74,6 +73,7 @@ void AEscapingPoint::OnCollisionEndOverlap(
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
+	//플레이어인지 확인
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 	if (OtherActor && OtherActor == PlayerPawn)
 	{

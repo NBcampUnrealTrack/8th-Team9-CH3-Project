@@ -29,22 +29,18 @@ void ASpawnManager::SpawnEscapingPointAtRandomPoint()
 }
 
 //스테이지에 적 스폰
-void ASpawnManager::SpawnEnemyAtStage()
+void ASpawnManager::SpawnEnemyAtStage(bool bIsStageTimeUp)
 {
 	//스테이지에 있는 모든 스폰 볼륨 가져오기
 	TArray<AActor*> EnemySpawnVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemySpawnVolume::StaticClass(), EnemySpawnVolumes);
 	if (EnemySpawnVolumes.Num() <= 0) return;
 	
-	//스테이지 종료 확인
-	AMainGameModeBase* GM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
-	if (!GM) return;
-	bool IsStageTimeUp = GM->GetIsStageTimeUp();
 	
 	//모든 스폰 볼륨에 적 스폰
 	for (int32 i=0; i<EnemySpawnVolumes.Num(); ++i)
 	{
 		AEnemySpawnVolume* EnemySpawnVolume = Cast<AEnemySpawnVolume>(EnemySpawnVolumes[i]);
-		EnemySpawnVolume->TrySpawn(IsStageTimeUp);
+		EnemySpawnVolume->TrySpawn(bIsStageTimeUp);
 	}
 }

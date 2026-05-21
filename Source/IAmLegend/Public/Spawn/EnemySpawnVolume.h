@@ -22,13 +22,10 @@ protected:
 	//스폰 공간 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Spawn|Components")
 	TObjectPtr<UBoxComponent> SpawnArea;
-	//스폰할 적 데이터 테이블
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Spawn|Data")
-	TObjectPtr<UDataTable> EnemyDataTable;
 	//최대 적 스폰 카운트(볼륨 별로 수정 가능)
 	UPROPERTY(EditAnywhere, Category="Spawn|Config")
 	int32 MaxSpawnCount;
-	//스폰할 적 액터(적 종류가 추가되면 데이터 테이블 사용 예정)
+	//스폰할 적 액터
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Spawn|Data")
 	TSubclassOf<AActor> ActualEnemyClass;
 	
