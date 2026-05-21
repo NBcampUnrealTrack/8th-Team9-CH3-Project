@@ -22,6 +22,7 @@ AEnemySpawnVolume::AEnemySpawnVolume()
 //적 스폰 시도
 void AEnemySpawnVolume::TrySpawn(bool IsTimeUp)
 {
+	//제한 시간 지났으면 2배 스폰
 	if (!IsTimeUp)
 	{
 		for (int32 i = 0; i<MaxSpawnCount; ++i)
@@ -65,34 +66,20 @@ void AEnemySpawnVolume::SpawnEnemy(TSubclassOf<AActor> EnemyClass)
 	if (!TryGetValidSpawnLocation(SpawnLocation)) return;
 	
 	//적 스폰
-	//SpawnActor가 충돌 조정없이 그대로 스폰하도록 설정
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = 
-		ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
 		EnemyClass,
 		SpawnLocation,
-		RandRotation);
-	
-	if (SpawnedActor)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("실제 스폰 위치: %s"), *SpawnedActor->GetActorLocation().ToString());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("스폰 실패"));
-	}
-	
-	
+		RandRotation);	
 }
 
-//바닥 위치 확인 후 주변에 겹치는 사물이 있는지 확인. 
+//바닥 위치 확인, 주변에 겹치는 사물이 있는지 확인 및 스폰 위치 반환
 bool AEnemySpawnVolume::TryGetValidSpawnLocation(FVector& OutLocation)
 {
 	FVector BoxExtent = SpawnArea->GetScaledBoxExtent();
 	FVector BoxOrigin = SpawnArea->GetComponentLocation();
 	float TraceEndZ = BoxOrigin.Z - BoxExtent.Z - 200.f;;
 	
+	//스폰 가능한 위치 있는지 확인, MaxSpawnPlaceCheck만큼 확인(10번)
 	for (int32 i = 0; i<MaxSpawnPlaceCheck; ++i)
 	{
 		FVector RandLocation = GetRandomSpawnLocation();
@@ -113,14 +100,14 @@ bool AEnemySpawnVolume::TryGetValidSpawnLocation(FVector& OutLocation)
 			GroundHit,
 			true);
 		
-		
+		//바닥이 없으면 스폰X
 		if (!bHitGround) continue;
 		
 		//겹침 체크
 		FVector CapsuleCenter  = GroundHit.ImpactPoint + FVector(0.f, 0.f, SpawnCheckCapsuleHalfHeight+1.f);
 		
 		TArray<AActor*> Overlaps;
-		
+		//주변에 겹치는 사물 있는지 캡슐로 확인
 		bool bOverLapping = UKismetSystemLibrary::CapsuleOverlapActors(
 			this,
 			CapsuleCenter,
@@ -134,6 +121,7 @@ bool AEnemySpawnVolume::TryGetValidSpawnLocation(FVector& OutLocation)
 			ActorsToIgnore,
 			Overlaps);
 		
+		//디버그
 		if (bOverLapping)
 		{
 			// 겹침 있으면 빨강

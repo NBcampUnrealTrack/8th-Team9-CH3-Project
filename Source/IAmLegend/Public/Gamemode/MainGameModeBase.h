@@ -31,8 +31,6 @@ public:
 	int32 GetPlayerKillCount() const;
 	//적 처치
 	void killedEnemy();
-	//스테이지 제한 시간 여부 확인
-	bool GetIsStageTimeUp() const;
 	//레벨 불러오기
 	void LoadStageLevel(EStageType StageType);
 	//스테이지 제한 시간 가져오기
@@ -62,6 +60,4 @@ private:
 	TObjectPtr<UWidgetComponent> StageWidget;
 	//적 처치 횟수 (스테이지 정산 시스템에 사용 예정)
 	int32 PlayerKillCount;
-	//스테이지 제한 시간 종료 여부
-	bool bIsStageTimeUp;
 };
