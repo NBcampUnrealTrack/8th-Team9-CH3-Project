@@ -1,6 +1,8 @@
 #include "Spawn/EnemySpawnVolume.h"
 
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/Character.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 
@@ -13,7 +15,7 @@ AEnemySpawnVolume::AEnemySpawnVolume()
 	MaxSpawnCount = 5;
 	
 	//겹침 체크용 캡슐 반경
-	SpawnCheckCapsuleRadius = 10.f;
+	SpawnCheckCapsuleRadius = 50.f;
 	SpawnCheckCapsuleHalfHeight = 80.f;
 	//적 스폰 위치 탐색 최대 시도 횟숫
 	MaxSpawnPlaceCheck = 10;
@@ -65,11 +67,16 @@ void AEnemySpawnVolume::SpawnEnemy(TSubclassOf<AActor> EnemyClass)
 	//볼륨 안에 안겹치고 스폰할 자리 있는지 확인. 공간이 없다면 스폰 스킵
 	if (!TryGetValidSpawnLocation(SpawnLocation)) return;
 	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = 
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	
 	//적 스폰
 	AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
 		EnemyClass,
 		SpawnLocation,
-		RandRotation);	
+		RandRotation,
+		SpawnParams);	
 }
 
 //바닥 위치 확인, 주변에 겹치는 사물이 있는지 확인 및 스폰 위치 반환
@@ -150,8 +157,14 @@ bool AEnemySpawnVolume::TryGetValidSpawnLocation(FVector& OutLocation)
 				false,
 				30.f
 			);
-			OutLocation = GroundHit.ImpactPoint + FVector(0.f, 0.f, SpawnCheckCapsuleHalfHeight);
-			//UE_LOG(LogTemp, Warning, TEXT("ImpactPoint: %s"), *GroundHit.ImpactPoint.ToString());
+			if (ACharacter* Char = Cast<ACharacter>(ActualEnemyClass.GetDefaultObject()))
+			{
+				float HalfHeight = Char->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+				float Radius = Char->GetCapsuleComponent()->GetScaledCapsuleRadius();
+				OutLocation = GroundHit.ImpactPoint + FVector(0.f, 0.f, HalfHeight);
+			}
+			
+			UE_LOG(LogTemp, Warning, TEXT("ImpactPoint: %s"), *OutLocation.ToString());
 			return true;
 		}
 	}
