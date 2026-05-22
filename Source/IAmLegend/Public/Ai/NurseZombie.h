@@ -21,8 +21,11 @@ public:
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
         class AController* EventInstigator, AActor* DamageCauser) override;
 
+    virtual void Die() override;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
     class UAnimMontage* ScreamMontage;
+
 
     UFUNCTION()
     void OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted);

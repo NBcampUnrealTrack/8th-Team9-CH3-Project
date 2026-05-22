@@ -12,6 +12,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/SphereComponent.h"
 #include "Character/HanPlayerCharacter.h"
+#include "BrainComponent.h"
 #include "Gamemode/MainGameStateBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -239,6 +240,10 @@ void ABase_Zombie::Die()
 	if (CurrentState == EZombieState::Dead) return;
 	CurrentState = EZombieState::Dead;
 
+	// 모든 타이머 클리어 추가
+	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathFreezeTimerHandle);
+
 	if (IdleSoundComponent) IdleSoundComponent->Stop();
 	if (DeathSound)
 		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
@@ -257,6 +262,10 @@ void ABase_Zombie::Die()
 	if (AIController)
 	{
 		AIController->StopMovement();
+		if (AIController->GetBrainComponent())
+		{
+			AIController->GetBrainComponent()->StopLogic(TEXT("Dead"));
+		}
 	}
 
 	if (DeathMontage)
