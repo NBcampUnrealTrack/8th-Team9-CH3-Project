@@ -136,6 +136,20 @@ void UInventoryComponent::UseItem(int32 Index)
 		return;
 	}
 
+	// ==========================================
+	// [코드 추가] 무기 아이템인지 확인 후 장착 - 김민성
+	// ==========================================
+	if (UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(Slot.ItemData))
+	{
+		// 무기 장착 함수 호출
+		PlayerChar->EquipWeapon(WeaponData);
+
+		// 장착 후 인벤토리 UI 즉시 새로고침
+		DisplayUI(true);
+
+		return;
+	}
+
 	// 3. 사용 가능한 아이템 데이터 에셋(UUseItemDataAsset)인지 검사
 	UUseItemDataAsset* UseItemData = Cast<UUseItemDataAsset>(Slot.ItemData);
 	if (!UseItemData)
