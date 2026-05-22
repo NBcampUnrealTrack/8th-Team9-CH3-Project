@@ -8,19 +8,25 @@
 #include "AI/Boss_PoliceZombie.h"
 #include "Ai/BaseZombie_Ai.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
+
+// UI 가시성 일괄 변경 함수
+void UBossHealthWidget::SetHealthUIVisibility(ESlateVisibility InVisibility)
+{
+	if (BossProgressBar) BossProgressBar->SetVisibility(InVisibility);
+	if (BossFrameImage) BossFrameImage->SetVisibility(InVisibility);
+	if (BossNameText) BossNameText->SetVisibility(InVisibility);
+}
 
 void UBossHealthWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	// 루트 위젯은 마우스 클릭을 막지 않으면서 Tick이 돌아가도록 설정합니다.
 	SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
-	// 내부의 프로그레스 바만 콕 집어서 숨겨줍니다.
-	if (BossProgressBar)
-	{
-		BossProgressBar->SetVisibility(ESlateVisibility::Collapsed);
-	}
+	// UI 숨기기
+	SetHealthUIVisibility(ESlateVisibility::Collapsed);
 }
 
 void UBossHealthWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -37,17 +43,12 @@ void UBossHealthWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 		break;
 	}
 
+	// 보스가 없거나 죽으면 숨김
 	if (!BossZombie || BossZombie->GetCurrentState() == EZombieState::Dead)
 	{
-		if (BossProgressBar && BossProgressBar->GetVisibility() != ESlateVisibility::Collapsed)
-		{
-			BossProgressBar->SetVisibility(ESlateVisibility::Collapsed);
-		}
+		SetHealthUIVisibility(ESlateVisibility::Collapsed);
 		return;
 	}
-
-	float Distance = PlayerPawn->GetDistanceTo(BossZombie);
-	bool bIsCloseEnough = (Distance <= BossDetectDistance);
 
 	bool bIsTargetingPlayer = false;
 	ABaseZombie_Ai* BossAI = Cast<ABaseZombie_Ai>(BossZombie->GetController());
@@ -60,13 +61,10 @@ void UBossHealthWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 		}
 	}
 
-	// 가시성 조작 대상을 위젯 본체가 아닌 BossProgressBar로 변경
-	if (bIsCloseEnough || bIsTargetingPlayer)
+	// 보스 근처에 가거나 타겟팅 되었을 때 표시
+	if (bIsTargetingPlayer)
 	{
-		if (BossProgressBar && BossProgressBar->GetVisibility() != ESlateVisibility::Visible)
-		{
-			BossProgressBar->SetVisibility(ESlateVisibility::Visible);
-		}
+		SetHealthUIVisibility(ESlateVisibility::Visible);
 
 		if (BossProgressBar && BossZombie->MaxHealth > 0.f)
 		{
@@ -74,11 +72,9 @@ void UBossHealthWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 			BossProgressBar->SetPercent(HealthRatio);
 		}
 	}
+	// 다시 멀어지면 숨김
 	else
 	{
-		if (BossProgressBar && BossProgressBar->GetVisibility() != ESlateVisibility::Collapsed)
-		{
-			BossProgressBar->SetVisibility(ESlateVisibility::Collapsed);
-		}
+		SetHealthUIVisibility(ESlateVisibility::Collapsed);
 	}
 }
