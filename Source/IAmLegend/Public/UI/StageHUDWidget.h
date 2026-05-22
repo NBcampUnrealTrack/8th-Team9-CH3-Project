@@ -21,6 +21,8 @@ public:
 	class UTextBlock* Text_KillCount;
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Text_CurrentStage;
+	UPROPERTY(meta = (BindWidget))
+	class UImage* Img_SkullIcon;
 	
 private:
 	float CurrentRemainingTime;
@@ -33,9 +35,23 @@ private:
 	void UpdateKillCount();
 	//시간 포멧 변환
 	FString ConvertToClockTime(float RemainingSeconds) const;
+	//점멸 이펙트 관리
+	void StartBlinkEffect();
+	void StopBlinkEffect();
+	void OnBlink();
+	
 	//GameMode 캐싱
 	UPROPERTY()
 	AMainGameModeBase* CachedGM;
 	
 	FTimerHandle UpdateTimerHandle;
+	//점멸용 타이머
+	FTimerHandle BlinkTimerHandle;
+	//점멸 시간
+	float BlinkTime;
+	
+	//점멸 관련 변수
+	bool bIsBlinkVisible;
+	bool bAlphaGoingDown;
+	float CurrentAlpha;
 };
