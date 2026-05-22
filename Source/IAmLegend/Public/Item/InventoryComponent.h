@@ -48,7 +48,7 @@ public:
 	void ShowInventoryOnScreen();
 	
 	UFUNCTION()
-	void DisplayUI();
+	void DisplayUI(bool bshow);
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Ammo")
 	int32 GetItemQuantity(UItemDataAsset* TargetItem);
