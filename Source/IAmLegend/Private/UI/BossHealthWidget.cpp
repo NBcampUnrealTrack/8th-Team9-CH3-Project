@@ -25,8 +25,9 @@ void UBossHealthWidget::NativeConstruct()
 
 	SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
-	// UI 숨기기
+	// 시작 시 UI 숨기기 및 조우 상태 초기화
 	SetHealthUIVisibility(ESlateVisibility::Collapsed);
+	bHasEncountered = false;
 }
 
 void UBossHealthWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -43,38 +44,19 @@ void UBossHealthWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 		break;
 	}
 
-	// 보스가 없거나 죽으면 숨김
-	if (!BossZombie || BossZombie->GetCurrentState() == EZombieState::Dead)
+	// 1. 보스가 없거나, 죽었거나, [아직 프롤로그(시체 파먹기) 중]이라면 체력바를 무조건 숨김
+	if (!BossZombie || BossZombie->GetCurrentState() == EZombieState::Dead || !BossZombie->bPrologueDone)
 	{
 		SetHealthUIVisibility(ESlateVisibility::Collapsed);
 		return;
 	}
 
-	bool bIsTargetingPlayer = false;
-	ABaseZombie_Ai* BossAI = Cast<ABaseZombie_Ai>(BossZombie->GetController());
-	if (BossAI && BossAI->GetBlackboardComponent())
-	{
-		UObject* TargetObject = BossAI->GetBlackboardComponent()->GetValueAsObject(TEXT("TargetActor"));
-		if (TargetObject != nullptr)
-		{
-			bIsTargetingPlayer = true;
-		}
-	}
+	// 2. 프롤로그가 끝나고 전투가 시작되었다면 체력바 표시 및 갱신
+	SetHealthUIVisibility(ESlateVisibility::Visible);
 
-	// 보스 근처에 가거나 타겟팅 되었을 때 표시
-	if (bIsTargetingPlayer)
+	if (BossProgressBar && BossZombie->MaxHealth > 0.f)
 	{
-		SetHealthUIVisibility(ESlateVisibility::Visible);
-
-		if (BossProgressBar && BossZombie->MaxHealth > 0.f)
-		{
-			float HealthRatio = FMath::Clamp(BossZombie->Health / BossZombie->MaxHealth, 0.f, 1.f);
-			BossProgressBar->SetPercent(HealthRatio);
-		}
-	}
-	// 다시 멀어지면 숨김
-	else
-	{
-		SetHealthUIVisibility(ESlateVisibility::Collapsed);
+		float HealthRatio = FMath::Clamp(BossZombie->Health / BossZombie->MaxHealth, 0.f, 1.f);
+		BossProgressBar->SetPercent(HealthRatio);
 	}
 }

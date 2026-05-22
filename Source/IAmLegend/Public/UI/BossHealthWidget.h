@@ -38,4 +38,6 @@ private:
 
 	// UI 한 번에 숨기거나 켜는 함수
 	void SetHealthUIVisibility(ESlateVisibility InVisibility);
+
+	bool bHasEncountered = false;
 };
