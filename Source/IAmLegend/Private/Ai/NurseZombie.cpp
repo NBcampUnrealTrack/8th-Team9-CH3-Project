@@ -2,6 +2,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "BrainComponent.h"
 #include "Character/HanPlayerCharacter.h"
 
 ANurseZombie::ANurseZombie()
@@ -35,15 +36,25 @@ void ANurseZombie::Tick(float DeltaTime)
 
 void ANurseZombie::PlayScreamMontage()
 {
+    if (ScreamMontage && CurrentState == EZombieState::Screaming) return; // 중복 방지
     if (ScreamMontage && CurrentState == EZombieState::Idle)
     {
         SetCurrentState(EZombieState::Screaming);
         bLostSightDuringScream = false;
-        if (auto* AIC = Cast<AAIController>(GetController()))
+
+        AAIController* AIC = Cast<AAIController>(GetController());
+        if (AIC)
+        {
             AIC->StopMovement();
+            AIC->GetBrainComponent()->PauseLogic(TEXT("Screaming")); // BT 일시정지
+        }
+
+        // 이동속도 0으로 강제 차단
+        GetCharacterMovement()->MaxWalkSpeed = 0.0f;
+
         PlayAnimMontage(ScreamMontage);
 
-        // 1초마다 범위 체크 및 이동속도 감소 갱신
+        // 틱 타이머 시작
         GetWorld()->GetTimerManager().SetTimer(ScreamSlowTickHandle, [this]()
             {
                 ApplyScreamSlow();
@@ -87,35 +98,33 @@ void ANurseZombie::OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted
 {
     if (Montage != ScreamMontage) return;
     if (CurrentState != EZombieState::Screaming) return;
+
     GetWorld()->GetTimerManager().ClearTimer(ScreamSlowTickHandle);
+
+    // BT 재개
+    AAIController* AIC = Cast<AAIController>(GetController());
+    if (AIC)
+    {
+        AIC->GetBrainComponent()->ResumeLogic(TEXT("Screaming"));
+    }
+
+    // 이동속도 복구
+    GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
 
     if (bLostSightDuringScream)
     {
-        // 비명 중 시야 상실 → TargetActor 비우고 Idle
-        AAIController* AIC = Cast<AAIController>(GetController());
         if (AIC && AIC->GetBlackboardComponent())
         {
-            AIC->GetBlackboardComponent()->SetValueAsObject(
-                TEXT("TargetActor"), nullptr);
+            AIC->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), nullptr);
         }
         SetCurrentState(EZombieState::Idle);
     }
     else
     {
-        // 비명 끝, 플레이어 아직 보임 → TargetActor 먼저 설정 후 Idle
-        AAIController* AIC = Cast<AAIController>(GetController());
         if (AIC && AIC->GetBlackboardComponent())
         {
-            // ✅ TargetActor 먼저 설정
-            AIC->GetBlackboardComponent()->SetValueAsObject(
-                TEXT("TargetActor"), PlayerCharacter);
+            AIC->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), PlayerCharacter);
         }
-
-        // ✅ 이동속도 복구
-        if (GetCharacterMovement())
-            GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
-
-        // ✅ 마지막에 Idle로 바꿔서 BT가 추격 태스크를 타게 함
         SetCurrentState(EZombieState::Idle);
     }
 }
