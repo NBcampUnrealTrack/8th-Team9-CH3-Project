@@ -247,7 +247,7 @@ public:
 	// 무기 관련 입력 함수를 퍼블릭으로 이동했습니다.
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void EquipWeapon(UItemDataAsset* NewWeaponData);
-	void UnEquipWeapon(EWeaponSlot Slot);
+	void UnEquipWeapon(EWeaponSlot Slot, bool bDestroyWeapon);
 	void ChangeWeapon(EWeaponSlot NewSlot);
 
 	// 몽타주 재생 함수를 퍼블릭으로 선언했습니다.
