@@ -94,7 +94,6 @@ void AExplosiveProjectile::InitProjectileFromData(UThrowableWeaponDataAsset* Thr
 
 	ExplosionFX = ThrowableWeaponData->ExplosionEffect;
 	ExplosionRadius = ThrowableWeaponData->ExplosionRadius;
-	Damage = ThrowableWeaponData->Damage;
 	Friction = ThrowableWeaponData->Friction;
 	bIsBouncing = ThrowableWeaponData->bIsBouncing;
 	Bounciness = ThrowableWeaponData->Bounciness;
