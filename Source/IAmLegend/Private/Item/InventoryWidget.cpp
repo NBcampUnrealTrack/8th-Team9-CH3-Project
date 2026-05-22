@@ -6,9 +6,25 @@
 #include "Components/UniformGridPanel.h"
 #include "Components/TextBlock.h" 
 #include "Misc/DateTime.h"
+#include "GameFramework/Character.h"
+#include "Item/InventoryComponent.h"
+#include "Components/CanvasPanelSlot.h"
 
 void UInventoryWidget::RefreshInventory(const TArray<FItemSlot>& Inventory)
 {
+	
+	//인벤토리 그리드 안밀리게 고정
+	if (InventoryGrid)
+	{
+		UCanvasPanelSlot* GridSlot = Cast<UCanvasPanelSlot>(InventoryGrid->Slot);
+		if (GridSlot)
+		{
+			
+			FVector2D FixedGridSize(716.7f, 833.f); 
+			GridSlot->SetSize(FixedGridSize);
+		}
+	}
+	
 	InventoryGrid->ClearChildren();
 
 	const int32 ColumnCount = 8;
@@ -78,4 +94,32 @@ void UInventoryWidget::UpdateDateTime()
     {
         Time->SetText(FText::FromString(TimeString));
     }
+}
+
+FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	
+	if (InKeyEvent.GetKey() == EKeys::Escape)
+	{
+		APlayerController* PC = GetOwningPlayer();
+		if (PC)
+		{
+			ACharacter* PlayerChar = Cast<ACharacter>(PC->GetPawn());
+			if (PlayerChar)
+			{
+				UInventoryComponent* InvComp = PlayerChar->FindComponentByClass<UInventoryComponent>();
+				if (InvComp)
+				{
+					
+					InvComp->DisplayUI(false);
+                    
+					
+					return FReply::Handled();
+				}
+			}
+		}
+	}
+
+	
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }

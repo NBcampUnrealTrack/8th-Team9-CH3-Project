@@ -44,7 +44,7 @@ public:
 protected:
 	virtual void NativeConstruct() override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void OnSlotClicked();
 private:
 	// 현재 슬롯이 들고 있는 데이터 백업용
