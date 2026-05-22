@@ -844,7 +844,7 @@ void AHanPlayerCharacter::DisableStealthMode()
 	//if (StealthSoundMix) { UGameplayStatics::PopSoundMixModifier(GetWorld(), StealthSoundMix); }
 
 	UE_LOG(LogTemp, Warning, TEXT("은신이 꺼짐. 10초 쿨타임 적용"));
-
+	
 	// 은신이 풀림과 동시에 쿨타임 함수를 실행 해서 10초 동안은 다시 은신 모드로 들어가지 못하게 막음
 	bIsStealthCooldown = true;
 	GetWorldTimerManager().SetTimer(StealthCooldownTimerHandle, this, &AHanPlayerCharacter::ResetStealthCooldown, 10.0f, false);

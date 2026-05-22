@@ -22,7 +22,7 @@ public:
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override; // 이 AI 컨트롤러가 특정 좀비(Pawn)를 조종하기 시작할 때 호출되는 함수입니다.
-
+	
 public:
 	// AI의 오감 중 '시각'을 담당하는 컴포넌트입니다.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
