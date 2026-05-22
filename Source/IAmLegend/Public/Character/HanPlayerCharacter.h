@@ -201,7 +201,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound")  // 은신 중 계속 작게 반복될 사운드 큐
 	class USoundBase* LoopingStealthSoundCue;
 
-	UPROPERTY()  // 지속 사운드를 은신이 끝난 뒤에 같이 끄기 위해 기억해 둘 컴포넌트
+	/* 한기담 - 실험용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound") // 은신 중 사운드를 변경 - 실험용
+	class USoundMix* StealthSoundMix;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound") // 한기담 - 마스터 사운드의 자식 클래스로 넣으면?
+	class USoundClass* GameWorldSoundClass;
+	*/
+	UPROPERTY()  // 지속 사운드를 은신이 끝난 뒤에 같이 끄기 위해 기억해 둘 
 	class UAudioComponent* StealthAudioComp;
 
 	// 5초 뒤에 은신이 알아서 종료되게끔 타이머 핸들
