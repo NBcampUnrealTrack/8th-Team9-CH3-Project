@@ -66,8 +66,7 @@ bool UCraftingManager::CraftItem(UCraftRecipe* Recipe)
 		UE_LOG(LogTemp, Log, TEXT("조합 성공: %s %d개 생성됨"), 
 			*Recipe->ResultItem->ItemName, Recipe->ResultQuantity);
 
-		// UI 갱신 
-		InventoryComp->DisplayUI();
+		
 		return true;
 	}
 
