@@ -106,7 +106,7 @@ bool UInventoryComponent::AddItem(UItemDataAsset* NewItem, int32 Amount)
 		AMainGameStateBase* GameState = GetWorld()->GetGameState<AMainGameStateBase>();
 		if (GameState)
 		{
-			// GameState에 새로 만든 장부 기록 함수를 호출합니다.
+			
 			GameState->AddStageAcquiredItem(NewItem, Amount);
           
 			UE_LOG(LogTemp, Log, TEXT("%s 정보를 GameState 장부에 등록 완료!"), *NewItem->ItemName);
@@ -198,7 +198,7 @@ void UInventoryComponent::UseItem(int32 Index)
 		UE_LOG(LogTemp, Log, TEXT("[%s] 회복 완료. 남은 수량: %d"), *UseItemData->ItemName, Slot.Quantity);
         
 		// 인벤토리 UI 갱신
-		DisplayUI();
+		DisplayUI(true);
 	}
 	// 4-B. 이펙트 타입이 Buff(버프)이고 이름이 "각성제"인 경우 (Heal 블록 바깥에 위치해야 함!)
 	else if (UseItemData->EffectType == EItemType::Buff && UseItemData->ItemName.Equals(TEXT("각성제")))
@@ -228,7 +228,7 @@ void UInventoryComponent::UseItem(int32 Index)
 		}
 
 		// 인벤토리 UI 갱신
-		DisplayUI();
+		DisplayUI(true);
 	}
 	// 4-C. 그 외 정의되지 않은 아이템 타입인 경우
 	else if (UseItemData->EffectType == EItemType::Buff && UseItemData->ItemName.Equals(TEXT("진통제")))
@@ -270,7 +270,7 @@ void UInventoryComponent::UseItem(int32 Index)
 			Inv.RemoveAt(Index);
 		}
 
-		DisplayUI();
+		DisplayUI(true);
 	}
 }
 // Called when the game starts
@@ -333,7 +333,7 @@ void UInventoryComponent::ShowInventory()
 	}
 
 	
-	DisplayUI();
+	DisplayUI(true);
 }
 
 void UInventoryComponent::ShowInventoryOnScreen()
@@ -364,61 +364,62 @@ void UInventoryComponent::ShowInventoryOnScreen()
 	GEngine->AddOnScreenDebugMessage(100, 5.0f, FColor::Cyan, FullInventoryText);
 }
 
-void UInventoryComponent::DisplayUI()
+void UInventoryComponent::DisplayUI(bool bShow)
 {
 	TArray<FItemSlot>& Inv = GetActualInventory();
-
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (!PC) return;
 
-	// 위젯 없으면 생성
-	if (!InventoryWidget)
+	if (bShow)
 	{
-		if (InventoryWidgetClass)
+		if (bInventoryVisible)
 		{
-			InventoryWidget =
-				CreateWidget<UInventoryWidget>(PC, InventoryWidgetClass);
-
-			if (!InventoryWidget)
+			if (InventoryWidget)
 			{
-				return;
+				InventoryWidget->RefreshInventory(Inv);
 			}
+			return; 
 		}
-		else
+
+		if (!InventoryWidget && InventoryWidgetClass)
 		{
-			UE_LOG(LogTemp, Error,
-				TEXT("InventoryWidgetClass가 할당되지 않았습니다!"));
-			return;
+			InventoryWidget = CreateWidget<UInventoryWidget>(PC, InventoryWidgetClass);
 		}
-	}
 
-	// 현재 보이는 상태면 숨김
-	if (bInventoryVisible)
-	{
-		InventoryWidget->RemoveFromParent();
+		if (InventoryWidget)
+		{
+			InventoryWidget->AddToViewport();
+			InventoryWidget->RefreshInventory(Inv);
 
-		bInventoryVisible = false;
+			bInventoryVisible = true;
 
-		PC->bShowMouseCursor = false;
+			
+			InventoryWidget->bIsFocusable = true;
 
-		FInputModeGameOnly InputMode;
-		PC->SetInputMode(InputMode);
+			PC->bShowMouseCursor = true;
+          
+			// 포커스를 위젯으로 강제 고정
+			FInputModeGameAndUI InputMode;
+			InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget()); 
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			PC->SetInputMode(InputMode);
+
+			
+			InventoryWidget->SetUserFocus(PC);
+			InventoryWidget->SetKeyboardFocus();
+		}
 	}
 	else
 	{
-		InventoryWidget->AddToViewport();
+		if (InventoryWidget)
+		{
+			InventoryWidget->RemoveFromParent();
+			bInventoryVisible = false;
 
-		InventoryWidget->RefreshInventory(Inv);
-
-		bInventoryVisible = true;
-
-		PC->bShowMouseCursor = true;
-
-		FInputModeGameAndUI InputMode;
-		InputMode.SetLockMouseToViewportBehavior(
-			EMouseLockMode::DoNotLock);
-
-		PC->SetInputMode(InputMode);
+			PC->bShowMouseCursor = false;
+			FInputModeGameOnly InputMode;
+			PC->SetInputMode(InputMode);
+		}
 	}
 }
 

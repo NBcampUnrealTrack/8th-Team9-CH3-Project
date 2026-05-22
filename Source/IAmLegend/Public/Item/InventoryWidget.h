@@ -27,6 +27,8 @@ public:
     
     UFUNCTION(BlueprintCallable, Category = "UI")
     void UpdateDateTime();
+	
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 protected:
 
