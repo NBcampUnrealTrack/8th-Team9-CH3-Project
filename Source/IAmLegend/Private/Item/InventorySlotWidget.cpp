@@ -23,7 +23,8 @@ void UInventorySlotWidget::SetSlotData(const FItemSlot& SlotData)
 		// [수정] SlotButton이 진짜 존재할 때만 안전하게 제어합니다.
 		if (SlotButton) 
 		{
-			SlotButton->SetVisibility(ESlateVisibility::Visible);
+			// SlotButton->SetVisibility(ESlateVisibility::Visible);
+			SlotButton->SetVisibility(ESlateVisibility::HitTestInvisible);
 			SlotButton->SetIsEnabled(true);
 		}
 
