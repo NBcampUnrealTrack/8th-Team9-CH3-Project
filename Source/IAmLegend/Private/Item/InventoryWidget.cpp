@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Item/InventoryWidget.h"
@@ -180,7 +180,7 @@ void UInventoryWidget::OnClickUnequip1()
 	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Melee);
+		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Melee, false);
 
 		UInventoryComponent* InvComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
 		if (InvComp) RefreshInventory(InvComp->GetActualInventory());
@@ -192,7 +192,7 @@ void UInventoryWidget::OnClickUnequip2()
 	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Ranged);
+		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Ranged, false);
 
 		UInventoryComponent* InvComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
 		if (InvComp) RefreshInventory(InvComp->GetActualInventory());
@@ -204,7 +204,7 @@ void UInventoryWidget::OnClickUnequip3()
 	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Dagger);
+		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Dagger, false);
 
 		UInventoryComponent* InvComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
 		if (InvComp) RefreshInventory(InvComp->GetActualInventory());

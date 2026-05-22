@@ -602,7 +602,7 @@ void AHanPlayerCharacter::EquipWeapon(UItemDataAsset* NewWeaponData)
 	if (WeaponSlots.Contains(NewSlot))
 	{
 		// 기존 무기는 인벤토리에 추가됩니다.
-		UnEquipWeapon(NewSlot);
+		UnEquipWeapon(NewSlot, false);
 	}
 
 	FActorSpawnParameters SpawnParams;
@@ -649,7 +649,7 @@ void AHanPlayerCharacter::EquipWeapon(UItemDataAsset* NewWeaponData)
 	}
 }
 
-void AHanPlayerCharacter::UnEquipWeapon(EWeaponSlot RemoveSlot)
+void AHanPlayerCharacter::UnEquipWeapon(EWeaponSlot RemoveSlot, bool bDestroyWeapon)
 {
 	// 슬롯에 무기가 존재하지 않으면 리턴
 	if (!WeaponSlots.Contains(RemoveSlot))
@@ -676,7 +676,10 @@ void AHanPlayerCharacter::UnEquipWeapon(EWeaponSlot RemoveSlot)
 		}
 
 		// 무기 해제 시 인벤토리에 아이템 데이터 추가
-		InventoryComponent->AddItem(WeaponToRemove->ItemData);
+		if (!bDestroyWeapon  && InventoryComponent) 
+		{
+			InventoryComponent->AddItem(WeaponToRemove->ItemData);
+		}
 
 		WeaponToRemove->DestroyWeapon(); 
 		WeaponSlots.Remove(RemoveSlot);
