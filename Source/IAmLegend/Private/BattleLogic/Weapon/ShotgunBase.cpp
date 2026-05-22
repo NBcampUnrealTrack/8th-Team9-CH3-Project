@@ -89,29 +89,6 @@ void AShotgunBase::FinishReload()
 		bIsReloading = false;
 		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Next: End"));
 	}
-	// -----------------
-
-	/*
-	CurrentAmmo = FMath::Min(CurrentAmmo + AmmoPerReload, MaxAmmo);	// 탄약 추가
-	UE_LOG(LogTemp, Warning, TEXT("Shotgun Reloading... Current Ammo: %d / %d"), CurrentAmmo, MaxAmmo);
-
-	UAnimInstance* OwnerAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (!OwnerAnimInstance) return;
-
-	UAnimMontage* CurrentMontage = OwnerAnimInstance->GetCurrentActiveMontage();
-	if (!CurrentMontage) return;
-
-	if (CurrentAmmo < MaxAmmo)
-	{
-		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("Loop"), CurrentMontage);
-		UE_LOG(LogTemp, Log, TEXT("Keep Reloading... Next: Loop"));
-	}
-	else
-	{
-		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("End"), CurrentMontage);
-		bIsReloading = false;
-		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Next: End"));
-	}*/
 }
 
 void AShotgunBase::Fire()
@@ -144,9 +121,6 @@ void AShotgunBase::Fire()
 		{
 			ProcessHit(HitResult);
 		}
-
-		// 디버그 라인
-		DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.0f, 0, 1.0f);
 	}
 
 	// 발사 후 반동과 탄 퍼짐 증가 적용
@@ -155,8 +129,6 @@ void AShotgunBase::Fire()
 
 	// 탄 퍼짐 회복 타이머 시작
 	GetWorldTimerManager().SetTimer(SpreadRecoveryTimerHandle, this, &ARangedWeaponBase::RecoverSpread, 0.01f, true);
-
-	UE_LOG(LogTemp, Warning, TEXT("Fired weapon: %s, Current Ammo: %d, Current Spread: %f"), *GetName(), CurrentAmmo, CurrentSpreadAngle);
 }
 
 // --------------------------------------------------------

@@ -115,7 +115,8 @@ void AMeleeWeaponBase::AttackTrace()
 	Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
 
 	float WeaponThickness = 10.0f; // 칼날의 가상 두께
-	/*bool bHit = GetWorld()->SweepMultiByChannel(
+
+	bool bHit = GetWorld()->SweepMultiByChannel(
 		HitResults,
 		Start,
 		End,
@@ -123,23 +124,6 @@ void AMeleeWeaponBase::AttackTrace()
 		ATTACK_TRACE_CHANNEL,
 		FCollisionShape::MakeSphere(WeaponThickness),
 		Params
-	);*/
-
-	// 디버그 용
-	bool bHit = UKismetSystemLibrary::SphereTraceMulti(
-		GetWorld(),
-		Start,                          // 시작 위치
-		End,                            // 끝 위치
-		WeaponThickness,                // 구체 반지름
-		UEngineTypes::ConvertToTraceType(ATTACK_TRACE_CHANNEL), // 채널
-		false,                          // 복합 콜리전 사용 여부
-		{ OwnerCharacter, this },			// 충돌에서 제외할 액터 배열
-		EDrawDebugTrace::ForDuration,   // 디버그 형태 (None, ForOneFrame, ForDuration)
-		HitResults,                     // 결과 배열
-		true,                           // 자기 자신 무시 여부
-		FLinearColor::Red,              // 추적 선 색상
-		FLinearColor::Green,            // 히트 시 색상
-		1.0f                            // 디버그 선 유지 시간 (초)
 	);
 
 	ProcessHitResults(HitResults); // 타격 결과 처리 (데미지 적용 등)
