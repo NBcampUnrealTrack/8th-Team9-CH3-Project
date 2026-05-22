@@ -84,9 +84,6 @@ void AExplosiveProjectile::Explode()
 			NiagaraComp->SetAutoDestroy(true);
 		}
 	}
-
-	// 디버그용
-	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 12, FColor::Red, false, 2.0f);
 }
 
 void AExplosiveProjectile::InitProjectileFromData(UThrowableWeaponDataAsset* ThrowableWeaponData)

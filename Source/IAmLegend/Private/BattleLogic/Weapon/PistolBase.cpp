@@ -52,7 +52,6 @@ void APistolBase::MeleeAttackTrace()
 	
 	/* 메시 기준 벡터
 	// 메시 기준 피격 판정을 한다면 헤더의 메시 컴포넌트를 활성화하고 아래의 코드를 사용하면 됩니다.
-	// 현재 단검에는 소켓이 작성되어있지 않아 정상적으로 작동하지 않습니다.
 	FVector Start = Mesh->GetSocketLocation(FName("Root"));
 	FVector End = Mesh->GetSocketLocation(FName("Tip"));
 	*/
@@ -63,34 +62,15 @@ void APistolBase::MeleeAttackTrace()
 	Params.AddIgnoredActor(OwnerCharacter); // 플레이어는 충돌에서 제외
 	Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
 
-	/* 박스 형태의 트레이스
+	// 박스 형태의 트레이스
 	bool bHit = GetWorld()->SweepMultiByChannel(
 		HitResults,
 		Start,
 		End,
 		FQuat::Identity,
 		ATTACK_TRACE_CHANNEL,
-		FCollisionShape::MakeBox(StabBoxExtent),
+		FCollisionShape::MakeBox(MeleeAttackBoxExtent),
 		Params
-	);
-	*/
-
-	// 디버그 용
-	bool bHit = UKismetSystemLibrary::BoxTraceMulti(
-		GetWorld(),
-		Start,
-		End,
-		MeleeAttackBoxExtent,
-		OwnerCharacter->GetActorRotation(),
-		UEngineTypes::ConvertToTraceType(ATTACK_TRACE_CHANNEL),
-		false,
-		{ OwnerCharacter, this },
-		EDrawDebugTrace::ForDuration,
-		HitResults,
-		true,
-		FLinearColor::Red,
-		FLinearColor::Green,
-		1.0f
 	);
 
 	ProcessMeleeHits(HitResults); // 타격 결과 처리 (데미지 적용 등)

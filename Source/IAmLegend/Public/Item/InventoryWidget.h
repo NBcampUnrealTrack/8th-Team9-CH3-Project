@@ -15,6 +15,8 @@ class UUniformGridPanel;
 class UInventorySlotWidget;
 class UInventorySlotWidget;
 class UTextBlock;
+class UImage;
+class UButton;
 
 UCLASS()
 class IAMLEGEND_API UInventoryWidget : public UUserWidget
@@ -32,6 +34,27 @@ public:
 
 protected:
 
+	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* InvWeaponImage_1;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* InvWeaponImage_2;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* InvWeaponImage_3;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* Btn_Unequip1;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* Btn_Unequip2;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* Btn_Unequip3;
+
     UPROPERTY(meta = (BindWidget))
     UTextBlock* Date;
 
@@ -43,4 +66,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<UInventorySlotWidget> SlotWidgetClass;
+
+private:
+	UFUNCTION()
+	void OnClickUnequip1();
+
+	UFUNCTION()
+	void OnClickUnequip2();
+
+	UFUNCTION()
+	void OnClickUnequip3();
 };

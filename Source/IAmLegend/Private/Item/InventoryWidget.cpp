@@ -10,6 +10,11 @@
 #include "Item/InventoryComponent.h"
 #include "Components/CanvasPanelSlot.h"
 
+#include "Components/Image.h"
+#include "Components/Button.h"
+#include "Character/HanPlayerCharacter.h"
+#include "BattleLogic/WeaponBase.h"
+
 void UInventoryWidget::RefreshInventory(const TArray<FItemSlot>& Inventory)
 {
 	
@@ -122,4 +127,86 @@ FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 
 	
 	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
+// ---코드 추가 [김민성]
+void UInventoryWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	// 중복 요청 방지 코드
+	if (Btn_Unequip1) Btn_Unequip1->OnClicked.AddUniqueDynamic(this, &UInventoryWidget::OnClickUnequip1);
+	if (Btn_Unequip2) Btn_Unequip2->OnClicked.AddUniqueDynamic(this, &UInventoryWidget::OnClickUnequip2);
+	if (Btn_Unequip3) Btn_Unequip3->OnClicked.AddUniqueDynamic(this, &UInventoryWidget::OnClickUnequip3);
+}
+
+void UInventoryWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
+	if (!PlayerCharacter) return;
+
+	auto UpdateSlotIcon = [](UImage* TargetImage, AWeaponBase* WeaponActor)
+		{
+			if (TargetImage)
+			{
+				if (WeaponActor && WeaponActor->WeaponIcon)
+				{
+					TargetImage->SetBrushFromTexture(WeaponActor->WeaponIcon);
+					TargetImage->SetVisibility(ESlateVisibility::HitTestInvisible);
+				}
+				else
+				{
+					TargetImage->SetVisibility(ESlateVisibility::Hidden);
+				}
+			}
+		};
+
+	const TMap<EWeaponSlot, AWeaponBase*>& ActiveWeaponSlots = PlayerCharacter->GetWeaponSlots();
+
+	AWeaponBase* MeleeWeapon = ActiveWeaponSlots.Contains(EWeaponSlot::Melee) ? ActiveWeaponSlots[EWeaponSlot::Melee] : nullptr;
+	UpdateSlotIcon(InvWeaponImage_1, MeleeWeapon);
+
+	AWeaponBase* RangedWeapon = ActiveWeaponSlots.Contains(EWeaponSlot::Ranged) ? ActiveWeaponSlots[EWeaponSlot::Ranged] : nullptr;
+	UpdateSlotIcon(InvWeaponImage_2, RangedWeapon);
+
+	AWeaponBase* DaggerWeapon = ActiveWeaponSlots.Contains(EWeaponSlot::Dagger) ? ActiveWeaponSlots[EWeaponSlot::Dagger] : nullptr;
+	UpdateSlotIcon(InvWeaponImage_3, DaggerWeapon);
+}
+
+void UInventoryWidget::OnClickUnequip1()
+{
+	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Melee);
+
+		UInventoryComponent* InvComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+		if (InvComp) RefreshInventory(InvComp->GetActualInventory());
+	}
+}
+
+void UInventoryWidget::OnClickUnequip2()
+{
+	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Ranged);
+
+		UInventoryComponent* InvComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+		if (InvComp) RefreshInventory(InvComp->GetActualInventory());
+	}
+}
+
+void UInventoryWidget::OnClickUnequip3()
+{
+	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->UnEquipWeapon(EWeaponSlot::Dagger);
+
+		UInventoryComponent* InvComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+		if (InvComp) RefreshInventory(InvComp->GetActualInventory());
+	}
 }
