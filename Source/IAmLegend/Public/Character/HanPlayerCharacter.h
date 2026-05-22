@@ -126,6 +126,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;
+
+	// 무기 소켓 이름 캐싱
+	FName WeaponSocketName;
+	FName RootSocketName;
 	
 	// 공격중인지 판단 - 공격중일때 캐릭터를 멈추기 위해서.
 	UPROPERTY(BlueprintReadOnly, Category = "Character | State")
