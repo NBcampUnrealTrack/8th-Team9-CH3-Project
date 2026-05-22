@@ -82,7 +82,7 @@ void AThrowableWeaponBase::ThrowWeapon()
 	}
 
 	
-	OwnerCharacter->UnEquipWeapon(WeaponSlot); // 투척 후 무기 해제
+	OwnerCharacter->UnEquipWeapon(WeaponSlot, true); // 투척 후 무기 제거
 }	
 
 void AThrowableWeaponBase::EnableTrajectory(bool bEnable)
