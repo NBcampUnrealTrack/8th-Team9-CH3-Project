@@ -28,7 +28,6 @@ void ATwoHandRangedWeaponBase::MeleeAttackTrace()
 {
 	if (!OwnerCharacter || !SkeletalMesh) return;
 
-	// 찌르기 공격 판정 수행 (현재는 Tick에서 처리하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
 	// 범위 공격 벡터
 	FVector ForwardVector = OwnerCharacter->GetActorForwardVector();
 	float ForwardOffset = FVector::DotProduct(ForwardVector, OwnerCharacter->GetActorLocation() - SkeletalMesh->GetComponentLocation());
@@ -47,34 +46,15 @@ void ATwoHandRangedWeaponBase::MeleeAttackTrace()
 	Params.AddIgnoredActor(OwnerCharacter); // 플레이어는 충돌에서 제외
 	Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
 
-	/* 박스 형태의 트레이스
+	// 박스 형태의 트레이스
 	bool bHit = GetWorld()->SweepMultiByChannel(
 		HitResults,
 		Start,
 		End,
 		FQuat::Identity,
 		ATTACK_TRACE_CHANNEL,
-		FCollisionShape::MakeBox(StabBoxExtent),
+		FCollisionShape::MakeBox(MeleeAttackBoxExtent),
 		Params
-	);
-	*/
-
-	// 디버그 용
-	bool bHit = UKismetSystemLibrary::BoxTraceMulti(
-		GetWorld(),
-		Start,
-		End,
-		MeleeAttackBoxExtent,
-		OwnerCharacter->GetActorRotation(),
-		UEngineTypes::ConvertToTraceType(ATTACK_TRACE_CHANNEL),
-		false,
-		{ OwnerCharacter, this },
-		EDrawDebugTrace::ForDuration,
-		HitResults,
-		true,
-		FLinearColor::Red,
-		FLinearColor::Green,
-		1.0f
 	);
 
 	ProcessMeleeHits(HitResults); // 타격 결과 처리 (데미지 적용 등)
