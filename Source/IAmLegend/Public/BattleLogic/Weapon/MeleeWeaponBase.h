@@ -25,9 +25,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
 	float AttackCooldown; // 공격 간격 (초)
 
-	// 공격 속도에 따라 공격이 끝나는 시점을 관리하기 위한 타이머 핸들
-	// 추후 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.
-	// 현재는 AttackDuration에 따라 타이머의 시간 간격을 조절하여 공격이 끝나는 시점을 관리할 수 있습니다.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
+	float AttackSpeedRate; // 공격 속도 배율 (1.0 = 기본 속도, 2.0 = 2배 빠름 등)
+
 	FTimerHandle AttackIntervalTimerHandle; // 자동 공격 관리 타이머 핸들
 	bool bIsPressingAttack; // 공격 버튼이 눌려있는지 여부 (자동 공격 관리용)
 

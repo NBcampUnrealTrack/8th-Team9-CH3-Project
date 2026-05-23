@@ -17,4 +17,7 @@ class IAMLEGEND_API UMeleeWeaponDataAsset : public UThrowableWeaponDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
 	float AttackCooldown;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Melee")
+	float AttackSpeedRate;
 };

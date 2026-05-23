@@ -126,6 +126,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;
+
+	// 무기 소켓 이름 캐싱
+	FName WeaponSocketName;
+	FName RootSocketName;
 	
 	// 공격중인지 판단 - 공격중일때 캐릭터를 멈추기 위해서.
 	UPROPERTY(BlueprintReadOnly, Category = "Character | State")
@@ -262,7 +266,7 @@ public:
 	void ChangeWeapon(EWeaponSlot NewSlot);
 
 	// 몽타주 재생 함수를 퍼블릭으로 선언했습니다.
-	void PlayAttackMontage_1();
+	void PlayAttackMontage_1(float InPlayRate = 1.0f);
 	void PlayAttackMontage_2();
 	void PlayReloadMontage();
 
