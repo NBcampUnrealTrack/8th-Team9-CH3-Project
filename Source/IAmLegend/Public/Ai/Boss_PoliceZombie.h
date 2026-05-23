@@ -39,13 +39,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float MaxHealth;
 
+    // 코드 추가
+    bool bPrologueDone = false;
+
 protected:
     virtual void ResetAttack() override;
     virtual void Tick(float DeltaTime) override;
     virtual void BeginPlay() override;
 
     // 프롤로그 관련
-    bool bPrologueDone = false;
+    // 주석 처리
+    // bool bPrologueDone = false;
     FTimerHandle ScreamTimerHandle;
 
     void StartBiteLoop();
