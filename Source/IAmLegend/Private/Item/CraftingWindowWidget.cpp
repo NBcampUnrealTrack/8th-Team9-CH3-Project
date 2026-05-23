@@ -9,6 +9,7 @@
 #include "Components/Button.h"
 #include "Components/HorizontalBox.h"
 #include "Item/ItemDataAsset.h"
+#include "Item/CraftNotificationWidget.h"
 
 void UCraftingWindowWidget::NativeConstruct()
 {
@@ -121,34 +122,61 @@ void UCraftingWindowWidget::DisplayRecipeDetails(UCraftRecipe* NewRecipe)
 
 void UCraftingWindowWidget::OnDetailCraftButtonClicked()
 {
-	if (SelectedRecipe != nullptr) 
-	{
-		APawn* PlayerPawn = GetOwningPlayerPawn();
-		if (PlayerPawn != nullptr)
-		{
-			
-			UCraftingManager* CraftManager = PlayerPawn->FindComponentByClass<UCraftingManager>();
+    if (SelectedRecipe != nullptr) 
+    {
+       APawn* PlayerPawn = GetOwningPlayerPawn();
+       if (PlayerPawn != nullptr)
+       {
+          UCraftingManager* CraftManager = PlayerPawn->FindComponentByClass<UCraftingManager>();
             
-			if (CraftManager != nullptr)
-			{
-				
-				if (CraftManager->CraftItem(SelectedRecipe))
-				{
-					
-					DisplayRecipeDetails(SelectedRecipe);
+          if (CraftManager != nullptr)
+          {
+             
+             FText PopupMessage;
+             FLinearColor MessageColor;
+             bool bCraftVisualSuccess = false;
+
+             if (CraftManager->CraftItem(SelectedRecipe))
+             {
+                DisplayRecipeDetails(SelectedRecipe);
                     
-					
-					UInventoryComponent* InvenComp = PlayerPawn->FindComponentByClass<UInventoryComponent>();
-					if (InvenComp && InvenComp->bInventoryVisible)
-					{
-						InvenComp->DisplayUI(true);
-					}
-				}
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("CraftingWindowWidget: 캐릭터에서 CraftingManager를 찾을 수 없습니다!"));
-			}
-		}
-	}
+                UInventoryComponent* InvenComp = PlayerPawn->FindComponentByClass<UInventoryComponent>();
+                if (InvenComp && InvenComp->bInventoryVisible)
+                {
+                   InvenComp->DisplayUI(true);
+                }
+
+               
+                if (SelectedRecipe->ResultItem)
+                {
+                   PopupMessage = FText::Format(NSLOCTEXT("UI", "CraftSuccess", "{0} 제작 성공!"), FText::FromString(SelectedRecipe->ResultItem->ItemName));
+                }
+                MessageColor = FLinearColor(0.1f, 1.0f, 0.2f, 1.0f);
+                bCraftVisualSuccess = true;
+             }
+             else
+             {
+               
+                PopupMessage = NSLOCTEXT("UI", "CraftFail", "재료가 부족합니다.");
+                MessageColor = FLinearColor(1.0f, 0.1f, 0.1f, 1.0f);
+                bCraftVisualSuccess = true; // 위젯을 띄우기 위해 플래그 활성화
+             }
+
+            
+             if (bCraftVisualSuccess && NotificationWidgetClass)
+             {
+                UCraftNotificationWidget* NotiWidget = CreateWidget<UCraftNotificationWidget>(GetOwningPlayer(), NotificationWidgetClass);
+                if (NotiWidget)
+                {
+                   NotiWidget->AddToViewport(100); 
+                   NotiWidget->ShowNotification(PopupMessage, MessageColor);
+                }
+             }
+          }
+          else
+          {
+             UE_LOG(LogTemp, Error, TEXT("CraftingWindowWidget: 캐릭터에서 CraftingManager를 찾을 수 없습니다!"));
+          }
+       }
+    }
 }

@@ -12,6 +12,7 @@ class UButton;
 class UHorizontalBox;
 class UIngredientSlotWidget;
 class UCraftingSlotWidget;
+class UCraftNotificationWidget;
 
 UCLASS()
 class IAMLEGEND_API UCraftingWindowWidget : public UUserWidget
@@ -44,6 +45,9 @@ protected:
 	// 현재 선택된 레시피 데이터 저장
 	UPROPERTY()
 	TObjectPtr<UCraftRecipe> SelectedRecipe;
+	
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UCraftNotificationWidget> NotificationWidgetClass;
 
 public:
 	// 목록 전체 갱신
