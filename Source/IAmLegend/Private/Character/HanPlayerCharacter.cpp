@@ -67,7 +67,10 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
-	
+	// 무기 소켓 이름 캐싱
+	WeaponSocketName = TEXT("WeaponSocket");
+	RootSocketName = TEXT("RootSocket");
+
 }
 
 void AHanPlayerCharacter::BeginPlay()
@@ -628,7 +631,15 @@ void AHanPlayerCharacter::EquipWeapon(UItemDataAsset* NewWeaponData)
 		WeaponSlots.Add(NewSlot, SpawnedWeapon);
 
 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-		SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
+		SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, WeaponSocketName);
+
+		USkeletalMeshComponent* MeshComp = SpawnedWeapon->FindComponentByClass<USkeletalMeshComponent>();
+		if(MeshComp && MeshComp->DoesSocketExist(RootSocketName))
+		{
+			FTransform SocketTransform = MeshComp->GetSocketTransform(RootSocketName, RTS_Component);
+			FTransform InverseTransform = SocketTransform.Inverse();
+			MeshComp->SetRelativeTransform(InverseTransform);
+		}
 
 		// 무기는 처음에 보이지 않게 설정
 		SpawnedWeapon->SetActorHiddenInGame(true);
