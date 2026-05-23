@@ -266,7 +266,7 @@ public:
 	void ChangeWeapon(EWeaponSlot NewSlot);
 
 	// 몽타주 재생 함수를 퍼블릭으로 선언했습니다.
-	void PlayAttackMontage_1();
+	void PlayAttackMontage_1(float InPlayRate = 1.0f);
 	void PlayAttackMontage_2();
 	void PlayReloadMontage();
 

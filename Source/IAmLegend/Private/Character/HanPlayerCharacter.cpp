@@ -981,7 +981,7 @@ void AHanPlayerCharacter::InputChangeWeapon(const FInputActionValue& Value)
 }
 
 
-void AHanPlayerCharacter::PlayAttackMontage_1()
+void AHanPlayerCharacter::PlayAttackMontage_1(float InPlayRate)
 {
 	bIsAttacking = true;
 
@@ -992,7 +992,7 @@ void AHanPlayerCharacter::PlayAttackMontage_1()
 
 	if(CurrentAttack_1_Montage)
 	{
-		PlayAnimMontage(CurrentAttack_1_Montage);
+		PlayAnimMontage(CurrentAttack_1_Montage, InPlayRate);
 	}
 
 	// 몽타주가 완전히 끝나는 프레임 타이밍에 센서를 OFF
