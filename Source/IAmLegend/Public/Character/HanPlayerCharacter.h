@@ -154,7 +154,7 @@ protected:
 	
 	// 은신 스킬 사용시 카메라 채도 변환
 	float CurrentSaturation = 1.0f; // 현재 채도
-	float TargetSaturation = 1.0f; // 목표 채도
+	//float TargetSaturation = 1.0f; // 목표 채도
 
 	// 발차기 연출용 카메라 관련 변수
 	FVector DefaultSocketOffset;     // 디폴트 스프링 암 소켓 오프셋 수치를 기억해 둘 변수
