@@ -15,10 +15,9 @@ class IAMLEGEND_API UHanAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 	
 public:
-
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
-
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AHanPlayerCharacter> OwnerCharacter;

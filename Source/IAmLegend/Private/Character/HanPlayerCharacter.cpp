@@ -77,6 +77,14 @@ void AHanPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (SpringArmComponent) 
+	{
+		// 시작 시 저장할 스프링 암 컴포넌트의 기본 오프셋 (0, 50, 0)
+		DefaultSocketOffset = SpringArmComponent->SocketOffset; 
+		// 연출용 변수. 카메라가 도달해야하는 목표 위치. 일단은 기본 값으로 잡는다.
+		TargetSocketOffset = DefaultSocketOffset;
+	}
+
 	// 시작 시 무기 장착
 	for (const TPair<EWeaponSlot, UItemDataAsset*>& Elem : DefaultWeaponDataAssets)
 	{
@@ -147,6 +155,24 @@ void AHanPlayerCharacter::Tick(float DeltaTime)
 
 			// 카메라가 순간적으로 좁혀질 강도 설정
 			HeartBeatFOVOffset = HeartBeatPulse * -20.0f;
+		}
+
+		// 컴포넌트가 목표 지점을 향해 프레임마다 부드럽게 쫓아가게 만든다.
+		if (SpringArmComponent)
+		{
+			float InterpSpeed = FOVInterpSpeed;
+			
+			// 발차기 연출용 - 에디터에서 InterpSpeed를 높게 잡아줄수록 더 빠르게 목표지점으로 이동한다.
+			SpringArmComponent->SocketOffset = FMath::VInterpTo(SpringArmComponent->SocketOffset, TargetSocketOffset, DeltaTime, InterpSpeed);
+		
+			// 발차기 연출용 - 마우스 제어권을 잠시 잠구고, 카메라 각도를 왼쪽으로 스르륵 돌려준다. 
+			APlayerController* PC = Cast<APlayerController>(GetController());
+			if (PC && PC->IsLookInputIgnored()) // 마우스가 잠겨있는(발차기 중인) 동안에만 작동
+			{
+				FRotator CurrentRot = PC->GetControlRotation();
+				FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetControlRotation, DeltaTime, InterpSpeed);
+				PC->SetControlRotation(NewRot);
+			}
 		}
 
 		// 최종 FOV 적용 (기본 보간 FOV + 심장 박동 오프셋)
@@ -758,11 +784,15 @@ void AHanPlayerCharacter::StopAttack()
 
 void AHanPlayerCharacter::StartAim() 
 { 
-	// 장전중일때는 조준 입력 무시
+	// 장점 중, 발차기 중일 때는 조준 입력 무시
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (AnimInst && AnimInst->IsSlotActive(FName("ReloadSlot"))){ return; }
-
+	if (AnimInst && (AnimInst->IsSlotActive(FName("ReloadSlot")) || AnimInst->IsSlotActive(FName("LeftMouseAttackSlot"))))
+	{
+		return;
+	}
+	
 	bIsAiming = true; 
+	FOVInterpSpeed = 10.0f; // 줌인 속도
 	TargetFOV = AimingFOV; 
 
 	bUseControllerRotationYaw = true;
@@ -772,7 +802,9 @@ void AHanPlayerCharacter::StartAim()
 	// 근접 무기일경우 조준 모드에서도 카메라 확대는 안하도록
 	if (EquippedWeapon == nullptr) return;
 	EWeaponType CurrentWeapon = EquippedWeapon->GetWeaponType();
-	if (CurrentWeapon == EWeaponType::Dagger || CurrentWeapon == EWeaponType::TwoHandedMelee)
+	if (CurrentWeapon == EWeaponType::Dagger 
+		|| CurrentWeapon == EWeaponType::TwoHandedMelee
+		|| CurrentWeapon == EWeaponType::OneHandedMelee)
 	{
 		TargetFOV = DefaultFOV; // 줌 안 함
 	}
@@ -787,6 +819,7 @@ void AHanPlayerCharacter::StartAim()
 void AHanPlayerCharacter::StopAim() 
 { 
 	bIsAiming = false; 
+	FOVInterpSpeed = 10.0f;
 	TargetFOV = DefaultFOV; 
 
 	// 조준 풀면 다시 입력 방향대로 자유롭게 몸을 돌린다.
@@ -800,12 +833,61 @@ void AHanPlayerCharacter::StopAim()
 	}
 }
 
-void AHanPlayerCharacter::PlayCameraZoomIn()
+void AHanPlayerCharacter::PlayKickZoomIn(float InFOV, FVector InOffset, float InSpeed)
+{
+	TargetFOV = InFOV; // ABP 이벤트 그래프에서 입력 받은 값으로 줌인.
+	FOVInterpSpeed = InSpeed;
+	if (SpringArmComponent)
+	{
+		// 마우스 회전값(Control Rotation)을 담당하는 플레이어 컨트롤러를 가져옴
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			PC->SetIgnoreLookInput(true);
+
+			// 캐릭터의 현재 정면 각도를 가져와서 저장
+			FRotator CharacterRot = GetActorRotation();
+			PC->SetControlRotation(CharacterRot);
+			DefaultControlRotation = CharacterRot; // 원래 보던 각도 기억
+
+			// 캐릭터 정면 기준, 카메라의 시선을 왼쪽으로 75도(Yaw: -75.f) 돌린다.
+			TargetControlRotation = CharacterRot;
+			TargetControlRotation.Yaw -= 75.0f; // 숫자를 키울수록 더 왼쪽을 쳐다 본다.
+		}
+
+		// 카메라가 캐릭터의 등 뒤에서 시작
+		FVector StartOffset = FVector(-100.0f, 50.0f, -50.0f);
+		SpringArmComponent->SocketOffset = StartOffset;
+
+		// 카메라가 최종 도달할 앞으로 전진하는 목표 위치. ABP 이벤트 그래프에서 설정 가능
+		TargetSocketOffset = InOffset;
+	}
+}
+
+void AHanPlayerCharacter::PlayKickZoomOut()
+{
+	TargetFOV = DefaultFOV; // 줌아웃은 디폴트 줌으로
+	if (SpringArmComponent)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			PC->SetIgnoreLookInput(false);					// 발차기 모션이 완전히 끝났으므로 마우스 권한 다시 복구
+			PC->SetControlRotation(DefaultControlRotation); // 카메라 각도를 원래 정면 각도로 강제 리셋
+		}
+
+		// 끝나는 순간 원래 세팅(0, 50, 0)으로 이동
+		TargetSocketOffset = DefaultSocketOffset;
+		SpringArmComponent->SocketOffset = DefaultSocketOffset;
+	}
+}
+
+void AHanPlayerCharacter::PlayDaggerZoomIn()
 {
 	TargetFOV = AimingFOV;
 }
 
-void AHanPlayerCharacter::PlayCameraZoomOut()
+void AHanPlayerCharacter::PlayDaggerZoomOut()
 {
 	TargetFOV = DefaultFOV;
 }
