@@ -70,6 +70,10 @@ public:
 	void ShowStealthHUD();
 	void HideStealthHUD();
 
+	// 엔딩 UI 관리
+	void ShowHappyEndingHUD();
+	void ShowBadEndingHUD();
+
 protected:
 	//사용할 Widget 클래스 설정
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
@@ -100,6 +104,10 @@ protected:
 	TSubclassOf<UStealthWidget> StealthClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
 	TSubclassOf<UBossHealthWidget> BossHealthClass;
+	UPROPERTY(EditAnywhere, Category = "UI|Ending")
+	TSubclassOf<UUserWidget> HappyEndingWidgetClass;
+	UPROPERTY(EditAnywhere, Category = "UI|Ending")
+	TSubclassOf<UUserWidget> BadEndingWidgetClass;
 
 private:
 	

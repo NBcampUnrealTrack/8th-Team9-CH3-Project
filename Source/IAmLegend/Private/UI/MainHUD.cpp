@@ -334,3 +334,29 @@ void AMainHUD::HideStealthHUD()
 		StealthWidget = nullptr;
 	}
 }
+
+// 엔딩1 UI 함수
+void AMainHUD::ShowHappyEndingHUD()
+{
+	if (HappyEndingWidgetClass)
+	{
+		UUserWidget* HappyEnding = CreateWidget<UUserWidget>(GetOwningPlayerController(), HappyEndingWidgetClass);
+		if (HappyEnding)
+		{
+			HappyEnding->AddToViewport();
+		}
+	}
+}
+
+// 엔딩2 UI 함수
+void AMainHUD::ShowBadEndingHUD()
+{
+	if (BadEndingWidgetClass)
+	{
+		UUserWidget* BadEnding = CreateWidget<UUserWidget>(GetOwningPlayerController(), BadEndingWidgetClass);
+		if (BadEnding)
+		{
+			BadEnding->AddToViewport();
+		}
+	}
+}
