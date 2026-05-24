@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Gamemode/MainGameInstance.h"
 #include "Gamemode/MainGameStateBase.h"
+#include "Item/ItemDataAsset.h"
 
 AMainGameModeBase::AMainGameModeBase()
 {
@@ -58,12 +59,40 @@ void AMainGameModeBase::StartGame()
 // 스테이지 입장 시 초기 설정, 어떤 스테이지 입장했는지 Enum 값을 받음 
 void AMainGameModeBase::EnterStage(EStageType StageType)
 {
+	//보스 스테이지 진입 시도 시 백신 아이템 존재 확인
+	if (StageType == EStageType::Boss)
+	{
+		UMainGameInstance* GI = Cast<UMainGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+		if (!GI) return;
+		
+		//인벤토리에 백신 보유 여부 확인
+		bool bPossessVaccine = false;
+		for (const FItemSlot& ItemSlot : GI->GetItemsFromGlobalInventory())
+		{
+			if (!ItemSlot.ItemData) continue;
+			
+			if (ItemSlot.ItemData->ItemName=="백신")
+			{
+				bPossessVaccine = true;
+			}
+		}
+		//백신 보유 하지 않으면 경고 메시지 이후 맵 이동 X
+		if (bPossessVaccine == false)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("백신을 보유하고 있지 않습니다."))
+			return;
+		}
+	}
+	
+
+	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (PC)
 	{
 		// 입력 모드를 게임 전용으로 변경
 		FInputModeGameOnly InputMode;
 		PC->SetInputMode(InputMode);
+		PC->SetShowMouseCursor(false);
 	}
 	
 	//스테이지 시작 게임 인스턴스에 저장
