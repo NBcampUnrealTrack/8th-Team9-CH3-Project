@@ -23,7 +23,6 @@ void UStageHUDWidget::NativeConstruct()
 	
 	GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, this, &UStageHUDWidget::UpdateStageHUD, 0.1f, true);
 	
-	UpdateKillCount();
 	
 	if (Text_CurrentStage)
 	{
@@ -68,6 +67,7 @@ void UStageHUDWidget::UpdateStageHUD()
 			Img_SkullIcon->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
+	UpdateKillCount();
 }
 
 
