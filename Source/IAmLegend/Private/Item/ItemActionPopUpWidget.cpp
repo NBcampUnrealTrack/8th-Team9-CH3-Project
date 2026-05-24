@@ -1,10 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Item/ItemActionPopUpWidget.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h" 
 #include "Item/UseItemDataAsset.h"
-#include "Character/HanPlayerCharacter.h" // 캐릭터 캐스팅용 추가
+#include "Item/ItemDataAsset.h"
+#include "WeaponDataAsset.h"  
+#include "Character/HanPlayerCharacter.h"
 #include "Item/InventoryComponent.h"
 
 void UItemActionPopUpWidget::NativeConstruct()
@@ -17,34 +17,82 @@ void UItemActionPopUpWidget::NativeConstruct()
 	}
 }
 
+void UItemActionPopUpWidget::SetupPopup(const FItemSlot& InSlotData, int32 InIndex)
+{
+	TargetSlotData = InSlotData;
+	TargetIndex = InIndex;
+
+	if (!TargetSlotData.ItemData || !ButtonText || !UseButton)
+	{
+		RemoveFromParent(); 
+		return;
+	}
+
+	if (UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(TargetSlotData.ItemData))
+	{
+		ButtonText->SetText(FText::FromString(TEXT("무기 장착")));
+		SetVisibility(ESlateVisibility::Visible); 
+		return;
+	}
+
+	if (UUseItemDataAsset* UseItemData = Cast<UUseItemDataAsset>(TargetSlotData.ItemData))
+	{
+		if (UseItemData->EffectType == EItemType::Buff)
+		{
+			ButtonText->SetText(FText::FromString(TEXT("아이템 사용")));
+			SetVisibility(ESlateVisibility::Visible); 
+			return;
+		}
+	}
+
+	RemoveFromParent(); 
+}
+
 void UItemActionPopUpWidget::OnUseButtonClicked()
 {
-	// 인덱스가 유효하고 아이템 데이터가 있는지 확인
 	if (TargetIndex != INDEX_NONE && TargetSlotData.ItemData)
 	{
-		// 1. 로컬 플레이어 캐릭터 가져오기
 		APlayerController* PC = GetOwningPlayer();
 		if (PC)
 		{
 			AHanPlayerCharacter* PlayerChar = Cast<AHanPlayerCharacter>(PC->GetPawn());
 			if (PlayerChar)
 			{
-				// 2. 캐릭터가 가진 인벤토리 컴포넌트 컴포넌트 찾아오기
-				// (만약 인벤토리 컴포넌트를 반환하는 Getter 함수가 있다면 그걸 쓰셔도 좋습니다)
 				UInventoryComponent* InvComp = Cast<UInventoryComponent>(PlayerChar->GetComponentByClass(UInventoryComponent::StaticClass()));
-                
 				if (InvComp)
 				{
-					// 3. 실제 인벤토리 컴포넌트의 사용 로직 실행!
 					InvComp->UseItem(TargetIndex);
-
-					// 4. 아이템을 썼으니 화면의 인벤토리 UI도 최신 수량으로 새로고침
 					InvComp->ShowInventory();
 				}
 			}
 		}
-
-		// 사용 후 팝업 닫기
 		RemoveFromParent();
+	}
+}
+void UItemActionPopUpWidget::ShowOnlyName(const FItemSlot& InSlotData)
+{
+	TargetSlotData = InSlotData;
+
+	if (ItemNameText)
+	{
+		
+		ItemNameText->SetText(FText::FromString(TargetSlotData.ItemData->ItemName));
+		ItemNameText->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+		
+		if (Cast<UWeaponDataAsset>(TargetSlotData.ItemData))
+		{
+			
+			FLinearColor WeaponColor = FLinearColor(0.8f, 0.0f, 0.0f, 1.0f); // R, G, B, A
+			ItemNameText->SetColorAndOpacity(FSlateColor(WeaponColor));
+		}
+		else
+		{
+			ItemNameText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+		}
+	}
+
+	if (UseButton)
+	{
+		UseButton->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
