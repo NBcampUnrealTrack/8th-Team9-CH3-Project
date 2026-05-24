@@ -65,7 +65,7 @@ TArray<FItemSlot>& UInventoryComponent::GetActualInventory()
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetWorld()->GetGameInstance());
 	if (GI)
 	{
-		return GI->GlobalInventory;
+		return GI->GetItemsFromGlobalInventory();
 	}
 	
 	static TArray<FItemSlot> EmptyInv;

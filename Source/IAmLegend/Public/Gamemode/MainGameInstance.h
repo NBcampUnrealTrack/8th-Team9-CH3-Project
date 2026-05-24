@@ -43,11 +43,16 @@ public:
 	void SetCurrentStage(EStageType StageType);
 	EStageType GetCurrentStage() const;
 
+	//인벤토리 아이템 데이터 관리
+	void AddItemAtGlobalInventory(FItemSlot& ItemSlot);
+	TArray<FItemSlot>& GetItemsFromGlobalInventory();
+	
+private:
+	
 	//인벤토리 관련 데이터 아이템 데이터가 이제 여기로 들어옴
 	// 실제 아이템 데이터는 여기에 저장됩니다.
 	UPROPERTY()
 	TArray<FItemSlot> GlobalInventory;
-private:
 	
 	//게임 시작 여부
 	bool bIsGameStarted;

@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Gamemode/MainGameInstance.h"
 #include "Gamemode/MainGameStateBase.h"
+#include "Item/ItemDataAsset.h"
 
 AMainGameModeBase::AMainGameModeBase()
 {
@@ -58,12 +59,46 @@ void AMainGameModeBase::StartGame()
 // 스테이지 입장 시 초기 설정, 어떤 스테이지 입장했는지 Enum 값을 받음 
 void AMainGameModeBase::EnterStage(EStageType StageType)
 {
+	//보스 스테이지 진입 시도 시 백신 아이템 존재 확인
+	if (StageType == EStageType::Boss)
+	{
+		UMainGameInstance* GI = Cast<UMainGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+		if (!GI) return;
+		
+		//인벤토리에 백신 보유 여부 확인
+		bool bPossessVaccine = false;
+		for (const FItemSlot& ItemSlot : GI->GetItemsFromGlobalInventory())
+		{
+			if (!ItemSlot.ItemData) continue;
+			
+			if (ItemSlot.ItemData->ItemName=="백신")
+			{
+				bPossessVaccine = true;
+			}
+		}
+		//백신 보유 하지 않으면 경고 메시지 이후 맵 이동 X
+		if (bPossessVaccine == false)
+		{
+			APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+			if (!PC) return;
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->ShowWarningHUD();
+			}
+			return;
+		}
+	}
+	
+
+	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
 	if (PC)
 	{
 		// 입력 모드를 게임 전용으로 변경
 		FInputModeGameOnly InputMode;
 		PC->SetInputMode(InputMode);
+		PC->SetShowMouseCursor(false);
 	}
 	
 	//스테이지 시작 게임 인스턴스에 저장
@@ -80,8 +115,13 @@ void AMainGameModeBase::EnterStage(EStageType StageType)
 //스테이지 시작
 void AMainGameModeBase::StartStage()
 {
-	//타이머를 통해 스테이지 제한 시간 설정
-	GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
+	UMainGameInstance* GI = Cast<UMainGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (!GI) return;
+	if (GI->GetCurrentStage()!=EStageType::Boss)
+	{
+		//타이머를 통해 스테이지 제한 시간 설정
+		GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
+	}
 	
 	//스테이지 UI 출력
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
@@ -94,8 +134,6 @@ void AMainGameModeBase::StartStage()
 	}
 	
 	//플레이어 탈출 여부 실패로 초기 설정
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	if (!GI) return;
 	GI->SetbIsPlayerEscaped(false);
 	
 	//스폰 매니저에서 적 스폰

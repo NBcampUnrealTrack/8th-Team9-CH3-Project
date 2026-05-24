@@ -7,6 +7,7 @@
 #include "UI/StageHUDWidget.h"
 #include "UI/PauseMenuWidget.h"
 #include "UI/GameOverWidget.h"
+#include "UI/WarningUIWidget.h"
 #include "PlayerHealthWidget.h"
 #include "UI/CrosshairWidget.h"
 #include "UI/WeaponInstallationWidget.h"
@@ -359,4 +360,18 @@ void AMainHUD::ShowBadEndingHUD()
 			BadEnding->AddToViewport();
 		}
 	}
+}
+
+//경고 메시지 UI 함수
+void AMainHUD::ShowWarningHUD()
+{
+	if (WarningHUDClass)
+	{
+		UWarningUIWidget* WarningWidget = CreateWidget<UWarningUIWidget>(GetWorld(), WarningHUDClass);
+		if (WarningWidget)
+		{
+			WarningWidget->AddToViewport(200);
+		}
+	}
+	
 }
