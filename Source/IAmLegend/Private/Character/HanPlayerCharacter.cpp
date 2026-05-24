@@ -966,6 +966,11 @@ void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
 
 void AHanPlayerCharacter::InputChangeWeapon(const FInputActionValue& Value)
 {
+	if (GetMesh() && GetMesh()->GetAnimInstance() && GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
+	{
+		return;
+	}
+
 	float SlotIndex = Value.Get<float>();
 	EWeaponSlot TargetSlot = EWeaponSlot::None;
 
