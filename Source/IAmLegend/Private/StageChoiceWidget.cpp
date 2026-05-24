@@ -84,14 +84,6 @@ void UStageChoiceWidget::OnBackClicked()
 
 void UStageChoiceWidget::OnBossClicked()
 {
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (PC)
-	{
-		FInputModeGameOnly InputMode;
-		PC->SetInputMode(InputMode);
-		PC->SetShowMouseCursor(false);
-	}
-
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode)
 	{
