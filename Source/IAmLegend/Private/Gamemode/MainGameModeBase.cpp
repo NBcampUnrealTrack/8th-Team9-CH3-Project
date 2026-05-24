@@ -134,8 +134,6 @@ void AMainGameModeBase::StartStage()
 	}
 	
 	//플레이어 탈출 여부 실패로 초기 설정
-	UMainGameInstance* GI = Cast<UMainGameInstance>(GetGameInstance());
-	if (!GI) return;
 	GI->SetbIsPlayerEscaped(false);
 	
 	//스폰 매니저에서 적 스폰

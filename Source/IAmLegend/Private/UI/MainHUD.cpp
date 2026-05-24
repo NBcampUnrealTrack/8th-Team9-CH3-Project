@@ -367,7 +367,7 @@ void AMainHUD::ShowWarningHUD()
 {
 	if (WarningHUDClass)
 	{
-		UWarningUIWidget* WarningWidget = CreateWidget<UWarningUIWidget>(GetOwningPlayerController, WarningHUDClass);
+		UWarningUIWidget* WarningWidget = CreateWidget<UWarningUIWidget>(GetWorld(), WarningHUDClass);
 		if (WarningWidget)
 		{
 			WarningWidget->AddToViewport(200);
