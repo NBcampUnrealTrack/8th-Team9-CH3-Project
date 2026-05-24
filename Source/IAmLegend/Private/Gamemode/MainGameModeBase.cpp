@@ -79,7 +79,13 @@ void AMainGameModeBase::EnterStage(EStageType StageType)
 		//백신 보유 하지 않으면 경고 메시지 이후 맵 이동 X
 		if (bPossessVaccine == false)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("백신을 보유하고 있지 않습니다."))
+			APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+			if (!PC) return;
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->ShowWarningHUD();
+			}
 			return;
 		}
 	}
@@ -109,8 +115,13 @@ void AMainGameModeBase::EnterStage(EStageType StageType)
 //스테이지 시작
 void AMainGameModeBase::StartStage()
 {
-	//타이머를 통해 스테이지 제한 시간 설정
-	GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
+	UMainGameInstance* GI = Cast<UMainGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (!GI) return;
+	if (GI->GetCurrentStage()!=EStageType::Boss)
+	{
+		//타이머를 통해 스테이지 제한 시간 설정
+		GetWorldTimerManager().SetTimer(StageTimer, this, &AMainGameModeBase::OnStageTimeUp, MaxStageDuration, false);
+	}
 	
 	//스테이지 UI 출력
 	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
