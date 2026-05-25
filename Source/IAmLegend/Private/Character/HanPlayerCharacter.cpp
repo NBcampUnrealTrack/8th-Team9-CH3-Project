@@ -685,6 +685,11 @@ void AHanPlayerCharacter::EquipWeapon(UItemDataAsset* NewWeaponData)
 		{
 			ChangeWeapon(NewSlot);
 		}
+
+		if (NewSlot == EWeaponSlot::Ranged)
+		{
+			OnRangedWeaponEquipped.Broadcast(); // 원거리 무기 장착 시 이벤트 브로드캐스트
+		}
 	}
 }
 
@@ -743,6 +748,12 @@ void AHanPlayerCharacter::UnEquipWeapon(EWeaponSlot RemoveSlot, bool bDestroyWea
 		if (WeaponSlots.Contains(EWeaponSlot::Dagger) && IsValid(WeaponSlots[EWeaponSlot::Dagger]))
 		{
 			ChangeWeapon(EWeaponSlot::Dagger);
+		}
+
+		// 무기 제거 시, 원거리 무기였다면 이벤트 브로드캐스트
+		if (RemoveSlot == EWeaponSlot::Ranged)
+		{
+			OnRangedWeaponEquipped.Broadcast();
 		}
 	}
 }

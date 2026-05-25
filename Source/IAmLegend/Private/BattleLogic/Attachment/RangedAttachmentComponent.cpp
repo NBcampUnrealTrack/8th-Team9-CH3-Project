@@ -23,6 +23,7 @@ void URangedAttachmentComponent::BeginPlay()
 
 	if (!OwnerWeapon || !OwnerWeapon->ItemData) return;
 	WeaponData = Cast<URangedWeaponDataAsset>(OwnerWeapon->ItemData);
+	AttachmentSlots = OwnerWeapon->AttachmentSlots;
 
 	if (!OwnerWeapon->SkeletalMesh) return;
 	WeaponMesh = OwnerWeapon->SkeletalMesh;
@@ -73,7 +74,7 @@ bool URangedAttachmentComponent::IsCanEquipAttachment(UAttachmentDataAsset* Atta
 		return false;
 	}
 
-	if(!WeaponMesh->GetSocketByName(AttachmentData->SocketName))
+	if(!AttachmentSlots.Contains(AttachmentData->AttachmentSlot))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Weapon does not have the required socket for this attachment!"));
 		return false;
@@ -94,6 +95,7 @@ bool URangedAttachmentComponent::EquipAttachment(UAttachmentDataAsset* Attachmen
 	UpdateAttachmentMesh(CurrentSlot);						// 부착물 메쉬 업데이트
 	RefreshWeaponStats();									// 장착 후 무기 스탯 갱신
 
+	OnAttachmentChanged.Broadcast(this);					// 부착물 변경 후 델리게이트 브로드캐스트
 	return true;
 }
 
@@ -112,6 +114,7 @@ UAttachmentDataAsset* URangedAttachmentComponent::UnequipAttachment(EAttachmentS
 	UpdateAttachmentMesh(AttachmentSlot);		// 부착물 메쉬 업데이트
 	RefreshWeaponStats();						// 해제 후 무기 스탯 갱신
 
+	OnAttachmentChanged.Broadcast(this);		// 부착물 변경 후 델리게이트 브로드캐스트
 	return RemovedAttachment;
 }
 
@@ -147,7 +150,13 @@ void URangedAttachmentComponent::UpdateAttachmentMesh(EAttachmentSlot Attachment
 	}
 }
 
-TMap<EAttachmentSlot, UAttachmentDataAsset*> URangedAttachmentComponent::GetCurrentAttachments() const
+TMap<EAttachmentSlot, UAttachmentDataAsset*>& URangedAttachmentComponent::GetCurrentAttachments() const
 {
-	return CurrentAttachments;
+	return const_cast<TMap<EAttachmentSlot, UAttachmentDataAsset*>&>(CurrentAttachments);
+}
+
+bool URangedAttachmentComponent::IsSupportAttachment(EAttachmentSlot AttachmentSlot) const
+{
+	if (!WeaponData) return false;
+	return AttachmentSlots.Contains(AttachmentSlot);
 }

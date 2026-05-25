@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BattleLogic/WeaponBase.h"
+#include "BattleLogic/Attachment/AttachmentDataAsset.h"
 #include "RangedWeaponBase.generated.h"
 
 /**
@@ -58,6 +59,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
 	FName MuzzleSocketName; // 총구 소켓 이름
+
+	UPROPERTY(EditAnywhere, Category = "Weapon|Ranged|Attachment")
+	TArray<EAttachmentSlot> AttachmentSlots; // 이 무기가 지원하는 부착물 슬롯
 
 	//----애니메이션----
 	UPROPERTY(EditAnywhere, Category = "Weapon|Ranged|Animation")
