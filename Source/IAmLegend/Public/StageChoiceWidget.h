@@ -32,7 +32,20 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Boss;
 
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* WarningBorder;
+
 private:
+	FTimerHandle FadeTimerHandle;
+	float FadeDuration;
+	float FadeElapsed;
+
+	UFUNCTION()
+	void UpdateFade();
+
+	// 경고 시작 함수
+	void PlayWarningSequence();
+
 	UFUNCTION()
 	void OnHospitalClicked();
 
