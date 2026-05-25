@@ -26,20 +26,57 @@ void ATwoHandRangedWeaponBase::BeginPlay()
 
 void ATwoHandRangedWeaponBase::MeleeAttackTrace()
 {
+	if (!OwnerCharacter || !OwnerCharacter->GetMesh() || !SkeletalMesh) return;
+	
+	HitActors.Empty();
+	
+	FVector BaseStart = OwnerCharacter->GetMesh()->GetSocketLocation(FName("KickStart"));
+	FVector BaseEnd = OwnerCharacter->GetMesh()->GetSocketLocation(FName("KickEnd"));
+
+	FVector ForwardVector = OwnerCharacter->GetActorForwardVector();
+	FVector Start = BaseStart + (ForwardVector * 30.f);
+	FVector End = BaseEnd + (ForwardVector * 70.f);
+
+	TArray<FHitResult> HitResults;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerCharacter);
+	Params.AddIgnoredActor(this);
+
+	float KickThickness = 10.0f;
+
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		Start,
+		End,
+		FQuat::Identity,
+		ATTACK_TRACE_CHANNEL,
+		FCollisionShape::MakeSphere(KickThickness),
+		Params
+	);
+
+	if (bHit)
+	{
+		ProcessMeleeHits(HitResults);
+	}
+	/* 한기담 - 기존 방식 - 혹시 몰라 주석 처리 해두겠습니다.
 	if (!OwnerCharacter || !SkeletalMesh) return;
 
 	// 범위 공격 벡터
 	FVector ForwardVector = OwnerCharacter->GetActorForwardVector();
 	float ForwardOffset = FVector::DotProduct(ForwardVector, OwnerCharacter->GetActorLocation() - SkeletalMesh->GetComponentLocation());
-	FVector Start = OwnerCharacter->GetActorLocation() + ForwardVector * ForwardOffset; // 무기의 위치에서 플레이어의 앞쪽으로 시작 위치 설정
+	
+	// 플레이어 몸 중심(Actor Location)에서 정면으로 50cm 앞을 시작점(배 앞 공간)으로 설정합니다.
+	//FVector Start = OwnerCharacter->GetActorLocation() + ForwardVector * ForwardOffset; // 무기의 위치에서 플레이어의 앞쪽으로 시작 위치 설정
+	FVector Start = OwnerCharacter->GetActorLocation() + ForwardVector * 50.f;
+	// 시작점에서 데이터 에셋에 등록된 사거리(MeleeAttackRange)만큼 앞쪽을 끝점으로 설정합니다.
 	FVector End = Start + ForwardVector * MeleeAttackRange; 
-
+	
 	/* 메시 기준 벡터
 	// 메시 기준 피격 판정을 한다면 헤더의 메시 컴포넌트를 활성화하고 아래의 코드를 사용하면 됩니다.
-	FVector Start = Mesh->GetSocketLocation(FName("Root"));
+	FVector Start = Mesh->GetSocketLocation(FName("Root")); 
 	FVector End = Mesh->GetSocketLocation(FName("Tip"));
 	*/
-
+	/*
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams Params;
 
@@ -58,6 +95,7 @@ void ATwoHandRangedWeaponBase::MeleeAttackTrace()
 	);
 
 	ProcessMeleeHits(HitResults); // 타격 결과 처리 (데미지 적용 등)
+	*/
 }
 
 void ATwoHandRangedWeaponBase::ProcessMeleeHits(const TArray<FHitResult>& HitResults)
