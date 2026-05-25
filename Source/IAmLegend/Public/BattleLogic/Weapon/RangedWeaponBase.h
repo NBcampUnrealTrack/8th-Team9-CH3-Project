@@ -14,7 +14,12 @@ class IAMLEGEND_API ARangedWeaponBase : public AWeaponBase
 {
 	GENERATED_BODY()
 
+	friend class URangedAttachmentComponent;	// frined 선언으로 부착물은 RangedWeaponBase의 protected 멤버에 접근 가능
+
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Attachment")
+	URangedAttachmentComponent* AttachmentComponent;	// 원거리 무기용 부착물 컴포넌트
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
 	float FireRate; // 발사 속도 (분당 발사 횟수)
 
@@ -105,6 +110,9 @@ public:
 	virtual void MeleeAttackTrace();	// 근접 공격 시 트레이스 계산 및 타격 판정
 	virtual void ProcessMeleeHits(const TArray<FHitResult>& HitResults);	// 근접 공격 타격 판정 처리 (근접 공격 시마다 호출)
 	bool CanMeleeAttack() const;		// 근접 공격 가능한지 여부 체크
+
+	// 부착물 컴포넌트 Getters
+	URangedAttachmentComponent* GetRangedAttachmentComponent() const;
 
 	// 애니메이션 노티파이
 	virtual void AnimNotify_EndAttack_1() override;	// 일반 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)	
