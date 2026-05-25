@@ -8,11 +8,14 @@
 #include "Item/InventoryComponent.h"
 #include "Item/ItemDataAsset.h"
 #include "BattleLogic/Weapon/DataAssets/RangedWeaponDataAsset.h"
+#include "BattleLogic/Attachment/RangedAttachmentComponent.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 ARangedWeaponBase::ARangedWeaponBase()
 {
+	AttachmentComponent = CreateDefaultSubobject<URangedAttachmentComponent>(TEXT("AttachmentComponent"));
+
 	// 기본 값 설정
 	WeaponType = EWeaponType::TwoHandedRanged; // 무기 타입 설정
 	WeaponSlot = EWeaponSlot::Ranged; // 무기 슬롯 설정
@@ -432,4 +435,9 @@ void ARangedWeaponBase::WeaponInitFromData()
 		CurrentAmmo = MaxAmmo;
 		CurrentSpreadAngle = BaseSpreadAngle;
 	}
+}
+
+URangedAttachmentComponent* ARangedWeaponBase::GetRangedAttachmentComponent() const
+{
+	return AttachmentComponent;
 }

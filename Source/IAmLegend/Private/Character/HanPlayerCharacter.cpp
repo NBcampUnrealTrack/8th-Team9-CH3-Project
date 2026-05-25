@@ -19,6 +19,8 @@
 #include "BehaviorTree/BlackboardComponent.h" 
 #include "Components/AudioComponent.h"
 #include <Kismet/GameplayStatics.h>
+#include "BattleLogic/Attachment/AttachmentDataAsset.h"
+#include "BattleLogic/Attachment/RangedAttachmentComponent.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -716,6 +718,22 @@ void AHanPlayerCharacter::UnEquipWeapon(EWeaponSlot RemoveSlot, bool bDestroyWea
 		if (!bDestroyWeapon  && InventoryComponent) 
 		{
 			InventoryComponent->AddItem(WeaponToRemove->ItemData);
+
+			if (RemoveSlot == EWeaponSlot::Ranged)
+			{
+				// 원거리 무기일 경우 부착물도 인벤토리에 추가
+				if (ARangedWeaponBase* RangedWeapon = Cast<ARangedWeaponBase>(WeaponToRemove))
+				{
+					TMap<EAttachmentSlot, UAttachmentDataAsset*> Attachments = RangedWeapon->GetRangedAttachmentComponent()->GetCurrentAttachments();
+					for (const TPair<EAttachmentSlot, UAttachmentDataAsset*>& AttachmentPair : Attachments)
+					{
+						if (AttachmentPair.Value)
+						{
+							InventoryComponent->AddItem(AttachmentPair.Value);
+						}
+					}
+				}
+			}
 		}
 
 		WeaponToRemove->DestroyWeapon(); 
