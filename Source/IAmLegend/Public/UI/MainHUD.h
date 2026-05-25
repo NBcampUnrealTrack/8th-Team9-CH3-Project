@@ -11,7 +11,6 @@ class UWeaponInstallationWidget; // 전방 선언(무기 상태)
 class UWeaponSlotWidget; // 전방 선언(무기 슬롯)
 class UStealthWidget; // 전방 선언(은신)
 class UBossHealthWidget; // 전방 선언(보스 체력바)
-class UWarningUIWidget;
 
 UCLASS()
 class IAMLEGEND_API AMainHUD : public AHUD
@@ -73,10 +72,10 @@ public:
 
 	// 엔딩 UI 관리
 	void ShowHappyEndingHUD();
-	void ShowBadEndingHUD();
-	
-	//경고 UI 관리
-	void ShowWarningHUD();
+
+	// 최종 결과 UI 관리
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ShowGameEndingHUD();
 
 protected:
 	//사용할 Widget 클래스 설정
@@ -110,10 +109,8 @@ protected:
 	TSubclassOf<UBossHealthWidget> BossHealthClass;
 	UPROPERTY(EditAnywhere, Category = "UI|Ending")
 	TSubclassOf<UUserWidget> HappyEndingWidgetClass;
-	UPROPERTY(EditAnywhere, Category = "UI|Ending")
-	TSubclassOf<UUserWidget> BadEndingWidgetClass;
 	UPROPERTY(EditDefaultsOnly, Category = "Widgets")
-	TSubclassOf<UWarningUIWidget> WarningHUDClass;
+	TSubclassOf<UUserWidget> GameEndingClass;
 
 private:
 	
@@ -140,6 +137,4 @@ private:
 	UStealthWidget* StealthWidget;
 	UPROPERTY()
 	UBossHealthWidget* BossHealthWidget;
-	UPROPERTY()
-	UWarningUIWidget* WarningHUDWidget;
 };
