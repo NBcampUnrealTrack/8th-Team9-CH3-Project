@@ -23,6 +23,7 @@ void URangedAttachmentComponent::BeginPlay()
 
 	if (!OwnerWeapon || !OwnerWeapon->ItemData) return;
 	WeaponData = Cast<URangedWeaponDataAsset>(OwnerWeapon->ItemData);
+	AttachmentSlots = OwnerWeapon->AttachmentSlots;
 
 	if (!OwnerWeapon->SkeletalMesh) return;
 	WeaponMesh = OwnerWeapon->SkeletalMesh;
@@ -50,7 +51,7 @@ void URangedAttachmentComponent::RefreshWeaponStats()
 			BaseRecoverySpreadSpeed *= AttachmentData->RecoverySpreadMultiplier;
 			BaseMaxSpreadAngle *= AttachmentData->MaxSpreadMultiplier;
 			BaseMaxAmmo += AttachmentData->MaxAmmoBonus;
-			BaseRecoilAmount *= FMath::Lerp(AttachmentData->VerticalRecoilModifier, AttachmentData->HorizontalRecoilModifier, 0.5f);
+			BaseRecoilAmount *= AttachmentData->VerticalRecoilModifier;
 		}
 	}
 
@@ -73,7 +74,7 @@ bool URangedAttachmentComponent::IsCanEquipAttachment(UAttachmentDataAsset* Atta
 		return false;
 	}
 
-	if(!WeaponMesh->GetSocketByName(AttachmentData->SocketName))
+	if(!AttachmentSlots.Contains(AttachmentData->AttachmentSlot))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Weapon does not have the required socket for this attachment!"));
 		return false;
@@ -91,9 +92,10 @@ bool URangedAttachmentComponent::EquipAttachment(UAttachmentDataAsset* Attachmen
 
 	EAttachmentSlot CurrentSlot = AttachmentData->AttachmentSlot;
 	CurrentAttachments.Add(CurrentSlot, AttachmentData);	// 새로운 부착물 장착
-	UpdateAttachmentMesh(CurrentSlot);						// 부착물 메쉬 업데이트
+	//UpdateAttachmentMesh(CurrentSlot);						// 부착물 메쉬 업데이트
 	RefreshWeaponStats();									// 장착 후 무기 스탯 갱신
 
+	OnAttachmentChanged.Broadcast(this);					// 부착물 변경 후 델리게이트 브로드캐스트
 	return true;
 }
 
@@ -109,12 +111,15 @@ UAttachmentDataAsset* URangedAttachmentComponent::UnequipAttachment(EAttachmentS
 
 	UAttachmentDataAsset* RemovedAttachment = CurrentAttachments[AttachmentSlot];
 	CurrentAttachments.Remove(AttachmentSlot);	// 부착물 해제
-	UpdateAttachmentMesh(AttachmentSlot);		// 부착물 메쉬 업데이트
+	//UpdateAttachmentMesh(AttachmentSlot);		// 부착물 메쉬 업데이트
 	RefreshWeaponStats();						// 해제 후 무기 스탯 갱신
 
+	OnAttachmentChanged.Broadcast(this);		// 부착물 변경 후 델리게이트 브로드캐스트
 	return RemovedAttachment;
 }
 
+// 메시를 추가하는 함수는 구현되었지만, 부착물의 메시가 마땅치 않아
+// 현재는 메시 업데이트 부분은 주석 처리해두었습니다.
 void URangedAttachmentComponent::UpdateAttachmentMesh(EAttachmentSlot AttachmentSlot)
 {
 	if (!OwnerWeapon || !WeaponMesh) return;
@@ -147,7 +152,13 @@ void URangedAttachmentComponent::UpdateAttachmentMesh(EAttachmentSlot Attachment
 	}
 }
 
-TMap<EAttachmentSlot, UAttachmentDataAsset*> URangedAttachmentComponent::GetCurrentAttachments() const
+TMap<EAttachmentSlot, UAttachmentDataAsset*>& URangedAttachmentComponent::GetCurrentAttachments() const
 {
-	return CurrentAttachments;
+	return const_cast<TMap<EAttachmentSlot, UAttachmentDataAsset*>&>(CurrentAttachments);
+}
+
+bool URangedAttachmentComponent::IsSupportAttachment(EAttachmentSlot AttachmentSlot) const
+{
+	if (!WeaponData) return false;
+	return AttachmentSlots.Contains(AttachmentSlot);
 }

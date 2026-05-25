@@ -428,12 +428,14 @@ void ARangedWeaponBase::WeaponInitFromData()
 		MeleeAttackRange = RangedWeaponData->MeleeAttackRange;
 		MuzzleSocketName = RangedWeaponData->MuzzleSocketName;
 		FireAnimSequence = RangedWeaponData->FireAnimSequence;
+		AttachmentSlots = RangedWeaponData->AttachmentSlots;
 
 		// 데이터 에셋에서 불러온 값으로 발사 간격과 쿨다운 시간 계산
 		FireInterval = 60.f / FireRate;
 		CoolDownTime = FireInterval - 0.015f;
 		CurrentAmmo = MaxAmmo;
 		CurrentSpreadAngle = BaseSpreadAngle;
+		
 	}
 }
 

@@ -158,7 +158,10 @@ void UInventoryComponent::UseItem(int32 Index)
 	// ==========================================
 	if (UAttachmentDataAsset* AttachmentData = Cast<UAttachmentDataAsset>(Slot.ItemData))
 	{
-		ARangedWeaponBase* RangedWeapon = Cast<ARangedWeaponBase>(PlayerChar->GetEquippedWeapon());
+		TMap<EWeaponSlot, AWeaponBase*>& WeaponSlots = PlayerChar->GetWeaponSlots();
+		if(!WeaponSlots.Contains(EWeaponSlot::Ranged)) return;
+
+		ARangedWeaponBase* RangedWeapon = Cast<ARangedWeaponBase>(WeaponSlots[EWeaponSlot::Ranged]);
 		if(!RangedWeapon) return;
 		
 		URangedAttachmentComponent* AttachmentComp = RangedWeapon->GetRangedAttachmentComponent();

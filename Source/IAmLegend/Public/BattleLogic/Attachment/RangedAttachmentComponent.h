@@ -7,6 +7,7 @@
 #include "BattleLogic/Attachment/AttachmentDataAsset.h"
 #include "RangedAttachmentComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttachmentChanged, class URangedAttachmentComponent*, AttachmentComp);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class IAMLEGEND_API URangedAttachmentComponent : public UActorComponent
@@ -29,6 +30,8 @@ private:
 	UPROPERTY()
 	TMap<EAttachmentSlot, UStaticMeshComponent*> AttachmentMeshComponents;
 
+	TArray<EAttachmentSlot> AttachmentSlots;
+
 public:	
 	URangedAttachmentComponent();
 
@@ -41,6 +44,11 @@ public:
 	bool EquipAttachment(UAttachmentDataAsset* AttachmentData);					// 부착물을 장착하는 함수
 	UAttachmentDataAsset* UnequipAttachment(EAttachmentSlot AttachmentSlot);	// 부착물을 해제하는 함수
 	void UpdateAttachmentMesh(EAttachmentSlot AttachmentSlot);					// 부착물의 메쉬를 업데이트하는 함수
-	TMap<EAttachmentSlot, UAttachmentDataAsset*> GetCurrentAttachments() const;	// 현재 장착된 부착물들의 맵을 반환하는 함수 (무기 해제 시 사용)
+	TMap<EAttachmentSlot, UAttachmentDataAsset*>& GetCurrentAttachments() const;	// 현재 장착된 부착물들의 맵을 반환하는 함수 (무기 해제 시 사용)
+	bool IsSupportAttachment(EAttachmentSlot AttachmentSlot) const;		// 해당 부착물이 이 무기에서 지원되는 부착물인지 확인하는 함수
+
+	// 부착물이 변경될 때 호출되는 델리게이트
+	UPROPERTY(BlueprintAssignable, Category = "Weapon|Event")
+	FOnAttachmentChanged OnAttachmentChanged;
 	
 };
