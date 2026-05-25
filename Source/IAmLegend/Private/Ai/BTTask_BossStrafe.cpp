@@ -1,4 +1,4 @@
-#include "Ai/BTTask_BossStrafe.h"
+ï»¿#include "Ai/BTTask_BossStrafe.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Character.h"
@@ -25,11 +25,11 @@ EBTNodeResult::Type UBTTask_BossStrafe::ExecuteTask(UBehaviorTreeComponent& Owne
     AActor* Target = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetActor")));
     if (Target)
     {
-        AIC->SetFocus(Target); // Ãß°¡
+        AIC->SetFocus(Target); // ì¶”ê°€
     }
     AIC->StopMovement();
 
-    // ÇÃ·¹ÀÌ¾î ¹æÇâÀ¸·Î Áï½Ã Á¤·Ä
+    // í”Œë ˆì´ì–´ ë°©í–¥ìœ¼ë¡œ ì¦‰ì‹œ ì •ë ¬
     if (Target)
     {
         FVector ToTarget = (Target->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal();
@@ -39,14 +39,14 @@ EBTNodeResult::Type UBTTask_BossStrafe::ExecuteTask(UBehaviorTreeComponent& Owne
         Boss->SetActorRotation(LookRot);
     }
 
-    // Walk ¸ùÅ¸ÁÖ ¸ÕÀú ½ÇÇà
+    // Walk ëª½íƒ€ì£¼ ë¨¼ì € ì‹¤í–‰
     ABoss_PoliceZombie* BossZombie = Cast<ABoss_PoliceZombie>(Boss);
     if (BossZombie && BossZombie->WalkMontage)
     {
         BossZombie->PlayAnimMontage(BossZombie->WalkMontage);
     }
 
-    // 0.1ÃÊ ÈÄ ÀÌµ¿ ºÎ¿©
+    // 0.1ì´ˆ í›„ ì´ë™ ë¶€ì—¬
     StrafeDirection = FMath::RandBool() ? 1.0f : -1.0f;
     TargetStrafeTime = FMath::FRandRange(MinStrafeTime, MaxStrafeTime);
     ElapsedTime = 0.0f;
@@ -68,21 +68,35 @@ void UBTTask_BossStrafe::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
     AActor* Target = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetActor")));
     if (!Target) { FinishLatentTask(OwnerComp, EBTNodeResult::Failed); return; }
 
-    // ÇÃ·¹ÀÌ¾î ¹æÇâÀ¸·Î È¸Àü
+    // í”Œë ˆì´ì–´ ë°©í–¥ìœ¼ë¡œ íšŒì „
     FVector ToTarget = (Target->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal();
     FRotator LookRot = FRotationMatrix::MakeFromX(ToTarget).Rotator();
     LookRot.Pitch = 0.0f;
     LookRot.Roll = 0.0f;
     Boss->SetActorRotation(FMath::RInterpTo(Boss->GetActorRotation(), LookRot, DeltaSeconds, 10.0f));
 
-    // ±âÁ¸: Boss->GetActorRightVector() ¡æ È¸Àü Àû¿ë Àü º¤ÅÍ
-    // º¯°æ: ToTarget ±âÁØ ½Ç½Ã°£ Right Vector
+    // ê¸°ì¡´: Boss->GetActorRightVector() â†’ íšŒì „ ì ìš© ì „ ë²¡í„°
+    // ë³€ê²½: ToTarget ê¸°ì¤€ ì‹¤ì‹œê°„ Right Vector
     FVector RightVec = FVector::CrossProduct(FVector::UpVector, ToTarget).GetSafeNormal();
     Boss->AddMovementInput(RightVec, StrafeDirection);
 
+    ABoss_PoliceZombie* BossZombie = Cast<ABoss_PoliceZombie>(Boss);
+    if (BossZombie && BossZombie->WalkMontage)
+    {
+        UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance();
+        if (AnimInst && !AnimInst->Montage_IsPlaying(BossZombie->WalkMontage))
+        {
+            BossZombie->PlayAnimMontage(BossZombie->WalkMontage);
+        }
+    }
     ElapsedTime += DeltaSeconds;
     if (ElapsedTime >= TargetStrafeTime)
     {
+        if (BossZombie && BossZombie->WalkMontage)
+        {
+            BossZombie->StopAnimMontage(BossZombie->WalkMontage);
+        }
+        Boss->GetCharacterMovement()->MaxWalkSpeed = 0.0f;
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
     }
 }

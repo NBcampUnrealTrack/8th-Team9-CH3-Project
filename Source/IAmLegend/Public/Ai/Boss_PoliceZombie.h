@@ -34,7 +34,8 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     float JumpAttackDamage = 30.0f; // 착지 데미지
-
+    UPROPERTY(BlueprintReadWrite, Category = "AI")
+    bool bIsScreaming = false;
     // 김민성 작성
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float MaxHealth;
@@ -108,9 +109,10 @@ protected:
     bool bIsGroggy = false;
     FTimerHandle GroggyTimerHandle;
     bool bPhaseTransitioned = false;
-
+    bool bCombatStarted = false;
     UPROPERTY(VisibleAnywhere, Category = "Combat")
     class UBoxComponent* BellyHitBox;
+    virtual void Die() override;
 
     UPROPERTY(VisibleAnywhere, Category = "Combat")
     class UBoxComponent* LegHitBox;

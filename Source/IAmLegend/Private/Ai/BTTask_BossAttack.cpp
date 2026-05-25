@@ -1,4 +1,4 @@
-#include "Ai/BTTask_BossAttack.h"
+Ôªø#include "Ai/BTTask_BossAttack.h"
 #include "AI/Boss_PoliceZombie.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -13,7 +13,7 @@ UBTTask_BossAttack::UBTTask_BossAttack()
 EBTNodeResult::Type UBTTask_BossAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 
-    bExtraActionTriggered = false; // °Á √ﬂ∞°
+    bExtraActionTriggered = false; // ‚Üê Ï∂îÍ∞Ä
 
     AAIController* AIC = OwnerComp.GetAIOwner();
     if (!AIC) return EBTNodeResult::Failed;
@@ -38,17 +38,13 @@ void UBTTask_BossAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
     ABoss_PoliceZombie* Boss = Cast<ABoss_PoliceZombie>(AIC->GetPawn());
     if (!Boss) { FinishLatentTask(OwnerComp, EBTNodeResult::Failed); return; }
 
-    // ∞¯∞›¿Ã ≥°≥™∏È
     if (!Boss->bIsAttacking && !bExtraActionTriggered)
     {
         bExtraActionTriggered = true;
 
-        // 50% »Æ∑¸∑Œ JumpAttack
         bool bDoJumpAttack = FMath::RandBool();
-        // 50% »Æ∑¸∑Œ Screaming
         bool bDoScream = FMath::RandBool();
 
-        // µ— ¥Ÿ æ¯¿∏∏È πŸ∑Œ Strafe∑Œ ∫π±Õ
         if (!bDoJumpAttack && !bDoScream)
         {
             AIC->ClearFocus(EAIFocusPriority::Gameplay);
@@ -56,11 +52,13 @@ void UBTTask_BossAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
             return;
         }
 
-        // JumpAttack °Ê Screaming º¯º≠∑Œ Ω««‡
-        Boss->PlayExtraActions(bDoJumpAttack, bDoScream, [this, &OwnerComp, AIC]()
+        // ? Î≤ÑÍ∑∏2 ÏàòÏ†ï: &OwnerComp Î†àÌçºÎü∞Ïä§ Ï∫°Ï≤ò ‚Üí UBehaviorTreeComponent* Ìè¨Ïù∏ÌÑ∞Î°ú ÍµêÏ≤¥
+        UBehaviorTreeComponent* BTComp = &OwnerComp;
+        Boss->PlayExtraActions(bDoJumpAttack, bDoScream, [this, BTComp, AIC]()
             {
+                if (!BTComp || !AIC) return;  // Ïú†Ìö®ÏÑ± Ï≤¥ÌÅ¨ Ï∂îÍ∞Ä
                 AIC->ClearFocus(EAIFocusPriority::Gameplay);
-                FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+                FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
             });
     }
 }
