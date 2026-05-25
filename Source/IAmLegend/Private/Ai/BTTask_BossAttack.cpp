@@ -1,4 +1,4 @@
-#include "Ai/BTTask_BossAttack.h"
+ï»¿#include "Ai/BTTask_BossAttack.h"
 #include "AI/Boss_PoliceZombie.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -13,7 +13,7 @@ UBTTask_BossAttack::UBTTask_BossAttack()
 EBTNodeResult::Type UBTTask_BossAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 
-    bExtraActionTriggered = false; // ¡ç Ãß°¡
+    bExtraActionTriggered = false; // â† ì¶”ê°€
 
     AAIController* AIC = OwnerComp.GetAIOwner();
     if (!AIC) return EBTNodeResult::Failed;
@@ -52,11 +52,11 @@ void UBTTask_BossAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
             return;
         }
 
-        // ? ¹ö±×2 ¼öÁ¤: &OwnerComp ·¹ÆÛ·±½º Ä¸Ã³ ¡æ UBehaviorTreeComponent* Æ÷ÀÎÅÍ·Î ±³Ã¼
+        // ? ë²„ê·¸2 ìˆ˜ì •: &OwnerComp ë ˆí¼ëŸ°ìŠ¤ ìº¡ì²˜ â†’ UBehaviorTreeComponent* í¬ì¸í„°ë¡œ êµì²´
         UBehaviorTreeComponent* BTComp = &OwnerComp;
         Boss->PlayExtraActions(bDoJumpAttack, bDoScream, [this, BTComp, AIC]()
             {
-                if (!BTComp || !AIC) return;  // À¯È¿¼º Ã¼Å© Ãß°¡
+                if (!BTComp || !AIC) return;  // ìœ íš¨ì„± ì²´í¬ ì¶”ê°€
                 AIC->ClearFocus(EAIFocusPriority::Gameplay);
                 FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
             });

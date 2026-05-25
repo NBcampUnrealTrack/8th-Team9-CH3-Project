@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
 #include "BTTask_BossChase.generated.h"
@@ -17,8 +17,9 @@ public:
     UPROPERTY(EditAnywhere, Category = "Chase")
     float ChaseSpeed = 400.0f;
 
-    // °ø°Ý ¹üÀ§ ÁøÀÔ ½Ã Chase Á¾·á °Å¸®
+    // ê³µê²© ë²”ìœ„ ì§„ìž… ì‹œ Chase ì¢…ë£Œ ê±°ë¦¬
     UPROPERTY(EditAnywhere, Category = "Chase")
     float StopDistance = 150.0f;
     float ElapsedTime = 0.0f;
+    FVector LastKnownLocation = FVector::ZeroVector;
 };

@@ -86,6 +86,12 @@ void ABase_Zombie::BeginPlay()
 	{
 		AttackSphere->OnComponentBeginOverlap.AddDynamic(this, &ABase_Zombie::OnAttackOverlapBegin);
 	}
+	if (IdleSoundComponent)
+	{
+		// 거리 감쇠 활성화
+		IdleSoundComponent->bAllowSpatialization = true;
+		IdleSoundComponent->bOverrideAttenuation = false; // 에셋의 Attenuation 사용
+	}
 }
 
 //void ABase_Zombie::Tick(float DeltaTime)
@@ -129,46 +135,27 @@ void ABase_Zombie::Tick(float DeltaTime)
 		}
 	}
 }
-void ABase_Zombie::PlayAttackMontage() {
-	if (AttackMontage && !bIsAttacking) {
-		// 1. 공격 시작 시 대기 소리를 즉시 끕니다.
-		if (IdleSoundComponent) {
-			IdleSoundComponent->FadeOut(0.2f, 0.0f);
+void ABase_Zombie::PlayAttackMontage()
+{
+	if (CurrentState == EZombieState::Dead) return;
+	if (!AttackMontage || bIsAttacking) return;
 
-			// 혹시 이미 돌아가고 있을지 모를 '소리 켜기 타이머'를 취소합니다.
-			GetWorld()->GetTimerManager().ClearTimer(IdleSoundTimerHandle);
-		}
+	bIsAttacking = true;
+	CurrentAttackInstance++;
 
-		bIsAttacking = true;
-		CurrentState = EZombieState::Attacking;
+	// ✅ 공격 중 이동 차단
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
 
-		// 1. 이동 멈추기 및 속도 0으로 설정
-		AAIController* AIC = Cast<AAIController>(GetController());
-		if (AIC)
-		{
-			AIC->StopMovement();
-			AIC->SetFocus(PlayerCharacter); // ← 추가
-		}
-		if (AIC && AIC->GetBlackboardComponent())
-		{
-			// 현재 상태를 블랙보드의 "CurrentState" 키에 전달 (Enum 값 전달)
-			AIC->GetBlackboardComponent()->SetValueAsEnum(TEXT("CurrentState"), (uint8)EZombieState::Attacking);
-		}
-		// CharacterMovement의 최대 속도를 0으로 만들어 물리적 이동을 차단합니다.
-		if (GetCharacterMovement())
-		{
-			GetCharacterMovement()->MaxWalkSpeed = 0.0f;
-		}
-
-		PlayAnimMontage(AttackMontage);
-
-		// 2. 공격 쿨타임 타이머 (공격 가능 상태 복구용)
-		GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, this, &ABase_Zombie::ResetAttack, AttackCooldown, false);
-
-		// 3. 쿨타임 * 2의 시간 뒤에 대기 소리를 다시 켜는 타이머 설정
-		float SoundDelay = AttackCooldown * 2.0f;
-		GetWorld()->GetTimerManager().SetTimer(IdleSoundTimerHandle, this, &ABase_Zombie::ResumeIdleSound, SoundDelay, false);
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst)
+	{
+		AnimInst->Montage_Play(AttackMontage);
 	}
+
+	// 쿨타임 타이머 세팅
+	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABase_Zombie::ResetAttack,
+		AttackCooldown, false);
 }
 
 // 대기 소리를 다시 켜주는 새로운 함수
@@ -179,28 +166,14 @@ void ABase_Zombie::ResumeIdleSound()
 		IdleSoundComponent->FadeIn(0.5f);
 	}
 }
-void ABase_Zombie::ResetAttack() {
+void ABase_Zombie::ResetAttack()
+{
 	bIsAttacking = false;
 
-	// 1. 속도 복구
-	if (GetCharacterMovement())
-	{
-		GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
-	}
+	// ✅ 공격 끝나면 이동 재개
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 
-	// 2. C++ 상태 먼저 변경 (중요!)
-	if (CurrentState != EZombieState::Dead)
-	{
-		CurrentState = EZombieState::Idle;
-	}
-
-	// 3. 변경된 상태를 블랙보드에 반영
-	AAIController* AIC = Cast<AAIController>(GetController());
-	if (AIC && AIC->GetBlackboardComponent())
-	{
-		// 이제 C++의 CurrentState와 블랙보드의 값이 완벽히 일치합니다.
-		AIC->GetBlackboardComponent()->SetValueAsEnum(TEXT("CurrentState"), (uint8)CurrentState);
-	}
+	bHasAppliedDamageThisAttack = false;
 }
 
 float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
@@ -223,9 +196,9 @@ float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 
 			// 히트 몽타주가 끝날 때까지 공격 차단
 			bIsAttacking = true;
-			FTimerHandle HitTimerHandle;
 			GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
 				{
+					if (CurrentState == EZombieState::Dead) return; // ← 추가
 					bIsAttacking = false;
 					CurrentState = EZombieState::Idle;
 				}, HitMontageLength, false);
@@ -237,26 +210,38 @@ float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 
 void ABase_Zombie::Die()
 {
-	if (CurrentState == EZombieState::Dead) return;
 	CurrentState = EZombieState::Dead;
 
-	// 모든 타이머 클리어 추가
+	// ✅ 재생 중인 모든 몽타주 즉시 중단 → ABP State Machine이 Death State로 전환
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst)
+	{
+		AnimInst->StopAllMontages(0.0f);
+	}
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
+
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->SetComponentTickEnabled(false);
+
+	GetMesh()->SetSimulatePhysics(false);
+	GetMesh()->SetEnableGravity(false);
+
 	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
 	GetWorldTimerManager().ClearTimer(DeathFreezeTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(IdleSoundTimerHandle);
+	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
 
 	if (IdleSoundComponent) IdleSoundComponent->Stop();
 	if (DeathSound)
 		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
 
-	GetWorld()->GetTimerManager().ClearTimer(IdleSoundTimerHandle);
-	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
-
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);        // 추가
-	AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);    // 추가
-
-	GetCharacterMovement()->DisableMovement();  // 추가 (죽는 도중 밀림 방지)
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetCharacterMovement()->DisableMovement();  // 추가
+	AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	AAIController* AIController = Cast<AAIController>(GetController());
 	if (AIController)
@@ -268,36 +253,14 @@ void ABase_Zombie::Die()
 		}
 	}
 
-	if (DeathMontage)
-	{
-		float MontageLength = PlayAnimMontage(DeathMontage);
+	DeathAnimLength = 3.0f;
 
-		// ✅ 핵심 수정: Blend Out 직전에 ABP 완전 동결
-		GetWorld()->GetTimerManager().SetTimer(DeathFreezeTimerHandle, [this]()
-			{
-				if (GetMesh())
-				{
-					// 몽타주 강제 종료 후 마지막 포즈 고정
-					if (UAnimInstance* AnimInst = GetMesh()->GetAnimInstance())
-					{
-						AnimInst->StopAllMontages(0.0f);  // Blend 없이 즉시 정지
-					}
-					// ABP State Machine Tick 완전 차단
-					GetMesh()->bNoSkeletonUpdate = true;
-				}
-			}, MontageLength - 0.3f, false);  // Blend Out 시작 전에 차단
+	GetWorld()->GetTimerManager().SetTimer(DeathTimerHandle, [this]()
+		{
+			SetActorHiddenInGame(true);
+			SetLifeSpan(0.1f);
+		}, DeathAnimLength + 0.5f, false);
 
-		// 숨김 처리 타이머
-		GetWorld()->GetTimerManager().SetTimer(DeathTimerHandle, [this]()
-			{
-				SetActorHiddenInGame(true);
-				SetLifeSpan(0.1f);
-			}, MontageLength + 0.5f, false);  // 몽타주 완전 종료 후 여유있게
-	}
-	else
-	{
-		SetLifeSpan(3.0f);
-	}
 	AMainGameStateBase* GameState = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
 	if (GameState)
 	{

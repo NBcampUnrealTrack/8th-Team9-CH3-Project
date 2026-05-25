@@ -26,7 +26,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
     class UAnimMontage* ScreamMontage;
 
-
+    FTimerHandle ScreamEndTimerHandle;
     UFUNCTION()
     void OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
@@ -41,6 +41,7 @@ public:
 
     FTimerHandle ScreamSlowTimerHandle;
     FTimerHandle ScreamSlowTickHandle;
+    FTimerHandle HitResumeTimerHandle;
 
     void ApplyScreamSlow();
     void RestorePlayerSpeed();

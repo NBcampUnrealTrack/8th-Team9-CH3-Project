@@ -1,4 +1,4 @@
-#include "Ai/BTTask_BossChase.h"
+Ôªø#include "Ai/BTTask_BossChase.h"
 #include "AI/Boss_PoliceZombie.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
@@ -41,35 +41,40 @@ void UBTTask_BossChase::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
     if (!Boss || !BB) { FinishLatentTask(OwnerComp, EBTNodeResult::Failed); return; }
 
     AActor* Target = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetActor")));
-    if (!Target) { FinishLatentTask(OwnerComp, EBTNodeResult::Failed); return; }
 
-    // MoveToActor ∏≈ «¡∑π¿” ¥ÎΩ≈ ¿œ¡§ ∞£∞›¿∏∑Œ∏∏ ∞ªΩ≈
-    ElapsedTime += DeltaSeconds;
-    if (ElapsedTime >= 0.5f) // 0.5√ ∏∂¥Ÿ ∞Ê∑Œ ∞ªΩ≈
-    {
-        AIC->MoveToActor(Target, StopDistance, true, true, true);
-        ElapsedTime = 0.0f;
-    }
-
-    // ∞≈∏Æ √º≈©
-    AActor* Target = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetActor")));
-
-    // TargetActor∞° ¿÷¿∏∏È ∏∂¡ˆ∏∑ ¿ßƒ° ∞ªΩ≈
+    // ‚úÖ Target ÏûàÏúºÎ©¥ ÎßàÏßÄÎßâ ÏúÑÏπò Í∞±Ïã† + Ïù¥Îèô
     if (Target)
     {
         LastKnownLocation = Target->GetActorLocation();
-        AIC->MoveToLocation(LastKnownLocation, StopDistance, true, true, true);
+
+        ElapsedTime += DeltaSeconds;
+        if (ElapsedTime >= 0.5f)
+        {
+            AIC->MoveToActor(Target, StopDistance, true, true, true);
+            ElapsedTime = 0.0f;
+        }
     }
+    // ‚úÖ ÏùÄÏã† Ï§ë ‚Üí ÎßàÏßÄÎßâ ÏúÑÏπòÎ°ú Ïù¥Îèô, Í±∞Î¶¨ Ï≤¥ÌÅ¨ Ïä§ÌÇµ
     else if (!LastKnownLocation.IsZero())
     {
-        // ¿∫Ω≈ ¡ﬂ °Ê ∏∂¡ˆ∏∑ ¿ßƒ°∑Œ ∞Ëº” ¿Ãµø
         AIC->MoveToLocation(LastKnownLocation, StopDistance, true, true, true);
-        return; // ∞≈∏Æ √º≈© Ω∫≈µ (µµ¬¯«ÿµµ Attack æ» «‘)
+        return;
     }
     else
     {
-        // ≈∏∞Ÿµµ æ¯∞Ì ∏∂¡ˆ∏∑ ¿ßƒ°µµ æ¯¿∏∏È ¡æ∑·
         FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
         return;
+    }
+
+    // ‚úÖ Í±∞Î¶¨ Ï≤¥ÌÅ¨ ‚Üí AttackÏúºÎ°ú Ï†ÑÌôò
+    ABoss_PoliceZombie* BossZombie = Cast<ABoss_PoliceZombie>(Boss);
+    float StopRange = BossZombie ? BossZombie->AttackRange : StopDistance;
+
+    float Distance = FVector::Dist(Boss->GetActorLocation(), Target->GetActorLocation());
+    if (Distance <= StopRange)
+    {
+        AIC->ClearFocus(EAIFocusPriority::Gameplay);
+        AIC->StopMovement();
+        FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
     }
 }

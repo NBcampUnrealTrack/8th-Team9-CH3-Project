@@ -109,9 +109,10 @@ protected:
     bool bIsGroggy = false;
     FTimerHandle GroggyTimerHandle;
     bool bPhaseTransitioned = false;
-
+    bool bCombatStarted = false;
     UPROPERTY(VisibleAnywhere, Category = "Combat")
     class UBoxComponent* BellyHitBox;
+    virtual void Die() override;
 
     UPROPERTY(VisibleAnywhere, Category = "Combat")
     class UBoxComponent* LegHitBox;
