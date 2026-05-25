@@ -126,6 +126,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character | Weapon")
 	class AWeaponBase* EquippedWeapon;
+
+	// 무기 소켓 이름 캐싱
+	FName WeaponSocketName;
+	FName RootSocketName;
 	
 	// 공격중인지 판단 - 공격중일때 캐릭터를 멈추기 위해서.
 	UPROPERTY(BlueprintReadOnly, Category = "Character | State")
@@ -152,10 +156,16 @@ protected:
 	//카메라
 	bool bLastRotationState = false; // 이전 프레임의 상태를 기억
 	
-	//은신 스킬 사용시 카메라 채도 변환
+	// 은신 스킬 사용시 카메라 채도 변환
 	float CurrentSaturation = 1.0f; // 현재 채도
-	float TargetSaturation = 1.0f; // 목표 채도
+	//float TargetSaturation = 1.0f; // 목표 채도
 
+	// 발차기 연출용 카메라 관련 변수
+	FVector DefaultSocketOffset;     // 디폴트 스프링 암 소켓 오프셋 수치를 기억해 둘 변수
+	FVector TargetSocketOffset;      // 카메라가 최종적으로 도달해야 하는 목표 오프셋 수치 담을 변수 
+	FRotator DefaultControlRotation; // 원래대로 돌아올 때 쓸 기본 각도
+	FRotator TargetControlRotation;  // 카메라 회전 제어권을 통제하기 위한 목표 회전값 변수
+	
 	// --- 조준(FOV) 관련 변수 ---
 	float DefaultFOV = 90.f;
 	float AimingFOV = 60.f;
@@ -178,14 +188,19 @@ protected:
 	void StartAim();
 	void StopAim();
 
-	// 연출용 카메라 줌인 함수
+	// 발차기 연출용 카메라 줌인 줌아웃 함수
 	UFUNCTION(BlueprintCallable, Category = "Character | Camera")
-	void PlayCameraZoomIn();
-
+	void PlayKickZoomIn(float InFOV, FVector InOffset, float InSpeed);
 	UFUNCTION(BlueprintCallable, Category = "Character | Camera")
-	void PlayCameraZoomOut();
+	void PlayKickZoomOut();
 
-	// 은신 모드 함수 - Q키 키 바인딩 예정
+	// 단검 찌르기 연출용 카메라 줌인 줌아웃 함수
+	UFUNCTION(BlueprintCallable, Category = "Character | Camera")
+	void PlayDaggerZoomIn();
+	UFUNCTION(BlueprintCallable, Category = "Character | Camera")
+	void PlayDaggerZoomOut();
+
+	// 은신 모드 함수
 	UFUNCTION(BlueprintCallable, Category = "Character | Stealth")
 	void ToggleStealthMode();
 
@@ -201,13 +216,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound")  // 은신 중 계속 작게 반복될 사운드 큐
 	class USoundBase* LoopingStealthSoundCue;
 
-	/* 한기담 - 실험용
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound") // 은신 중 사운드를 변경 - 실험용
 	class USoundMix* StealthSoundMix;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound") // 한기담 - 마스터 사운드의 자식 클래스로 넣으면?
 	class USoundClass* GameWorldSoundClass;
-	*/
+
 	UPROPERTY()  // 지속 사운드를 은신이 끝난 뒤에 같이 끄기 위해 기억해 둘 
 	class UAudioComponent* StealthAudioComp;
 
@@ -248,11 +262,11 @@ public:
 	// 무기 관련 입력 함수를 퍼블릭으로 이동했습니다.
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void EquipWeapon(UItemDataAsset* NewWeaponData);
-	void UnEquipWeapon(EWeaponSlot Slot);
+	void UnEquipWeapon(EWeaponSlot Slot, bool bDestroyWeapon);
 	void ChangeWeapon(EWeaponSlot NewSlot);
 
 	// 몽타주 재생 함수를 퍼블릭으로 선언했습니다.
-	void PlayAttackMontage_1();
+	void PlayAttackMontage_1(float InPlayRate = 1.0f);
 	void PlayAttackMontage_2();
 	void PlayReloadMontage();
 

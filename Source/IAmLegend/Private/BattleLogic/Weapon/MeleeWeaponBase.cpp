@@ -17,6 +17,7 @@ AMeleeWeaponBase::AMeleeWeaponBase()
 	WeaponType = EWeaponType::TwoHandedMelee; // 무기 타입 설정
 	WeaponSlot = EWeaponSlot::Melee; // 무기 슬롯 설정
 	AttackCooldown = .5f; // 공격 간격
+	AttackSpeedRate = 1.0f; // 공격 속도 배율 (기본값은 1.0)
 
 	bIsAttacking = false; // 공격 중인지 여부
 	bIsPressingAttack = false; // 공격 버튼이 눌려있는지 여부 (자동 공격 관리용)
@@ -93,8 +94,8 @@ void AMeleeWeaponBase::StopWeaponAttack()
 
 void AMeleeWeaponBase::ExcuteAttack()
 {
-	// 공격이 시작될 때 공격 애니메이션 재생
-	OwnerCharacter->PlayAttackMontage_1();
+	// 공격이 시작될 때 공격 속도에 따라 공격 애니메이션 재생
+	OwnerCharacter->PlayAttackMontage_1(AttackSpeedRate);
 
 	// 공격이 시작될 때 타이머를 초기화
 	GetWorldTimerManager().ClearTimer(AttackIntervalTimerHandle);
@@ -169,5 +170,6 @@ void AMeleeWeaponBase::WeaponInitFromData()
 	if (UMeleeWeaponDataAsset* MeleeWeaponData = Cast<UMeleeWeaponDataAsset>(ItemData))
 	{
 		AttackCooldown = MeleeWeaponData->AttackCooldown;
+		AttackSpeedRate = MeleeWeaponData->AttackSpeedRate;
 	}
 }

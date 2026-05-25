@@ -38,17 +38,13 @@ void UBTTask_BossAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
     ABoss_PoliceZombie* Boss = Cast<ABoss_PoliceZombie>(AIC->GetPawn());
     if (!Boss) { FinishLatentTask(OwnerComp, EBTNodeResult::Failed); return; }
 
-    // 공격이 끝나면
     if (!Boss->bIsAttacking && !bExtraActionTriggered)
     {
         bExtraActionTriggered = true;
 
-        // 50% 확률로 JumpAttack
         bool bDoJumpAttack = FMath::RandBool();
-        // 50% 확률로 Screaming
         bool bDoScream = FMath::RandBool();
 
-        // 둘 다 없으면 바로 Strafe로 복귀
         if (!bDoJumpAttack && !bDoScream)
         {
             AIC->ClearFocus(EAIFocusPriority::Gameplay);
@@ -56,11 +52,13 @@ void UBTTask_BossAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
             return;
         }
 
-        // JumpAttack → Screaming 순서로 실행
-        Boss->PlayExtraActions(bDoJumpAttack, bDoScream, [this, &OwnerComp, AIC]()
+        // ? 버그2 수정: &OwnerComp 레퍼런스 캡처 → UBehaviorTreeComponent* 포인터로 교체
+        UBehaviorTreeComponent* BTComp = &OwnerComp;
+        Boss->PlayExtraActions(bDoJumpAttack, bDoScream, [this, BTComp, AIC]()
             {
+                if (!BTComp || !AIC) return;  // 유효성 체크 추가
                 AIC->ClearFocus(EAIFocusPriority::Gameplay);
-                FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+                FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
             });
     }
 }

@@ -52,14 +52,24 @@ void UBTTask_BossChase::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeM
     }
 
     // 거리 체크
-    ABoss_PoliceZombie* BossZombie = Cast<ABoss_PoliceZombie>(Boss);
-    float StopRange = BossZombie ? BossZombie->AttackRange : StopDistance;
+    AActor* Target = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetActor")));
 
-    float Distance = FVector::Dist(Boss->GetActorLocation(), Target->GetActorLocation());
-    if (Distance <= StopRange)
+    // TargetActor가 있으면 마지막 위치 갱신
+    if (Target)
     {
-        AIC->ClearFocus(EAIFocusPriority::Gameplay);
-        AIC->StopMovement();
-        FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
+        LastKnownLocation = Target->GetActorLocation();
+        AIC->MoveToLocation(LastKnownLocation, StopDistance, true, true, true);
+    }
+    else if (!LastKnownLocation.IsZero())
+    {
+        // 은신 중 → 마지막 위치로 계속 이동
+        AIC->MoveToLocation(LastKnownLocation, StopDistance, true, true, true);
+        return; // 거리 체크 스킵 (도착해도 Attack 안 함)
+    }
+    else
+    {
+        // 타겟도 없고 마지막 위치도 없으면 종료
+        FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+        return;
     }
 }

@@ -5,6 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "UI/MainHUD.h"
+#include "Ai/Boss_PoliceZombie.h"
+#include "EngineUtils.h"
 
 AEscapingPoint::AEscapingPoint()
 {
@@ -96,6 +98,56 @@ void AEscapingPoint::OnCollisionEndOverlap(
 //탈출 지점에 3초 버틸 시 호출
 void AEscapingPoint::PlayerEscaped()
 {
+
+	FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
+	bool bIsBossStage = CurrentLevelName.Equals(TEXT("BossStage"));
+
+	bool bIsBossDead = false;
+	if (bIsBossStage)
+	{
+		bIsBossDead = true;
+		for (TActorIterator<ABoss_PoliceZombie> It(GetWorld()); It; ++It)
+		{
+			if (It->GetCurrentState() != EZombieState::Dead)
+			{
+				bIsBossDead = false;
+				break;
+			}
+		}
+	}
+
+	if (bIsBossStage && bIsBossDead)
+	{
+		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+		if (PC && PC->GetPawn())
+		{
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			UInventoryComponent* InvComp = PC->GetPawn()->FindComponentByClass<UInventoryComponent>();
+
+			if (HUD && InvComp)
+			{
+				// 백신 아이템 데이터 에셋 호출
+				// 백신 조합 아이템은 있는데 완성 백신은 없는 것 같아서 주석 처리 하겠습니다.
+				// UItemDataAsset* VaccineItem = Cast<UItemDataAsset>(StaticLoadObject(UItemDataAsset::StaticClass(), nullptr, TEXT("/Game/Item/DA_Vaccine.DA_Vaccine")));
+
+				// 인벤토리에 백신이 있는지 확인
+				// int32 VaccineCount = InvComp->GetItemQuantity(VaccineItem);
+
+				// if (VaccineCount > 0)
+				//{
+					// 백신 O -> 해피 엔딩 UI
+				//	HUD->ShowHappyEndingHUD();
+				// }
+				// else
+				// {
+					// 백신 X -> 배드 엔딩 UI
+				//	HUD->ShowBadEndingHUD();
+				// }
+				// return;
+			}
+		}
+	}
+
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode) 
 	{

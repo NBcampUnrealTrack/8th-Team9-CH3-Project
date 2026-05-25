@@ -221,6 +221,7 @@ void ABoss_PoliceZombie::OnPrologueTakeDamage()
                             float ScreamLength = 0.0f;
                             if (ScreamMontage)
                             {
+                                bIsScreaming = true;
                                 ScreamLength = PlayAnimMontage(ScreamMontage);
                                 ApplyScreamEffect();
                             }
@@ -242,6 +243,7 @@ void ABoss_PoliceZombie::OnPrologueTakeDamage()
 
 void ABoss_PoliceZombie::StartCombat()
 {
+    bIsScreaming = false;
     bIsAttacking = false;
     CurrentState = EZombieState::Idle;
 
@@ -318,10 +320,12 @@ void ABoss_PoliceZombie::PlayExtraActions(bool bDoJumpAttack, bool bDoScream, TF
 
         GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, bDoScream, OnComplete]()
             {
+                bIsScreaming = false;
                 bIsAttacking = false;
 
                 if (bDoScream && ScreamMontage)
                 {
+                    bIsScreaming = true;
                     bIsAttacking = true;
                     float ScreamLength = PlayAnimMontage(ScreamMontage);
                     ApplyScreamEffect();
@@ -340,11 +344,13 @@ void ABoss_PoliceZombie::PlayExtraActions(bool bDoJumpAttack, bool bDoScream, TF
     }
     else if (bDoScream && ScreamMontage)
     {
+        bIsScreaming = true;
         bIsAttacking = true;
         float ScreamLength = PlayAnimMontage(ScreamMontage);
 
         GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, OnComplete]()
             {
+                bIsScreaming = false;
                 bIsAttacking = false;
                 OnComplete();
             }, ScreamLength, false);
@@ -366,6 +372,7 @@ void ABoss_PoliceZombie::StartPhase2()
     float ScreamLength = 0.0f;
     if (ScreamMontage)
     {
+        bIsScreaming = true;
         ScreamLength = PlayAnimMontage(ScreamMontage);
         ApplyScreamEffect();
     }
@@ -373,6 +380,7 @@ void ABoss_PoliceZombie::StartPhase2()
     // Screaming 후 GetDown
     GetWorld()->GetTimerManager().SetTimer(Phase2TimerHandle, [this]()
         {
+            bIsScreaming = false;
             float GetDownLength = 0.0f;
             if (DownMontage)
             {
@@ -467,6 +475,7 @@ void ABoss_PoliceZombie::EndPhase2Bite()
             float ScreamLength = 0.0f;
             if (ScreamMontage)
             {
+                bIsScreaming = true;
                 ScreamLength = PlayAnimMontage(ScreamMontage);
                 ApplyScreamEffect();
             }

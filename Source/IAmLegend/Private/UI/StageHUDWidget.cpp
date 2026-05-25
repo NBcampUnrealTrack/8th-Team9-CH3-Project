@@ -1,5 +1,6 @@
 #include "UI/StageHUDWidget.h"
 
+#include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Gamemode/MainGameModeBase.h"
 #include "Gamemode/MainGameInstance.h"
@@ -11,11 +12,17 @@ void UStageHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
+	//여러번 사용할 GameMode 미리 캐싱 후 저장
 	CachedGM = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	
+	//점멸 관련 설정
+	BlinkTime = 30.f;
+	bIsBlinkVisible = true;
+	bAlphaGoingDown = true;
+	CurrentAlpha = 1.f;
 	
 	GetWorld()->GetTimerManager().SetTimer(UpdateTimerHandle, this, &UStageHUDWidget::UpdateStageHUD, 0.1f, true);
 	
-	UpdateKillCount();
 	
 	if (Text_CurrentStage)
 	{
@@ -25,6 +32,11 @@ void UStageHUDWidget::NativeConstruct()
 		if (!GI) return;
 		FText Text = EnumPtr->GetDisplayValueAsText(GI->GetCurrentStage());
 		Text_CurrentStage->SetText(FText::FromString(FString::Printf(TEXT("%s"), *Text.ToString())));
+	}
+	
+	if (Img_SkullIcon)
+	{
+		Img_SkullIcon->SetVisibility(ESlateVisibility::Hidden);
 	}
 	
 }
@@ -38,7 +50,24 @@ void UStageHUDWidget::UpdateStageHUD()
 	if (Text_RemainingTime)
 	{
 		Text_RemainingTime->SetText(FText::FromString(ConvertToClockTime(CurrentRemainingTime)));
+		
+		if (CurrentRemainingTime <= 0.0f)
+		{
+			StopBlinkEffect();
+			Text_RemainingTime->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.0f, 0.0f, 1.0f)));
+		}
+		else if (CurrentRemainingTime <= BlinkTime)
+		{
+			bAlphaGoingDown = true;
+			Text_RemainingTime->SetColorAndOpacity(FSlateColor(FLinearColor::Red));
+			if (!GetWorld()->GetTimerManager().IsTimerActive(BlinkTimerHandle))
+			{
+				StartBlinkEffect();
+			}
+			Img_SkullIcon->SetVisibility(ESlateVisibility::Visible);
+		}
 	}
+	UpdateKillCount();
 }
 
 
@@ -75,4 +104,43 @@ FString UStageHUDWidget::ConvertToClockTime(float RemainingSeconds) const
 	int32 Minutes = TotalMinutes % 60;
 	
 	return FString::Printf(TEXT("%02d:%02d"), Hours, Minutes);
+}
+
+void UStageHUDWidget::StartBlinkEffect()
+{
+	bIsBlinkVisible = true;
+	GetWorld()->GetTimerManager().SetTimer(BlinkTimerHandle, this, &UStageHUDWidget::OnBlink, 0.5f, true);
+}
+
+void UStageHUDWidget::StopBlinkEffect()
+{
+	GetWorld()->GetTimerManager().ClearTimer(BlinkTimerHandle);
+}
+
+void UStageHUDWidget::OnBlink()
+{
+	if (!Text_RemainingTime) return;
+	
+	
+	if (bAlphaGoingDown)
+	{
+		CurrentAlpha -= 0.05f;
+		if (CurrentAlpha <= 0.2f)
+		{
+			CurrentAlpha = 0.2f;
+			bAlphaGoingDown = false;
+		}
+	}
+	else
+	{
+		CurrentAlpha += 0.05f;
+		if (CurrentAlpha >= 1.f)
+		{
+			CurrentAlpha = 1.f;
+			bAlphaGoingDown = true;
+		}
+	}
+
+	Text_RemainingTime->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.0f, 0.0f, CurrentAlpha)));
+
 }

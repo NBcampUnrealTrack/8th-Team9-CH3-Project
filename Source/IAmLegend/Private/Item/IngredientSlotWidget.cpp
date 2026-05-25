@@ -20,4 +20,9 @@ void UIngredientSlotWidget::InitIngredient(UItemDataAsset* ItemData, int32 Requi
 	    //필요한 재료의 개수 표시
 		IngredientCountText->SetText(FText::AsNumber(RequiredQuantity));
 	}
+	
+	if (IngredientName)
+	{
+		IngredientName->SetText(FText::FromString(ItemData->ItemName));
+	}
 }

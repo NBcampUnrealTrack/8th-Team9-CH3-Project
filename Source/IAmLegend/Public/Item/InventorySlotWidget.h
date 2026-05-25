@@ -43,6 +43,9 @@ public:
 	
 protected:
 	virtual void NativeConstruct() override;
+	
+	virtual void NativeOnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual void NativeOnMouseLeave(const FPointerEvent& MouseEvent) override;
 
 	UFUNCTION(BlueprintCallable)
 	void OnSlotClicked();

@@ -6,22 +6,38 @@
 #include "Blueprint/UserWidget.h"
 #include "BossHealthWidget.generated.h"
 
+// 전방 선언
+class UProgressBar;
+class UImage;
+class UTextBlock;
+
 UCLASS()
 class IAMLEGEND_API UBossHealthWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
 public:
+	// 보스 체력바
 	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* BossProgressBar;
+	UProgressBar* BossProgressBar;
+
+	// 보스 체력바 테두리
+	UPROPERTY(meta = (BindWidget))
+	UImage* BossFrameImage;
+
+	// 보스 이름
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* BossNameText;
 
 protected:
-	// 위젯이 생성될 때 실행
 	virtual void NativeConstruct() override;
-
-	// 위젯이 매 프레임 스스로 로직을 체크하는 함수
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
-	const float BossDetectDistance = 1000.f;
+	// const float BossDetectDistance = 1000.f;
+
+	// UI 한 번에 숨기거나 켜는 함수
+	void SetHealthUIVisibility(ESlateVisibility InVisibility);
+
+	bool bHasEncountered = false;
 };

@@ -37,17 +37,26 @@ void ASharpProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 
 void ASharpProjectile::AttachToHitActor(AActor* OtherActor, UPrimitiveComponent* OtherComp, const FHitResult& Hit)
 {
-	
 	USkeletalMeshComponent* TargetMesh = OtherActor->FindComponentByClass<USkeletalMeshComponent>();
+
+	if (ProjectileMesh && ProjectileMesh->DoesSocketExist(TEXT("Tip")))
+	{
+		// 투사체의 Tip 소켓 위치를 충돌 지점에 맞춰 조정
+		FVector TipWorldLoc = ProjectileMesh->GetSocketLocation(TEXT("Tip"));
+		FVector ActorWorldLoc = GetActorLocation();
+		FVector Offset = TipWorldLoc - ActorWorldLoc;
+		FVector FinalLocation = Hit.ImpactPoint - Offset + (GetActorForwardVector() * 10.f);
+		SetActorLocationAndRotation(FinalLocation, GetActorRotation());
+
+		// 투사체의 위치를 새로운 변환으로 설정
+		SetActorTransform(FTransform(GetActorRotation(), FinalLocation));
+	}
 
 	// 액터가 스켈레톤 메시를 갖고있으면
 	if (TargetMesh)
 	{
 		// 가장 가까운 본을 찾아서 그 본에 붙임
 		FName Bone = TargetMesh->FindClosestBone(Hit.Location);
-
-		FVector StickLoc = Hit.Location + (GetActorForwardVector() * 10.f);
-		SetActorLocation(StickLoc);
 
 		AttachToComponent(TargetMesh, FAttachmentTransformRules::KeepWorldTransform, Bone);
 		UE_LOG(LogTemp, Warning, TEXT("Bone Found: %s"), *Bone.ToString());

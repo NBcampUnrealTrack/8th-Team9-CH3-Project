@@ -65,7 +65,7 @@ TArray<FItemSlot>& UInventoryComponent::GetActualInventory()
 	UMainGameInstance* GI = Cast<UMainGameInstance>(GetWorld()->GetGameInstance());
 	if (GI)
 	{
-		return GI->GlobalInventory;
+		return GI->GetItemsFromGlobalInventory();
 	}
 	
 	static TArray<FItemSlot> EmptyInv;
@@ -391,6 +391,9 @@ void UInventoryComponent::DisplayUI(bool bShow)
 			if (InventoryWidget)
 			{
 				InventoryWidget->RefreshInventory(Inv);
+
+				// 창 닫히고 키보드 포커스를 다시 인벤토리 창으로 강제 복구 - 김민성
+				InventoryWidget->SetKeyboardFocus();
 			}
 			return; 
 		}

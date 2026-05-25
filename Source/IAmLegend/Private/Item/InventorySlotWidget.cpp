@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Item/InventorySlotWidget.h"
 #include "Item/UseItemDataAsset.h"
 #include "Components/Image.h"
@@ -10,104 +7,133 @@
 #include "Blueprint/SlateBlueprintLibrary.h"
 
 static TWeakObjectPtr<UItemActionPopUpWidget> GlobalActivePopup = nullptr;
+static TWeakObjectPtr<UItemActionPopUpWidget> GlobalActiveHoverName = nullptr;
 
 void UInventorySlotWidget::SetSlotData(const FItemSlot& SlotData)
 {
-	CurrentSlotData = SlotData;
-	if (SlotData.ItemData)
-	{
-		
-		ItemIcon->SetVisibility(ESlateVisibility::Visible);
-		Quantity->SetVisibility(ESlateVisibility::HitTestInvisible);
-		
-		// [수정] SlotButton이 진짜 존재할 때만 안전하게 제어합니다.
-		if (SlotButton) 
-		{
-			// SlotButton->SetVisibility(ESlateVisibility::Visible);
-			SlotButton->SetVisibility(ESlateVisibility::HitTestInvisible);
-			SlotButton->SetIsEnabled(true);
-		}
+    CurrentSlotData = SlotData;
+    if (SlotData.ItemData)
+    {
+       ItemIcon->SetVisibility(ESlateVisibility::Visible);
+       Quantity->SetVisibility(ESlateVisibility::HitTestInvisible);
+       
+       if (SlotButton) 
+       {
+          SlotButton->SetVisibility(ESlateVisibility::HitTestInvisible);
+          SlotButton->SetIsEnabled(true);
+       }
 
-		ItemIcon->SetBrushFromTexture(SlotData.ItemData->ItemIcon);
-		Quantity->SetText(FText::AsNumber(SlotData.Quantity));
-	}
-	else
-	{
-		ClearSlot();
-	}
+       ItemIcon->SetBrushFromTexture(SlotData.ItemData->ItemIcon);
+       Quantity->SetText(FText::AsNumber(SlotData.Quantity));
+    }
+    else
+    {
+       ClearSlot();
+    }
 }
 
 void UInventorySlotWidget::ClearSlot()
 {
-	CurrentSlotData = FItemSlot();
-	ItemIcon->SetBrushFromTexture(nullptr);
-	Quantity->SetText(FText::GetEmpty());
-	
-	if (SlotButton) 
-	{
-		SlotButton->SetIsEnabled(false);
-		SlotButton->SetVisibility(ESlateVisibility::Collapsed);
-	}
+    CurrentSlotData = FItemSlot();
+    ItemIcon->SetBrushFromTexture(nullptr);
+    Quantity->SetText(FText::GetEmpty());
     
-	
-	ItemIcon->SetVisibility(ESlateVisibility::Collapsed);
-	Quantity->SetVisibility(ESlateVisibility::Collapsed);
+    if (SlotButton) 
+    {
+       SlotButton->SetIsEnabled(false);
+       SlotButton->SetVisibility(ESlateVisibility::Collapsed);
+    }
+    
+    ItemIcon->SetVisibility(ESlateVisibility::Collapsed);
+    Quantity->SetVisibility(ESlateVisibility::Collapsed);
 }
 
 void UInventorySlotWidget::OnSlotClicked()
 {
-	if (GEngine)
-	{
-		FString DebugMsg = FString::Printf(TEXT("슬롯 버튼 클릭됨! 아이템: %s"), 
-		   CurrentSlotData.ItemData ? *CurrentSlotData.ItemData->GetName() : TEXT("없음"));
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, DebugMsg);
-	}
+    if (GEngine)
+    {
+       FString DebugMsg = FString::Printf(TEXT("슬롯 버튼 클릭됨! 아이템: %s"), 
+          CurrentSlotData.ItemData ? *CurrentSlotData.ItemData->GetName() : TEXT("없음"));
+       GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, DebugMsg);
+    }
 
-	// 1. 이미 화면에 유효한 팝업이 켜져 있다면 토글 및 삭제 처리
-	if (GlobalActivePopup.IsValid() && GlobalActivePopup->IsInViewport())
-	{
-		if (GlobalActivePopup->TargetSlotData.ItemData == CurrentSlotData.ItemData)
-		{
-			GlobalActivePopup->RemoveFromParent();
-			GlobalActivePopup = nullptr;
-			return; 
-		}
+    if (GlobalActivePopup.IsValid() && GlobalActivePopup->IsInViewport())
+    {
+       if (GlobalActivePopup->TargetSlotData.ItemData == CurrentSlotData.ItemData)
+       {
+          GlobalActivePopup->RemoveFromParent();
+          GlobalActivePopup = nullptr;
+          return; 
+       }
         
-		GlobalActivePopup->RemoveFromParent();
-		GlobalActivePopup = nullptr;
-	}
+       GlobalActivePopup->RemoveFromParent();
+       GlobalActivePopup = nullptr;
+    }
 
-	// 2. 아이템 데이터가 있고, 설정된 팝업 클래스가 있다면 새로 생성
-	if (CurrentSlotData.ItemData && PopupWidgetClass)
-	{
-		UItemActionPopUpWidget* PopupWidget = CreateWidget<UItemActionPopUpWidget>(GetWorld(), PopupWidgetClass);
-		if (PopupWidget)
-		{
-			PopupWidget->TargetSlotData = CurrentSlotData;
+    if (CurrentSlotData.ItemData && PopupWidgetClass)
+    {
+       UItemActionPopUpWidget* PopupWidget = CreateWidget<UItemActionPopUpWidget>(GetWorld(), PopupWidgetClass);
+       if (PopupWidget)
+       {
+          PopupWidget->AddToViewport();
+          PopupWidget->SetupPopup(CurrentSlotData, SlotIndex);
           
-			
-			PopupWidget->TargetIndex = SlotIndex; 
+          GlobalActivePopup = PopupWidget;
 
-			PopupWidget->AddToViewport();
-			GlobalActivePopup = PopupWidget;
+          FVector2D MousePosition;
+          if (GetOwningPlayer()->GetMousePosition(MousePosition.X, MousePosition.Y))
+          {
+             PopupWidget->SetPositionInViewport(MousePosition);
+          }
+       }
+    }
+}
 
-			// 마우스 커서 위치에 띄우기
-			FVector2D MousePosition;
-			if (GetOwningPlayer()->GetMousePosition(MousePosition.X, MousePosition.Y))
-			{
-				PopupWidget->SetPositionInViewport(MousePosition);
-			}
-		}
-	}
+void UInventorySlotWidget::NativeOnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+    Super::NativeOnMouseEnter(MyGeometry, MouseEvent);
+
+    if (!CurrentSlotData.ItemData || !PopupWidgetClass) return;
+
+    if (GlobalActiveHoverName.IsValid() && GlobalActiveHoverName->IsInViewport())
+    {
+        GlobalActiveHoverName->RemoveFromParent();
+        GlobalActiveHoverName = nullptr;
+    }
+
+    UItemActionPopUpWidget* HoverWidget = CreateWidget<UItemActionPopUpWidget>(GetWorld(), PopupWidgetClass);
+    if (HoverWidget)
+    {
+        HoverWidget->AddToViewport();
+        HoverWidget->ShowOnlyName(CurrentSlotData);
+        
+        GlobalActiveHoverName = HoverWidget;
+
+        FVector2D MousePosition;
+        if (GetOwningPlayer()->GetMousePosition(MousePosition.X, MousePosition.Y))
+        {
+            HoverWidget->SetPositionInViewport(MousePosition);
+        }
+    }
+}
+
+void UInventorySlotWidget::NativeOnMouseLeave(const FPointerEvent& MouseEvent)
+{
+    Super::NativeOnMouseLeave(MouseEvent);
+
+    if (GlobalActiveHoverName.IsValid() && GlobalActiveHoverName->IsInViewport())
+    {
+        GlobalActiveHoverName->RemoveFromParent();
+        GlobalActiveHoverName = nullptr;
+    }
 }
 
 void UInventorySlotWidget::NativeConstruct()
 {
-	Super::NativeConstruct();
+    Super::NativeConstruct();
 
-	if (SlotButton)
-	{
-		SlotButton->OnClicked.AddUniqueDynamic(this, &UInventorySlotWidget::OnSlotClicked);
-	}
+    if (SlotButton)
+    {
+       SlotButton->OnClicked.AddUniqueDynamic(this, &UInventorySlotWidget::OnSlotClicked);
+    }
 }
-

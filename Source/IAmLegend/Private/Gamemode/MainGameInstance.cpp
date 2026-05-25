@@ -49,3 +49,15 @@ EStageType UMainGameInstance::GetCurrentStage() const
 {
 	return CurrentStage;
 }
+
+//인벤토리 아이템 추가
+void UMainGameInstance::AddItemAtGlobalInventory(FItemSlot& ItemSlot)
+{
+	GlobalInventory.Add(ItemSlot);
+}
+
+// 인벤토리 아이템 가져가기
+TArray<FItemSlot>& UMainGameInstance::GetItemsFromGlobalInventory()
+{
+	return GlobalInventory;
+}

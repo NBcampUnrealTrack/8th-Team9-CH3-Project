@@ -93,7 +93,7 @@ void AWeaponProjectileBase::InitProjectileFromData(UThrowableWeaponDataAsset* Th
 	InitialSpeed = ThrowableWeaponData->InitialSpeed;
 	MaxSpeed = ThrowableWeaponData->MaxSpeed;
 	bRotationFollowsVelocity = ThrowableWeaponData->bRotationFollowsVelocity;
-	Damage = ThrowableWeaponData->Damage;
+	Damage = ThrowableWeaponData->ProjectileDamage;
 	LifeSpan = ThrowableWeaponData->ProjectileLifeSpan;
 
 	if (ProjectileMovement)

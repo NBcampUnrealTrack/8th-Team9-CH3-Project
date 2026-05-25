@@ -34,10 +34,14 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     float JumpAttackDamage = 30.0f; // 착지 데미지
-
+    UPROPERTY(BlueprintReadWrite, Category = "AI")
+    bool bIsScreaming = false;
     // 김민성 작성
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float MaxHealth;
+
+    // 코드 추가
+    bool bPrologueDone = false;
 
 protected:
     virtual void ResetAttack() override;
@@ -45,7 +49,8 @@ protected:
     virtual void BeginPlay() override;
 
     // 프롤로그 관련
-    bool bPrologueDone = false;
+    // 주석 처리
+    // bool bPrologueDone = false;
     FTimerHandle ScreamTimerHandle;
 
     void StartBiteLoop();

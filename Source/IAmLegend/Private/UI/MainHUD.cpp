@@ -7,6 +7,7 @@
 #include "UI/StageHUDWidget.h"
 #include "UI/PauseMenuWidget.h"
 #include "UI/GameOverWidget.h"
+#include "UI/WarningUIWidget.h"
 #include "PlayerHealthWidget.h"
 #include "UI/CrosshairWidget.h"
 #include "UI/WeaponInstallationWidget.h"
@@ -333,4 +334,44 @@ void AMainHUD::HideStealthHUD()
 		StealthWidget->RemoveFromParent();
 		StealthWidget = nullptr;
 	}
+}
+
+// 엔딩1 UI 함수
+void AMainHUD::ShowHappyEndingHUD()
+{
+	if (HappyEndingWidgetClass)
+	{
+		UUserWidget* HappyEnding = CreateWidget<UUserWidget>(GetOwningPlayerController(), HappyEndingWidgetClass);
+		if (HappyEnding)
+		{
+			HappyEnding->AddToViewport();
+		}
+	}
+}
+
+// 엔딩2 UI 함수
+void AMainHUD::ShowBadEndingHUD()
+{
+	if (BadEndingWidgetClass)
+	{
+		UUserWidget* BadEnding = CreateWidget<UUserWidget>(GetOwningPlayerController(), BadEndingWidgetClass);
+		if (BadEnding)
+		{
+			BadEnding->AddToViewport();
+		}
+	}
+}
+
+//경고 메시지 UI 함수
+void AMainHUD::ShowWarningHUD()
+{
+	if (WarningHUDClass)
+	{
+		UWarningUIWidget* WarningWidget = CreateWidget<UWarningUIWidget>(GetWorld(), WarningHUDClass);
+		if (WarningWidget)
+		{
+			WarningWidget->AddToViewport(200);
+		}
+	}
+	
 }

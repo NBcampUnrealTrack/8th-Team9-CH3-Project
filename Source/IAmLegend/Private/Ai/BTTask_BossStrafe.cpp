@@ -80,9 +80,23 @@ void UBTTask_BossStrafe::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
     FVector RightVec = FVector::CrossProduct(FVector::UpVector, ToTarget).GetSafeNormal();
     Boss->AddMovementInput(RightVec, StrafeDirection);
 
+    ABoss_PoliceZombie* BossZombie = Cast<ABoss_PoliceZombie>(Boss);
+    if (BossZombie && BossZombie->WalkMontage)
+    {
+        UAnimInstance* AnimInst = Boss->GetMesh()->GetAnimInstance();
+        if (AnimInst && !AnimInst->Montage_IsPlaying(BossZombie->WalkMontage))
+        {
+            BossZombie->PlayAnimMontage(BossZombie->WalkMontage);
+        }
+    }
     ElapsedTime += DeltaSeconds;
     if (ElapsedTime >= TargetStrafeTime)
     {
+        if (BossZombie && BossZombie->WalkMontage)
+        {
+            BossZombie->StopAnimMontage(BossZombie->WalkMontage);
+        }
+        Boss->GetCharacterMovement()->MaxWalkSpeed = 0.0f;
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
     }
 }
