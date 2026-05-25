@@ -72,15 +72,21 @@ void ABoss_PoliceZombie::JumpAttackLand()
     if (!PlayerCharacter) return;
 
     float Distance = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
+    if (Distance > JumpAttackRadius) return;
 
-    if (Distance <= JumpAttackRadius)
+    AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(PlayerCharacter);
+    if (!Player) return;
+
+    // ✅ 플레이어가 땅에 닿아있을 때만 데미지
+    if (Player->GetCharacterMovement()->IsMovingOnGround() ||
+        Player->GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Walking)
     {
-        AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(PlayerCharacter);
-        if (Player)
-        {
-            UGameplayStatics::ApplyDamage(Player, JumpAttackDamage, GetController(), this, nullptr);
-            UE_LOG(LogTemp, Warning, TEXT("점프 공격 착지 데미지! 거리: %f"), Distance);
-        }
+        UGameplayStatics::ApplyDamage(Player, JumpAttackDamage, GetController(), this, nullptr);
+        UE_LOG(LogTemp, Warning, TEXT("점프 공격 착지 데미지! 거리: %f"), Distance);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("플레이어 점프로 회피 성공! 거리: %f"), Distance);
     }
 }
 void ABoss_PoliceZombie::StartBiteLoop()
@@ -132,6 +138,9 @@ void ABoss_PoliceZombie::ApplyScreamEffect()
 float ABoss_PoliceZombie::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
     class AController* EventInstigator, AActor* DamageCauser)
 {
+    if (CurrentState == EZombieState::Dead) return 0.0f;
+
+    // ✅ 첫 피격 → 프롤로그 시작
     if (!bPrologueDone)
     {
         bPrologueDone = true;
@@ -139,8 +148,8 @@ float ABoss_PoliceZombie::TakeDamage(float DamageAmount, struct FDamageEvent con
         return DamageAmount;
     }
 
-    // Super::TakeDamage 대신 직접 처리 (Hit 몽타주 스킵)
-    if (CurrentState == EZombieState::Dead) return 0.0f;
+    // ✅ 프롤로그 진행 중 (첫 피격 이후 ~ StartCombat 전) 무적
+    if (!bCombatStarted) return 0.0f;
 
     Health -= DamageAmount;
 
@@ -149,6 +158,7 @@ float ABoss_PoliceZombie::TakeDamage(float DamageAmount, struct FDamageEvent con
     if (Health <= 0.0f)
     {
         Die();
+        return DamageAmount;
     }
 
     if (!bPhase2Triggered && Health <= MaxHealth * 0.2f)
@@ -159,6 +169,30 @@ float ABoss_PoliceZombie::TakeDamage(float DamageAmount, struct FDamageEvent con
 
     return DamageAmount;
 }
+void ABoss_PoliceZombie::Die()
+{
+    // ✅ 페이즈 2 관련 타이머 전부 정리
+    GetWorldTimerManager().ClearTimer(Phase2TimerHandle);
+    GetWorldTimerManager().ClearTimer(ScreamTimerHandle);
+    GetWorldTimerManager().ClearTimer(ExtraActionTimerHandle);
+    GetWorldTimerManager().ClearTimer(GroggyTimerHandle);
+
+    // ✅ 이동 중지
+    AAIController* AIC = Cast<AAIController>(GetController());
+    if (AIC)
+    {
+        AIC->StopMovement();
+    }
+
+    // ✅ Crawl 몽타주 중단
+    if (CrawlMontage)
+    {
+        StopAnimMontage(CrawlMontage);
+    }
+
+    Super::Die();
+}
+
 void ABoss_PoliceZombie::OnPrologueTakeDamage()
 {
     // Bite 중지
@@ -221,6 +255,7 @@ void ABoss_PoliceZombie::OnPrologueTakeDamage()
                             float ScreamLength = 0.0f;
                             if (ScreamMontage)
                             {
+                                bIsScreaming = true;
                                 ScreamLength = PlayAnimMontage(ScreamMontage);
                                 ApplyScreamEffect();
                             }
@@ -242,10 +277,11 @@ void ABoss_PoliceZombie::OnPrologueTakeDamage()
 
 void ABoss_PoliceZombie::StartCombat()
 {
+    bCombatStarted = true; // ✅ 여기서 무적 해제
+    bIsScreaming = false;
     bIsAttacking = false;
     CurrentState = EZombieState::Idle;
 
-    // BT 재개
     AAIController* AIC = Cast<AAIController>(GetController());
     if (AIC)
     {
@@ -318,10 +354,12 @@ void ABoss_PoliceZombie::PlayExtraActions(bool bDoJumpAttack, bool bDoScream, TF
 
         GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, bDoScream, OnComplete]()
             {
+                bIsScreaming = false;
                 bIsAttacking = false;
 
                 if (bDoScream && ScreamMontage)
                 {
+                    bIsScreaming = true;
                     bIsAttacking = true;
                     float ScreamLength = PlayAnimMontage(ScreamMontage);
                     ApplyScreamEffect();
@@ -340,11 +378,13 @@ void ABoss_PoliceZombie::PlayExtraActions(bool bDoJumpAttack, bool bDoScream, TF
     }
     else if (bDoScream && ScreamMontage)
     {
+        bIsScreaming = true;
         bIsAttacking = true;
         float ScreamLength = PlayAnimMontage(ScreamMontage);
 
         GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, OnComplete]()
             {
+                bIsScreaming = false;
                 bIsAttacking = false;
                 OnComplete();
             }, ScreamLength, false);
@@ -366,6 +406,7 @@ void ABoss_PoliceZombie::StartPhase2()
     float ScreamLength = 0.0f;
     if (ScreamMontage)
     {
+        bIsScreaming = true;
         ScreamLength = PlayAnimMontage(ScreamMontage);
         ApplyScreamEffect();
     }
@@ -373,6 +414,7 @@ void ABoss_PoliceZombie::StartPhase2()
     // Screaming 후 GetDown
     GetWorld()->GetTimerManager().SetTimer(Phase2TimerHandle, [this]()
         {
+            bIsScreaming = false;
             float GetDownLength = 0.0f;
             if (DownMontage)
             {
@@ -467,6 +509,7 @@ void ABoss_PoliceZombie::EndPhase2Bite()
             float ScreamLength = 0.0f;
             if (ScreamMontage)
             {
+                bIsScreaming = true;
                 ScreamLength = PlayAnimMontage(ScreamMontage);
                 ApplyScreamEffect();
             }

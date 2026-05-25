@@ -14,6 +14,7 @@
 #include "Components/Button.h"
 #include "Character/HanPlayerCharacter.h"
 #include "BattleLogic/WeaponBase.h"
+#include "BattleLogic/Attachment/RangedAttachmentComponent.h"
 
 void UInventoryWidget::RefreshInventory(const TArray<FItemSlot>& Inventory)
 {
@@ -138,6 +139,26 @@ void UInventoryWidget::NativeConstruct()
 	if (Btn_Unequip1) Btn_Unequip1->OnClicked.AddUniqueDynamic(this, &UInventoryWidget::OnClickUnequip1);
 	if (Btn_Unequip2) Btn_Unequip2->OnClicked.AddUniqueDynamic(this, &UInventoryWidget::OnClickUnequip2);
 	if (Btn_Unequip3) Btn_Unequip3->OnClicked.AddUniqueDynamic(this, &UInventoryWidget::OnClickUnequip3);
+
+	// 부착물 버튼과 이미지 매핑
+	if (SightImage) AttachmentSlotImages.Add(EAttachmentSlot::Sight, SightImage);
+	if (StockImage) AttachmentSlotImages.Add(EAttachmentSlot::Stock, StockImage);
+	if (MuzzleImage) AttachmentSlotImages.Add(EAttachmentSlot::Muzzle, MuzzleImage);
+	if (MagazineImage) AttachmentSlotImages.Add(EAttachmentSlot::Magazine, MagazineImage);
+	if (GripImage) AttachmentSlotImages.Add(EAttachmentSlot::Grip, GripImage);
+
+	if (SightButton) AttachmentSlotButtons.Add(EAttachmentSlot::Sight, SightButton);
+	if (StockButton) AttachmentSlotButtons.Add(EAttachmentSlot::Stock, StockButton);
+	if (MuzzleButton) AttachmentSlotButtons.Add(EAttachmentSlot::Muzzle, MuzzleButton);
+	if (MagazineButton) AttachmentSlotButtons.Add(EAttachmentSlot::Magazine, MagazineButton);
+	if (GripButton) AttachmentSlotButtons.Add(EAttachmentSlot::Grip, GripButton);
+
+	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->OnRangedWeaponEquipped.AddUniqueDynamic(this, &UInventoryWidget::UpdateAttachmentComponent);
+	}
+	UpdateAttachmentComponent();
 }
 
 void UInventoryWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -208,5 +229,113 @@ void UInventoryWidget::OnClickUnequip3()
 
 		UInventoryComponent* InvComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
 		if (InvComp) RefreshInventory(InvComp->GetActualInventory());
+	}
+}
+
+void UInventoryWidget::OnClickAttachment(EAttachmentSlot AttachmentSlot)
+{
+	if (!CurrentAttachmentComponent.IsValid()) return;
+
+	if(UAttachmentDataAsset* UnequippedAttachment = CurrentAttachmentComponent->UnequipAttachment(AttachmentSlot))
+	{
+		AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
+		if (PlayerCharacter)
+		{
+			UInventoryComponent* InvComp = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+			if (!InvComp) return;
+
+			InvComp->AddItem(UnequippedAttachment);
+			RefreshInventory(InvComp->GetActualInventory());
+		}
+	}
+}
+
+void UInventoryWidget::UpdateAttachmentUI(URangedAttachmentComponent* AttachmentComp)
+{
+	// 부착물 컴포넌트가 유효하지 않으면 모든 부착물 UI 요소 숨김
+	if (!AttachmentComp)
+	{
+		AttachmentsWeaponImage->SetVisibility(ESlateVisibility::Collapsed);
+
+		for (const TPair<EAttachmentSlot, UImage*>& Pair : AttachmentSlotImages)
+		{
+			if (Pair.Value)
+			{
+				Pair.Value->SetVisibility(ESlateVisibility::Collapsed);
+			}
+		}
+
+		for (const TPair<EAttachmentSlot, UButton*>& Pair : AttachmentSlotButtons)
+		{
+			if (Pair.Value)
+			{
+				Pair.Value->SetVisibility(ESlateVisibility::Collapsed);
+			}
+		}
+		return;
+	}
+
+	const TMap<EAttachmentSlot, UAttachmentDataAsset*>& CurrentAttachments = AttachmentComp->GetCurrentAttachments();
+	AttachmentsWeaponImage->SetVisibility(ESlateVisibility::Visible);
+
+	// 부착물 슬롯의 이미지 업데이트
+	for (const TPair<EAttachmentSlot, UImage*>& Pair : AttachmentSlotImages)
+	{
+		EAttachmentSlot AttachmentSlot = Pair.Key;
+		UImage* Image = Pair.Value;
+		
+		// 해당 무기가 슬롯을 지원하지 않으면 숨김
+		if (!AttachmentComp->IsSupportAttachment(AttachmentSlot))
+		{
+			Image->SetVisibility(ESlateVisibility::Collapsed);
+			continue;
+		}
+
+		// 해당 슬롯에 부착물이 장착되어 있으면 아이콘 표시, 아니면 숨김
+		if (CurrentAttachments.Contains(AttachmentSlot) && CurrentAttachments[AttachmentSlot])
+		{
+			Image->SetBrushFromTexture(CurrentAttachments[AttachmentSlot]->ItemIcon);
+			Image->SetVisibility(ESlateVisibility::HitTestInvisible);
+		}
+		else
+		{
+			Image->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+
+	for (const TPair<EAttachmentSlot, UButton*>& Pair : AttachmentSlotButtons)
+	{
+		// 해당 무기가 슬롯을 지원하지 않으면 숨김
+		if (!AttachmentComp->IsSupportAttachment(Pair.Key))
+		{
+			Pair.Value->SetVisibility(ESlateVisibility::Collapsed);
+			continue;
+		}
+
+		if (Pair.Value)
+		{
+			Pair.Value->SetVisibility(ESlateVisibility::Visible);
+		}
+	}
+}
+
+void UInventoryWidget::UpdateAttachmentComponent()
+{
+	AHanPlayerCharacter* PlayerCharacter = Cast<AHanPlayerCharacter>(GetOwningPlayerPawn());
+	if (!PlayerCharacter) return;
+	AWeaponBase* RangedWeapon = PlayerCharacter->GetWeaponSlots().Contains(EWeaponSlot::Ranged) ? PlayerCharacter->GetWeaponSlots()[EWeaponSlot::Ranged] : nullptr;
+	if (RangedWeapon)
+	{
+		URangedAttachmentComponent* AttachmentComp = RangedWeapon->FindComponentByClass<URangedAttachmentComponent>();
+		CurrentAttachmentComponent = AttachmentComp;
+		CurrentAttachmentComponent->OnAttachmentChanged.AddUniqueDynamic(this, &UInventoryWidget::UpdateAttachmentUI);
+		AttachmentsWeaponImage->SetBrushFromTexture(RangedWeapon->WeaponIcon);
+		UpdateAttachmentUI(CurrentAttachmentComponent.Get());
+		
+	}
+	else
+	{
+		CurrentAttachmentComponent = nullptr;
+		UpdateAttachmentUI(nullptr);
 	}
 }

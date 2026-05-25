@@ -1,4 +1,4 @@
-#include "Item/InventoryComponent.h"
+﻿#include "Item/InventoryComponent.h"
 #include "GameFramework/Character.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Item/UseItemDataAsset.h"
@@ -10,6 +10,9 @@
 #include "WeaponDataAsset.h"
 #include "UI/MainHUD.h"
 #include "PlayerHealthWidget.h"
+#include "BattleLogic/Attachment/AttachmentDataAsset.h"
+#include "BattleLogic/Weapon/RangedWeaponBase.h"
+#include "BattleLogic/Attachment/RangedAttachmentComponent.h"
 
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
@@ -147,6 +150,41 @@ void UInventoryComponent::UseItem(int32 Index)
 		// 장착 후 인벤토리 UI 즉시 새로고침
 		DisplayUI(true);
 
+		return;
+	}
+
+	// ==========================================
+	// [코드 추가] 부착물 아이템인지 확인 후 장착 - 차재현
+	// ==========================================
+	if (UAttachmentDataAsset* AttachmentData = Cast<UAttachmentDataAsset>(Slot.ItemData))
+	{
+		TMap<EWeaponSlot, AWeaponBase*>& WeaponSlots = PlayerChar->GetWeaponSlots();
+		if(!WeaponSlots.Contains(EWeaponSlot::Ranged)) return;
+
+		ARangedWeaponBase* RangedWeapon = Cast<ARangedWeaponBase>(WeaponSlots[EWeaponSlot::Ranged]);
+		if(!RangedWeapon) return;
+		
+		URangedAttachmentComponent* AttachmentComp = RangedWeapon->GetRangedAttachmentComponent();
+		if(!AttachmentComp->IsCanEquipAttachment(AttachmentData)) return;
+
+		// 기존 장착된 부착물 제거 및 인벤토리에 추가
+		if(UAttachmentDataAsset* OldAttachmentData = AttachmentComp->UnequipAttachment(AttachmentData->AttachmentSlot))
+		{
+			AddItem(OldAttachmentData, 1);
+		}
+
+		// 새 부착물 장착
+		if (AttachmentComp->EquipAttachment(AttachmentData))
+		{
+			Slot.Quantity--;
+			if (Slot.Quantity <= 0)
+			{
+				Inv.RemoveAt(Index);
+			}
+		}
+		
+		// 장착 후 인벤토리 UI 즉시 새로고침
+		DisplayUI(true);
 		return;
 	}
 

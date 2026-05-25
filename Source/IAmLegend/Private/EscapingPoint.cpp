@@ -168,6 +168,10 @@ void AEscapingPoint::RunLogTimer()
 
 float AEscapingPoint::GetRemainingEscapingTime() const
 {
+	if (!GetWorldTimerManager().IsTimerActive(EscapeTimer))
+	{
+		return EscapeDuration;
+	}
 	return GetWorldTimerManager().GetTimerRemaining(EscapeTimer);
 }
 

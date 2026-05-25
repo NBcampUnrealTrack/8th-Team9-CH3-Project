@@ -25,6 +25,7 @@ ABaseZombie_Ai::ABaseZombie_Ai()
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+    //SightConfig->bLoseSightOnObstruction = true;
 
     // 4. 이벤트 연결: '타겟을 인지했을 때' 실행할 함수를 등록합니다. (델리게이트 바인딩)
     AIPerceptionComp->ConfigureSense(*SightConfig);

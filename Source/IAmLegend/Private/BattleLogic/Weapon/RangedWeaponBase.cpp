@@ -8,11 +8,14 @@
 #include "Item/InventoryComponent.h"
 #include "Item/ItemDataAsset.h"
 #include "BattleLogic/Weapon/DataAssets/RangedWeaponDataAsset.h"
+#include "BattleLogic/Attachment/RangedAttachmentComponent.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 ARangedWeaponBase::ARangedWeaponBase()
 {
+	AttachmentComponent = CreateDefaultSubobject<URangedAttachmentComponent>(TEXT("AttachmentComponent"));
+
 	// 기본 값 설정
 	WeaponType = EWeaponType::TwoHandedRanged; // 무기 타입 설정
 	WeaponSlot = EWeaponSlot::Ranged; // 무기 슬롯 설정
@@ -425,11 +428,18 @@ void ARangedWeaponBase::WeaponInitFromData()
 		MeleeAttackRange = RangedWeaponData->MeleeAttackRange;
 		MuzzleSocketName = RangedWeaponData->MuzzleSocketName;
 		FireAnimSequence = RangedWeaponData->FireAnimSequence;
+		AttachmentSlots = RangedWeaponData->AttachmentSlots;
 
 		// 데이터 에셋에서 불러온 값으로 발사 간격과 쿨다운 시간 계산
 		FireInterval = 60.f / FireRate;
 		CoolDownTime = FireInterval - 0.015f;
 		CurrentAmmo = MaxAmmo;
 		CurrentSpreadAngle = BaseSpreadAngle;
+		
 	}
+}
+
+URangedAttachmentComponent* ARangedWeaponBase::GetRangedAttachmentComponent() const
+{
+	return AttachmentComponent;
 }

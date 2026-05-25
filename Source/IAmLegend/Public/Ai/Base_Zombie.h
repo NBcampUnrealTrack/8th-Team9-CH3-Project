@@ -52,7 +52,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-
+    UPROPERTY(EditAnywhere, Category = "Animation")
+    float DeathAnimLength = 3.0f;
     // [에디터 설정] 각 상황에 맞는 애니메이션 몽타주 에셋을 넣어주세요.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
     class UAnimMontage* AttackMontage;
@@ -94,6 +95,8 @@ protected:
     FTimerHandle DeathTimerHandle;
     FTimerHandle HideTimerHandle;
     FTimerHandle DeathFreezeTimerHandle;
+    FTimerHandle HitTimerHandle;
+
     // [에디터 설정] 좀비의 체력입니다.
     // 복사해서 public로 복제했습니다 - 김민성
     //UPROPERTY(EditAnywhere, Category = "Stat")
