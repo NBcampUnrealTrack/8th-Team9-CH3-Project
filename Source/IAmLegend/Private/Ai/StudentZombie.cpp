@@ -1,8 +1,22 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Ai/StudentZombie.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
+AStudentZombie::AStudentZombie()
+{
+    AttackCooldown = 4.0f;
+    Health = 100.0f;
+    AttackRange = 150.0f;
+
+    // âœ… ì–´íƒ ìŠ¤í”¼ì–´ë¥¼ ë¨¸ë¦¬ ì†Œì¼“ìœ¼ë¡œ ì´ë™
+    if (AttackSphere)
+    {
+        AttackSphere->SetupAttachment(GetMesh(), FName("Head"));
+    }
+}
 
 void AStudentZombie::PlayAttackMontage()
 {
@@ -15,7 +29,7 @@ void AStudentZombie::PlayAttackMontage()
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->DisableMovement();
 
-    // ? ÇĞ»ı Á»ºñ¸¸ °ø°İ Áß È¸Àü Â÷´Ü
+    // ? í•™ìƒ ì¢€ë¹„ë§Œ ê³µê²© ì¤‘ íšŒì „ ì°¨ë‹¨
     bUseControllerRotationYaw = false;
     GetCharacterMovement()->bOrientRotationToMovement = false;
 
@@ -37,6 +51,6 @@ void AStudentZombie::ResetAttack()
     GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
     bHasAppliedDamageThisAttack = false;
 
-    // ? °ø°İ ³¡³ª¸é È¸Àü Àç°³
+    // ? ê³µê²© ëë‚˜ë©´ íšŒì „ ì¬ê°œ
     bUseControllerRotationYaw = true;
 }

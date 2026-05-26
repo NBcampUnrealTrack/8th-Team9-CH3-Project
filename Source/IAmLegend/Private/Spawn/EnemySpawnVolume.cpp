@@ -103,7 +103,7 @@ bool AEnemySpawnVolume::TryGetValidSpawnLocation(FVector& OutLocation)
 			UEngineTypes::ConvertToTraceType(ECC_WorldStatic),
 			false,
 			ActorsToIgnore,
-			EDrawDebugTrace::ForDuration,
+			EDrawDebugTrace::None,
 			GroundHit,
 			true);
 		
@@ -128,35 +128,8 @@ bool AEnemySpawnVolume::TryGetValidSpawnLocation(FVector& OutLocation)
 			ActorsToIgnore,
 			Overlaps);
 		
-		//디버그
-		if (bOverLapping)
-		{
-			// 겹침 있으면 빨강
-			DrawDebugCapsule(
-				GetWorld(),
-				CapsuleCenter,
-				SpawnCheckCapsuleHalfHeight,
-				SpawnCheckCapsuleRadius,
-				FQuat::Identity,
-				FColor::Red,
-				false,
-				30.f
-			);
-		}
-		
 		if (!bOverLapping)
 		{
-			// 유효한 위치면 초록
-			DrawDebugCapsule(
-				GetWorld(),
-				CapsuleCenter,
-				SpawnCheckCapsuleHalfHeight,
-				SpawnCheckCapsuleRadius,
-			FQuat::Identity,
-				FColor::Green,
-				false,
-				30.f
-			);
 			if (ACharacter* Char = Cast<ACharacter>(ActualEnemyClass.GetDefaultObject()))
 			{
 				float HalfHeight = Char->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
@@ -164,7 +137,6 @@ bool AEnemySpawnVolume::TryGetValidSpawnLocation(FVector& OutLocation)
 				OutLocation = GroundHit.ImpactPoint + FVector(0.f, 0.f, HalfHeight);
 			}
 			
-			UE_LOG(LogTemp, Warning, TEXT("ImpactPoint: %s"), *OutLocation.ToString());
 			return true;
 		}
 	}
