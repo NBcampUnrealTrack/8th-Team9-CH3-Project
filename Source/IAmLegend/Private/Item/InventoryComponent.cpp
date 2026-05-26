@@ -207,7 +207,7 @@ void UInventoryComponent::UseItem(int32 Index)
 		float MaxHP = PlayerChar->GetMaxHealth();
 
 		// [체력 체크] 이미 피가 가득 차 있다면 취소
-		if (CurrentHP >= MaxHP)
+		/*if (CurrentHP >= MaxHP)
 		{
 			if (GEngine)
 			{
@@ -215,7 +215,7 @@ void UInventoryComponent::UseItem(int32 Index)
 			}
 			UE_LOG(LogTemp, Log, TEXT("아이템 사용 취소: 현재 체력이 가득 차 있습니다."));
 			return; 
-		}
+		}*/
 
 		// [회복 적용]
 		float NewHP = FMath::Clamp(CurrentHP + UseItemData->Value, 0.f, MaxHP);
@@ -233,12 +233,13 @@ void UInventoryComponent::UseItem(int32 Index)
 			}
 		}
 
-		if (GEngine)
+		/*if (GEngine)
 		{
 			FString TurnText = FString::Printf(TEXT("아이템 사용함: %s | 체력 회복 완료! (+%.1f) 현재: %.1f / %.1f"), 
 				*UseItemData->ItemName, UseItemData->Value, NewHP, MaxHP);
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TurnText);
 		}
+		*/
 
 		// 힐 성공 시에만 수량 차감 및 슬롯 제거
 		Slot.Quantity--;
@@ -264,12 +265,12 @@ void UInventoryComponent::UseItem(int32 Index)
 		// 캐릭터에 새로운 속도 즉시 영구 지정
 		PlayerChar->SetBaseWalkSpeed(BuffedSpeed);
 
-		if (GEngine)
+		/*if (GEngine)
 		{
 			FString BuffText = FString::Printf(TEXT("아이템 사용함: %s | 이동 속도 %.0f%% 영구 상승! (현재 속도: %.1f)"), 
 			 *UseItemData->ItemName, UseItemData->Value * 100.f, BuffedSpeed);
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, BuffText);
-		}
+		}*/
 		UE_LOG(LogTemp, Log, TEXT("[%s] 버프 영구 발동. 속도 갱신: %.1f -> %.1f"), *UseItemData->ItemName, CurrentSpeed, BuffedSpeed);
 
 		// 버프 성공 시에만 수량 차감 및 슬롯 제거
@@ -308,12 +309,12 @@ void UInventoryComponent::UseItem(int32 Index)
 		}
 		// --------------------------------------------------------------
 
-		if (GEngine)
+		/*if (GEngine)
 		{
 			FString BuffText = FString::Printf(TEXT("아이템 사용함: %s | 보유한 모든 근접 무기 데미지 %.1f배 영구 상승!"), 
 			*UseItemData->ItemName, UseItemData->Value);
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, BuffText);
-		}
+		}*/
 
 		// 수량 차감 및 슬롯 제거
 		Slot.Quantity--;
@@ -391,13 +392,13 @@ void UInventoryComponent::ShowInventory()
 void UInventoryComponent::ShowInventoryOnScreen()
 {
 	TArray<FItemSlot>& Inv = GetActualInventory();
-	if (!GEngine) return;
+	/*if (!GEngine) return;
 
 	if (Inv.Num() == 0)
 	{
 		GEngine->AddOnScreenDebugMessage(100, 3.0f, FColor::Red, TEXT("Inventory is Empty."));
 		return;
-	}
+	}*/
 
 	
 	FString FullInventoryText = TEXT("=== Current Inventory ===\n");
@@ -413,7 +414,7 @@ void UInventoryComponent::ShowInventoryOnScreen()
 	}
 
 	
-	GEngine->AddOnScreenDebugMessage(100, 5.0f, FColor::Cyan, FullInventoryText);
+	/*GEngine->AddOnScreenDebugMessage(100, 5.0f, FColor::Cyan, FullInventoryText);*/
 }
 
 void UInventoryComponent::DisplayUI(bool bShow)

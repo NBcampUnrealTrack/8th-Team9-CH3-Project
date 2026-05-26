@@ -5,8 +5,10 @@
 #include "Components/TextBlock.h"
 #include "Components/Button.h"
 
-void UCraftNotificationWidget::ShowNotification(const FText& Message, const FLinearColor& TextColor)
+void UCraftNotificationWidget::ShowNotification(const FText& Message, const FLinearColor& TextColor, UUserWidget* InParent)
 {
+	ParentWidget = InParent;
+	
 	if (NotificationText)
 	{
 		NotificationText->SetText(Message);
@@ -27,5 +29,10 @@ void UCraftNotificationWidget::NativeConstruct()
 
 void UCraftNotificationWidget::OnBackgroundClicked()
 {
+	if (ParentWidget)
+	{
+		ParentWidget->SetKeyboardFocus(); 
+	}
+	
 	RemoveFromParent();
 }
