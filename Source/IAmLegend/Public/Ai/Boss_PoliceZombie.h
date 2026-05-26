@@ -42,6 +42,11 @@ public:
 
     // 코드 추가
     bool bPrologueDone = false;
+    UPROPERTY(EditAnywhere, Category = "Animation")
+    UAnimMontage* RightStrafeMontage;
+
+    UPROPERTY(EditAnywhere, Category = "Animation")
+    UAnimMontage* LeftStrafeMontage;
 
 protected:
     virtual void ResetAttack() override;
@@ -90,6 +95,7 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Animation")
     UAnimMontage* CrawlMontage;
+
 
 
 

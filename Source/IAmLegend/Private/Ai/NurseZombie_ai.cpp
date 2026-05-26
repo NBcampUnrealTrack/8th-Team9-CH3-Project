@@ -9,7 +9,9 @@ void ANurseZombie_ai::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
     ANurseZombie* Nurse = Cast<ANurseZombie>(GetPawn());
     if (!Nurse || !Actor) return;
 
-    // 태그 대신 캐스팅으로 플레이어 확인
+    // ✅ Dead 상태면 차단
+    if (Nurse->GetCurrentState() == EZombieState::Dead) return;
+
     AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(Actor);
     if (!Player) return;
 

@@ -114,6 +114,8 @@ void ABase_Zombie::BeginPlay()
 //}
 void ABase_Zombie::Tick(float DeltaTime)
 {
+	if (CurrentState == EZombieState::Dead) return; // ← 추가
+
 	Super::Tick(DeltaTime);
 
 	if (PlayerCharacter && !bIsAttacking)
@@ -122,12 +124,10 @@ void ABase_Zombie::Tick(float DeltaTime)
 
 		if (Distance <= AttackRange)
 		{
-			// 좀비가 플레이어를 바라보는지 체크
 			FVector ToPlayer = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 			FVector Forward = GetActorForwardVector();
 			float DotProduct = FVector::DotProduct(Forward, ToPlayer);
 
-			// 약 90도 시야각 (0.0 = 90도, 0.5 = 60도)
 			if (DotProduct > 0.0f)
 			{
 				PlayAttackMontage();
@@ -143,7 +143,16 @@ void ABase_Zombie::PlayAttackMontage()
 	bIsAttacking = true;
 	CurrentAttackInstance++;
 
-	// ✅ 공격 중 이동 차단
+	// ✅ 공격 전 플레이어 방향으로 회전
+	if (PlayerCharacter)
+	{
+		FVector ToPlayer = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+		FRotator LookRot = FRotationMatrix::MakeFromX(ToPlayer).Rotator();
+		LookRot.Pitch = 0.0f;
+		LookRot.Roll = 0.0f;
+		SetActorRotation(LookRot);
+	}
+
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
 
@@ -153,11 +162,9 @@ void ABase_Zombie::PlayAttackMontage()
 		AnimInst->Montage_Play(AttackMontage);
 	}
 
-	// 쿨타임 타이머 세팅
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABase_Zombie::ResetAttack,
 		AttackCooldown, false);
 }
-
 // 대기 소리를 다시 켜주는 새로운 함수
 void ABase_Zombie::ResumeIdleSound()
 {
@@ -168,39 +175,86 @@ void ABase_Zombie::ResumeIdleSound()
 }
 void ABase_Zombie::ResetAttack()
 {
+	if (CurrentState == EZombieState::Dead) return;
+
 	bIsAttacking = false;
-
-	// ✅ 공격 끝나면 이동 재개
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-
 	bHasAppliedDamageThisAttack = false;
-}
 
+
+}
+void ABase_Zombie::PlayKnockdownMontage()
+{
+	if (CurrentState == EZombieState::Dead) return;
+	if (!KnockdownMontage) return;
+
+	CurrentState = EZombieState::Knockdown;
+	bIsAttacking = true;
+
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+
+	AAIController* AIC = Cast<AAIController>(GetController());
+	if (AIC && AIC->GetBrainComponent())
+		AIC->GetBrainComponent()->PauseLogic(TEXT("Knockdown"));
+
+	float MontageLength = PlayAnimMontage(KnockdownMontage);
+
+	GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
+		{
+			if (CurrentState == EZombieState::Dead) return;
+			bIsAttacking = false;
+			CurrentState = EZombieState::Idle;
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+			AAIController* AIC2 = Cast<AAIController>(GetController());
+			if (AIC2 && AIC2->GetBrainComponent())
+				AIC2->GetBrainComponent()->ResumeLogic(TEXT("Knockdown"));
+		}, MontageLength, false);
+}
 float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	if (CurrentState == EZombieState::Dead) return 0.0f; // 죽은 좀비는 또 죽지 않게 예외 처리
+	if (CurrentState == EZombieState::Dead) return 0.0f;
 
-	Health -= DamageAmount; // 체력 차감
+	Health -= DamageAmount;
 
 	if (Health <= 0.0f)
 	{
-		Die(); // 체력 없으면 사망
+		Die();
 	}
 	else
 	{
-		// 공격 중이 아닐 때만 피격(Hit) 애니메이션을 보여줍니다. (공격 끊김 방지)
 		if (HitMontage && CurrentState != EZombieState::Attacking)
 		{
 			CurrentState = EZombieState::Hit;
 			float HitMontageLength = PlayAnimMontage(HitMontage);
 
-			// 히트 몽타주가 끝날 때까지 공격 차단
 			bIsAttacking = true;
+
+			// ✅ Hit 중 이동 차단
+			GetCharacterMovement()->StopMovementImmediately();
+			GetCharacterMovement()->DisableMovement();
+
+			AAIController* AIC = Cast<AAIController>(GetController());
+			if (AIC)
+			{
+				AIC->StopMovement();
+				if (AIC->GetBrainComponent())
+					AIC->GetBrainComponent()->PauseLogic(TEXT("Hit"));
+			}
+
 			GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
 				{
-					if (CurrentState == EZombieState::Dead) return; // ← 추가
+					if (CurrentState == EZombieState::Dead) return;
 					bIsAttacking = false;
 					CurrentState = EZombieState::Idle;
+
+					// ✅ Hit 끝나면 이동 재개
+					GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+					AAIController* AIC2 = Cast<AAIController>(GetController());
+					if (AIC2 && AIC2->GetBrainComponent())
+						AIC2->GetBrainComponent()->ResumeLogic(TEXT("Hit"));
 				}, HitMontageLength, false);
 		}
 	}
