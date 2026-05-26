@@ -169,7 +169,7 @@ void UCraftingWindowWidget::OnDetailCraftButtonClicked()
                 if (NotiWidget)
                 {
                    NotiWidget->AddToViewport(100); 
-                   NotiWidget->ShowNotification(PopupMessage, MessageColor);
+                   NotiWidget->ShowNotification(PopupMessage, MessageColor,this);
                 }
              }
           }

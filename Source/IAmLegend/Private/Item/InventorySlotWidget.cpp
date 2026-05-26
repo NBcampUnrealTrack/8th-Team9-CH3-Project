@@ -50,12 +50,12 @@ void UInventorySlotWidget::ClearSlot()
 
 void UInventorySlotWidget::OnSlotClicked()
 {
-    if (GEngine)
+    /*if (GEngine)
     {
        FString DebugMsg = FString::Printf(TEXT("슬롯 버튼 클릭됨! 아이템: %s"), 
           CurrentSlotData.ItemData ? *CurrentSlotData.ItemData->GetName() : TEXT("없음"));
        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, DebugMsg);
-    }
+    }*/
 
     if (GlobalActivePopup.IsValid() && GlobalActivePopup->IsInViewport())
     {

@@ -28,7 +28,11 @@ protected:
 	TObjectPtr<UButton> BackgroundCloseButton;
 
 public:
-	void ShowNotification(const FText& Message, const FLinearColor& TextColor);
+	
+	UPROPERTY()
+	class UUserWidget* ParentWidget;
+	
+	void ShowNotification(const FText& Message, const FLinearColor& TextColor, class UUserWidget* InParent);
 
 protected:
 	virtual void NativeConstruct() override;
