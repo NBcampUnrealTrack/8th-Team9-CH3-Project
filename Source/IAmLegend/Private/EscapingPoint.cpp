@@ -119,31 +119,25 @@ void AEscapingPoint::PlayerEscaped()
 	if (bIsBossStage && bIsBossDead)
 	{
 		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-		if (PC && PC->GetPawn())
+		if (PC)
 		{
-			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-			UInventoryComponent* InvComp = PC->GetPawn()->FindComponentByClass<UInventoryComponent>();
-
-			if (HUD && InvComp)
+			APawn* PlayerPawn = PC->GetPawn();
+			if (PlayerPawn)
 			{
-				// 백신 아이템 데이터 에셋 호출
-				// 백신 조합 아이템은 있는데 완성 백신은 없는 것 같아서 주석 처리 하겠습니다.
-				// UItemDataAsset* VaccineItem = Cast<UItemDataAsset>(StaticLoadObject(UItemDataAsset::StaticClass(), nullptr, TEXT("/Game/Item/DA_Vaccine.DA_Vaccine")));
+				PlayerPawn->DisableInput(PC);
+			}
 
-				// 인벤토리에 백신이 있는지 확인
-				// int32 VaccineCount = InvComp->GetItemQuantity(VaccineItem);
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->ShowHappyEndingHUD();
 
-				// if (VaccineCount > 0)
-				//{
-					// 백신 O -> 해피 엔딩 UI
-				//	HUD->ShowHappyEndingHUD();
-				// }
-				// else
-				// {
-					// 백신 X -> 배드 엔딩 UI
-				//	HUD->ShowBadEndingHUD();
-				// }
-				// return;
+				FInputModeUIOnly InputMode;
+
+				PC->SetInputMode(InputMode);
+				PC->bShowMouseCursor = true; // 필요 시 커서 표시 활성화
+
+				return;
 			}
 		}
 	}
@@ -174,6 +168,10 @@ void AEscapingPoint::RunLogTimer()
 
 float AEscapingPoint::GetRemainingEscapingTime() const
 {
+	if (!GetWorldTimerManager().IsTimerActive(EscapeTimer))
+	{
+		return EscapeDuration;
+	}
 	return GetWorldTimerManager().GetTimerRemaining(EscapeTimer);
 }
 

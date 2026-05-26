@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "WeaponDataAsset.h"
+#include "BattleLogic/Attachment/AttachmentDataAsset.h"
 #include "RangedWeaponDataAsset.generated.h"
 
 /**
@@ -47,6 +48,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
     FName MuzzleSocketName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Attachment")
+    TArray<EAttachmentSlot> AttachmentSlots;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Animation")
     TObjectPtr<UAnimSequence> FireAnimSequence;

@@ -7,7 +7,6 @@
 #include "UI/StageHUDWidget.h"
 #include "UI/PauseMenuWidget.h"
 #include "UI/GameOverWidget.h"
-#include "UI/WarningUIWidget.h"
 #include "PlayerHealthWidget.h"
 #include "UI/CrosshairWidget.h"
 #include "UI/WeaponInstallationWidget.h"
@@ -336,7 +335,7 @@ void AMainHUD::HideStealthHUD()
 	}
 }
 
-// 엔딩1 UI 함수
+// 엔딩 UI 함수
 void AMainHUD::ShowHappyEndingHUD()
 {
 	if (HappyEndingWidgetClass)
@@ -349,29 +348,24 @@ void AMainHUD::ShowHappyEndingHUD()
 	}
 }
 
-// 엔딩2 UI 함수
-void AMainHUD::ShowBadEndingHUD()
+// 최종 결과 UI 함수
+void AMainHUD::ShowGameEndingHUD()
 {
-	if (BadEndingWidgetClass)
+	if (GameEndingClass)
 	{
-		UUserWidget* BadEnding = CreateWidget<UUserWidget>(GetOwningPlayerController(), BadEndingWidgetClass);
-		if (BadEnding)
+		UUserWidget* GameEndingWidget = CreateWidget<UUserWidget>(GetWorld(), GameEndingClass);
+		if (GameEndingWidget)
 		{
-			BadEnding->AddToViewport();
-		}
-	}
-}
+			GameEndingWidget->AddToViewport(100);
 
-//경고 메시지 UI 함수
-void AMainHUD::ShowWarningHUD()
-{
-	if (WarningHUDClass)
-	{
-		UWarningUIWidget* WarningWidget = CreateWidget<UWarningUIWidget>(GetWorld(), WarningHUDClass);
-		if (WarningWidget)
-		{
-			WarningWidget->AddToViewport(200);
+			// 마우스 커서를 보이게 하고 게임 입력을 UI로 전환 및 일시 정지
+			APlayerController* PC = GetOwningPlayerController();
+			if (PC)
+			{
+				PC->bShowMouseCursor = true;
+				PC->SetInputMode(FInputModeUIOnly());
+				UGameplayStatics::SetGamePaused(GetWorld(), true);
+			}
 		}
 	}
-	
 }

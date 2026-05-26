@@ -32,7 +32,44 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* Boss;
 
+	UPROPERTY(meta = (BindWidget))
+	class UBorder* WarningBorder;
+
+	UPROPERTY(meta = (BindWidget))
+	class UWidget* InfoPanel;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* InfoTitleText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* InfoDescText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* InfoImage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Hover Images")
+	class UTexture2D* HospitalTex;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Hover Images")
+	class UTexture2D* SchoolTex;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Hover Images")
+	class UTexture2D* PoliceTex;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Hover Images")
+	class UTexture2D* BossTex;
+
 private:
+	FTimerHandle FadeTimerHandle;
+	float FadeDuration;
+	float FadeElapsed;
+
+	UFUNCTION()
+	void UpdateFade();
+
+	// 경고 시작 함수
+	void PlayWarningSequence();
+
 	UFUNCTION()
 	void OnHospitalClicked();
 
@@ -47,4 +84,19 @@ private:
 
 	UFUNCTION()
 	void OnBossClicked();
+
+	UFUNCTION()
+	void OnHospitalHovered();
+
+	UFUNCTION()
+	void OnSchoolHovered();
+
+	UFUNCTION()
+	void OnPoliceHovered();
+
+	UFUNCTION()
+	void OnBossHovered();
+
+	UFUNCTION()
+	void HideInfoPanel();
 };

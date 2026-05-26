@@ -1,4 +1,7 @@
 ﻿#include "Ai/PoliceZombie.h"
+#include "AIController.h"
+#include "BrainComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 APoliceZombie::APoliceZombie()
@@ -19,4 +22,50 @@ void APoliceZombie::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
+}
+void APoliceZombie::Die()
+{
+    if (CurrentState == EZombieState::Dead) return;
+
+    CurrentState = EZombieState::Dead;
+
+    if (AAIController* AIC = Cast<AAIController>(GetController()))
+    {
+        if (AIC->GetBrainComponent())
+            AIC->GetBrainComponent()->StopLogic("Dead");
+    }
+
+    GetCharacterMovement()->StopMovementImmediately();
+    GetCharacterMovement()->DisableMovement();
+
+    GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+    GetWorldTimerManager().ClearTimer(DamageTimerHandle);
+    GetWorldTimerManager().ClearTimer(IdleSoundTimerHandle);
+    GetWorldTimerManager().ClearTimer(HitTimerHandle);
+
+    Super::Die();
+
+    // ✅ Super 호출 후 DeathMontage 직접 재생
+    if (DeathMontage)
+    {
+        float MontageLength = PlayAnimMontage(DeathMontage);
+
+        // 몽타주 끝나면 마지막 포즈 고정
+        GetWorld()->GetTimerManager().SetTimer(DeathFreezeTimerHandle, [this]()
+            {
+                if (GetMesh())
+                {
+                    GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+                    GetMesh()->SetAnimation(nullptr);
+                    GetMesh()->bNoSkeletonUpdate = true;
+                }
+            }, MontageLength - 0.05f, false);
+
+        // 숨김 처리 타이머 덮어쓰기
+        GetWorld()->GetTimerManager().SetTimer(DeathTimerHandle, [this]()
+            {
+                SetActorHiddenInGame(true);
+                SetLifeSpan(0.1f);
+            }, MontageLength + 0.5f, false);
+    }
 }

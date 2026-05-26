@@ -55,6 +55,8 @@ void UStageHUDWidget::UpdateStageHUD()
 		{
 			StopBlinkEffect();
 			Text_RemainingTime->SetColorAndOpacity(FSlateColor(FLinearColor(1.0f, 0.0f, 0.0f, 1.0f)));
+			FString String = FString::Printf(TEXT("--:--"));
+			Text_RemainingTime->SetText(FText::FromString(String));
 		}
 		else if (CurrentRemainingTime <= BlinkTime)
 		{

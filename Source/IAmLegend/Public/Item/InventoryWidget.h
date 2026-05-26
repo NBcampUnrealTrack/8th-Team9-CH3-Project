@@ -1,10 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "InventoryComponent.h"
+#include "BattleLogic/Attachment/AttachmentDataAsset.h"
 #include "InventoryWidget.generated.h"
 
 /**
@@ -17,6 +18,7 @@ class UInventorySlotWidget;
 class UTextBlock;
 class UImage;
 class UButton;
+class URangedAttachmentComponent;
 
 UCLASS()
 class IAMLEGEND_API UInventoryWidget : public UUserWidget
@@ -67,6 +69,48 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<UInventorySlotWidget> SlotWidgetClass;
 
+	// 부착물 관련 UI
+	UPROPERTY(meta = (BindWidget))
+	UButton* SightButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* StockButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* MuzzleButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* MagazineButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* GripButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* SightImage;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* StockImage;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* MuzzleImage;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* MagazineImage;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* GripImage;
+	
+	UPROPERTY(BlueprintReadOnly)
+	TMap<EAttachmentSlot, UImage*> AttachmentSlotImages;
+
+	UPROPERTY(BlueprintReadOnly)
+	TMap<EAttachmentSlot, UButton*> AttachmentSlotButtons;
+
+	UPROPERTY(meta = (BindWidget))
+	UImage* AttachmentsWeaponImage;
+
+	TWeakObjectPtr<URangedAttachmentComponent> CurrentAttachmentComponent;
+
 private:
 	UFUNCTION()
 	void OnClickUnequip1();
@@ -76,4 +120,13 @@ private:
 
 	UFUNCTION()
 	void OnClickUnequip3();
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon|Attachments")
+	void OnClickAttachment(EAttachmentSlot AttachmentSlot);
+
+	UFUNCTION()
+	void UpdateAttachmentUI(URangedAttachmentComponent* AttachmentComp);
+
+	UFUNCTION()
+	void UpdateAttachmentComponent();
 };

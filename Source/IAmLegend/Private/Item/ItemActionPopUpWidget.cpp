@@ -1,4 +1,4 @@
-#include "Item/ItemActionPopUpWidget.h"
+﻿#include "Item/ItemActionPopUpWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h" 
 #include "Item/UseItemDataAsset.h"
@@ -6,6 +6,7 @@
 #include "WeaponDataAsset.h"  
 #include "Character/HanPlayerCharacter.h"
 #include "Item/InventoryComponent.h"
+#include "BattleLogic/Attachment/AttachmentDataAsset.h"
 
 void UItemActionPopUpWidget::NativeConstruct()
 {
@@ -31,6 +32,13 @@ void UItemActionPopUpWidget::SetupPopup(const FItemSlot& InSlotData, int32 InInd
 	if (UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(TargetSlotData.ItemData))
 	{
 		ButtonText->SetText(FText::FromString(TEXT("무기 장착")));
+		SetVisibility(ESlateVisibility::Visible); 
+		return;
+	}
+
+	if(UAttachmentDataAsset* AttachmentData = Cast<UAttachmentDataAsset>(TargetSlotData.ItemData))
+	{
+		ButtonText->SetText(FText::FromString(TEXT("부착물 장착")));
 		SetVisibility(ESlateVisibility::Visible); 
 		return;
 	}

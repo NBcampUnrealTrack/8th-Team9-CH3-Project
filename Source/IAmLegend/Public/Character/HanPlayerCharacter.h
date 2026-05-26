@@ -8,6 +8,9 @@
 #include "BattleLogic/BaseDummyCharacter.h"
 #include "HanPlayerCharacter.generated.h"
 
+// 무기 슬롯 교체 델리게이트 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRangedWeaponEquipped);
+
 //전방 선언
 class USpringArmComponent;
 class UCameraComponent;
@@ -273,6 +276,9 @@ public:
 	// 현재 무기, 탄약 개수를 알기위해 Getter 추가 - 김민성
 	class AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
 	class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
+	// 무기 슬롯이 변경될 때마다 이벤트를 발생시키는 델리게이트 선언 - 차재현
+	FOnRangedWeaponEquipped OnRangedWeaponEquipped; 
 
 protected:
 	/// 현재 시점 모드
