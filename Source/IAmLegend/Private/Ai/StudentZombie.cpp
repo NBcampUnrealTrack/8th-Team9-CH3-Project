@@ -1,0 +1,42 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Ai/StudentZombie.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
+void AStudentZombie::PlayAttackMontage()
+{
+    if (CurrentState == EZombieState::Dead) return;
+    if (!AttackMontage || bIsAttacking) return;
+
+    bIsAttacking = true;
+    CurrentAttackInstance++;
+
+    GetCharacterMovement()->StopMovementImmediately();
+    GetCharacterMovement()->DisableMovement();
+
+    // ? 학생 좀비만 공격 중 회전 차단
+    bUseControllerRotationYaw = false;
+    GetCharacterMovement()->bOrientRotationToMovement = false;
+
+    UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+    if (AnimInst)
+    {
+        AnimInst->Montage_Play(AttackMontage);
+    }
+
+    GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABase_Zombie::ResetAttack,
+        AttackCooldown, false);
+}
+
+void AStudentZombie::ResetAttack()
+{
+    if (CurrentState == EZombieState::Dead) return;
+
+    bIsAttacking = false;
+    GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+    bHasAppliedDamageThisAttack = false;
+
+    // ? 공격 끝나면 회전 재개
+    bUseControllerRotationYaw = true;
+}

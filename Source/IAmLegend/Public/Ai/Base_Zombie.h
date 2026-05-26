@@ -48,7 +48,6 @@ public:
     // [에디터 설정] 좀비의 체력
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
     float Health;
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -115,7 +114,11 @@ protected:
     UFUNCTION(BlueprintCallable)
     virtual void DisableAttackCollision();
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    UAnimMontage* KnockdownMontage;
 
+    UFUNCTION(BlueprintCallable)
+    void PlayKnockdownMontage();
     // 소리 재개 함수
     UFUNCTION()
     void ResumeIdleSound();
