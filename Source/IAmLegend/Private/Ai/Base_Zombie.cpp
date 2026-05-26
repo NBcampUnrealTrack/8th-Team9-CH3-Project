@@ -114,6 +114,8 @@ void ABase_Zombie::BeginPlay()
 //}
 void ABase_Zombie::Tick(float DeltaTime)
 {
+	if (CurrentState == EZombieState::Dead) return; // ← 추가
+
 	Super::Tick(DeltaTime);
 
 	if (PlayerCharacter && !bIsAttacking)
@@ -122,12 +124,10 @@ void ABase_Zombie::Tick(float DeltaTime)
 
 		if (Distance <= AttackRange)
 		{
-			// 좀비가 플레이어를 바라보는지 체크
 			FVector ToPlayer = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 			FVector Forward = GetActorForwardVector();
 			float DotProduct = FVector::DotProduct(Forward, ToPlayer);
 
-			// 약 90도 시야각 (0.0 = 90도, 0.5 = 60도)
 			if (DotProduct > 0.0f)
 			{
 				PlayAttackMontage();
