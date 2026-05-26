@@ -47,7 +47,11 @@ void ABaseZombie_Ai::OnPossess(APawn* InPawn)
 
                     if (PlayerPawn->ActorHasTag(TEXT("Player")))
                     {
-                        BlackboardComp->SetValueAsObject(TEXT("TargetActor"), PlayerPawn);
+                        float Distance = FVector::Dist(InPawn->GetActorLocation(), PlayerPawn->GetActorLocation());
+                        if (Distance <= SightConfig->SightRadius)
+                        {
+                            BlackboardComp->SetValueAsObject(TEXT("TargetActor"), PlayerPawn);
+                        }
                     }
                 }
             }
@@ -97,6 +101,20 @@ void ABaseZombie_Ai::Tick(float DeltaTime)
 
     if (!Player->bIsStealth && !CurrentTarget)
     {
-        BlackboardComp->SetValueAsObject(TEXT("TargetActor"), Player);
+        float Distance = FVector::Dist(GetPawn()->GetActorLocation(), Player->GetActorLocation());
+        if (Distance <= SightConfig->SightRadius)
+        {
+            BlackboardComp->SetValueAsObject(TEXT("TargetActor"), Player);
+        }
+    }
+
+    // ✅ 타겟 있는데 속도가 순찰 속도면 복구
+    if (CurrentTarget)
+    {
+        ABase_Zombie* Zombie = Cast<ABase_Zombie>(GetPawn());
+        if (Zombie && Zombie->GetCharacterMovement()->MaxWalkSpeed < Zombie->DefaultMaxWalkSpeed)
+        {
+            Zombie->GetCharacterMovement()->MaxWalkSpeed = Zombie->DefaultMaxWalkSpeed;
+        }
     }
 }
