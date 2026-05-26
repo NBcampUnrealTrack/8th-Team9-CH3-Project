@@ -147,6 +147,8 @@ void ABase_Zombie::PlayAttackMontage()
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
 
+
+
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (AnimInst)
 	{
@@ -168,39 +170,86 @@ void ABase_Zombie::ResumeIdleSound()
 }
 void ABase_Zombie::ResetAttack()
 {
+	if (CurrentState == EZombieState::Dead) return;
+
 	bIsAttacking = false;
-
-	// ✅ 공격 끝나면 이동 재개
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-
 	bHasAppliedDamageThisAttack = false;
-}
 
+
+}
+void ABase_Zombie::PlayKnockdownMontage()
+{
+	if (CurrentState == EZombieState::Dead) return;
+	if (!KnockdownMontage) return;
+
+	CurrentState = EZombieState::Knockdown;
+	bIsAttacking = true;
+
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+
+	AAIController* AIC = Cast<AAIController>(GetController());
+	if (AIC && AIC->GetBrainComponent())
+		AIC->GetBrainComponent()->PauseLogic(TEXT("Knockdown"));
+
+	float MontageLength = PlayAnimMontage(KnockdownMontage);
+
+	GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
+		{
+			if (CurrentState == EZombieState::Dead) return;
+			bIsAttacking = false;
+			CurrentState = EZombieState::Idle;
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+			AAIController* AIC2 = Cast<AAIController>(GetController());
+			if (AIC2 && AIC2->GetBrainComponent())
+				AIC2->GetBrainComponent()->ResumeLogic(TEXT("Knockdown"));
+		}, MontageLength, false);
+}
 float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	if (CurrentState == EZombieState::Dead) return 0.0f; // 죽은 좀비는 또 죽지 않게 예외 처리
+	if (CurrentState == EZombieState::Dead) return 0.0f;
 
-	Health -= DamageAmount; // 체력 차감
+	Health -= DamageAmount;
 
 	if (Health <= 0.0f)
 	{
-		Die(); // 체력 없으면 사망
+		Die();
 	}
 	else
 	{
-		// 공격 중이 아닐 때만 피격(Hit) 애니메이션을 보여줍니다. (공격 끊김 방지)
 		if (HitMontage && CurrentState != EZombieState::Attacking)
 		{
 			CurrentState = EZombieState::Hit;
 			float HitMontageLength = PlayAnimMontage(HitMontage);
 
-			// 히트 몽타주가 끝날 때까지 공격 차단
 			bIsAttacking = true;
+
+			// ✅ Hit 중 이동 차단
+			GetCharacterMovement()->StopMovementImmediately();
+			GetCharacterMovement()->DisableMovement();
+
+			AAIController* AIC = Cast<AAIController>(GetController());
+			if (AIC)
+			{
+				AIC->StopMovement();
+				if (AIC->GetBrainComponent())
+					AIC->GetBrainComponent()->PauseLogic(TEXT("Hit"));
+			}
+
 			GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
 				{
-					if (CurrentState == EZombieState::Dead) return; // ← 추가
+					if (CurrentState == EZombieState::Dead) return;
 					bIsAttacking = false;
 					CurrentState = EZombieState::Idle;
+
+					// ✅ Hit 끝나면 이동 재개
+					GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+					AAIController* AIC2 = Cast<AAIController>(GetController());
+					if (AIC2 && AIC2->GetBrainComponent())
+						AIC2->GetBrainComponent()->ResumeLogic(TEXT("Hit"));
 				}, HitMontageLength, false);
 		}
 	}

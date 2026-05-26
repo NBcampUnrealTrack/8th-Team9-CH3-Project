@@ -10,7 +10,6 @@
 
 ABoss_PoliceZombie::ABoss_PoliceZombie()
 {
-    // 배 히트박스 생성
     BellyHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BellyHitBox"));
     BellyHitBox->SetupAttachment(GetMesh(), FName("Spine1"));
     BellyHitBox->SetBoxExtent(FVector(20.0f, 20.0f, 20.0f));
@@ -18,7 +17,6 @@ ABoss_PoliceZombie::ABoss_PoliceZombie()
     BellyHitBox->SetCollisionResponseToAllChannels(ECR_Ignore);
     BellyHitBox->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Overlap);
 
-    // 다리 히트박스 생성
     LegHitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("LegHitBox"));
     LegHitBox->SetupAttachment(GetMesh(), FName("LeftUpLeg"));
     LegHitBox->SetBoxExtent(FVector(20.0f, 20.0f, 20.0f));
@@ -28,23 +26,23 @@ ABoss_PoliceZombie::ABoss_PoliceZombie()
 
     GetCharacterMovement()->MaxWalkSpeed = 400.0f;
     GetCharacterMovement()->bUseRVOAvoidance = false;
-    AttackCooldown = 4.0f; // 공격 쿨타임 현재 4초의 텀을 가지고 공격함
-    Health = 200.0f; // 좀비 체력 현재 100
-    AttackRange = 250.0f; // 좀비와 플레이어간의 거리 약 15CM거리에 들어서면 공격모션을 취합니다
+    AttackCooldown = 4.0f;
+    Health = 200.0f;
+    AttackRange = 250.0f;
     MaxHealth = Health;
 }
+
 void ABoss_PoliceZombie::Tick(float DeltaTime)
 {
     // 보스는 BT에서 공격 관리하므로 부모 Tick 공격 로직 스킵
     ACharacter::Tick(DeltaTime);
 }
+
 void ABoss_PoliceZombie::BeginPlay()
 {
     Super::BeginPlay();
     GetMesh()->SetWorldScale3D(FVector(1.5f, 1.5f, 1.5f));
     BiteLocation = GetActorLocation();
-    UE_LOG(LogTemp, Warning, TEXT("BiteLocation 저장: X=%f, Y=%f, Z=%f"),
-        BiteLocation.X, BiteLocation.Y, BiteLocation.Z);
 
     FTimerHandle FindPlayerTimer;
     GetWorld()->GetTimerManager().SetTimer(FindPlayerTimer, [this]()
@@ -55,20 +53,19 @@ void ABoss_PoliceZombie::BeginPlay()
     BellyHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABoss_PoliceZombie::OnBellyHit);
     LegHitBox->OnComponentBeginOverlap.AddDynamic(this, &ABoss_PoliceZombie::OnLegHit);
 
-    // BT 일시정지 + Bite 시작
     AAIController* AIC = Cast<AAIController>(GetController());
     if (AIC)
     {
         AIC->GetBrainComponent()->PauseLogic(TEXT("Prologue"));
     }
 
-    // Bite 몽타주 반복
     StartBiteLoop();
 }
 
-
 void ABoss_PoliceZombie::JumpAttackLand()
 {
+    // Dead 상태면 착지 데미지 차단
+    if (CurrentState == EZombieState::Dead) return;
     if (!PlayerCharacter) return;
 
     float Distance = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
@@ -77,7 +74,6 @@ void ABoss_PoliceZombie::JumpAttackLand()
     AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(PlayerCharacter);
     if (!Player) return;
 
-    // ✅ 플레이어가 땅에 닿아있을 때만 데미지
     if (Player->GetCharacterMovement()->IsMovingOnGround() ||
         Player->GetCharacterMovement()->MovementMode == EMovementMode::MOVE_Walking)
     {
@@ -89,24 +85,27 @@ void ABoss_PoliceZombie::JumpAttackLand()
         UE_LOG(LogTemp, Warning, TEXT("플레이어 점프로 회피 성공! 거리: %f"), Distance);
     }
 }
+
 void ABoss_PoliceZombie::StartBiteLoop()
 {
+    // Dead 상태면 Bite 차단
+    if (CurrentState == EZombieState::Dead) return;
+
     if (BiteMontage && !bPrologueDone)
     {
         float MontageLength = PlayAnimMontage(BiteMontage);
-        //FTimerHandle BiteLoopTimer;
-        //GetWorld()->GetTimerManager().SetTimer(BiteLoopTimer, [this]()
-        //    {
-        //        StartBiteLoop();
-        //    }, MontageLength, false);
     }
 }
+
 void ABoss_PoliceZombie::ApplyScreamEffect()
 {
+    // Dead 상태면 스크림 효과 차단
+    if (CurrentState == EZombieState::Dead) return;
     if (!PlayerCharacter) return;
 
     AHanPlayerCharacter* Player = Cast<AHanPlayerCharacter>(PlayerCharacter);
     if (!Player) return;
+
     if (ScreamEffect)
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(
@@ -116,15 +115,13 @@ void ABoss_PoliceZombie::ApplyScreamEffect()
             GetActorRotation()
         );
     }
-    // 원래 속도 저장
+
     float OriginalWalkSpeed = Player->GetCharacterMovement()->MaxWalkSpeed;
     float OriginalCrouchSpeed = Player->GetCharacterMovement()->MaxWalkSpeedCrouched;
 
-    // 속도 감소
     Player->GetCharacterMovement()->MaxWalkSpeed *= 0.5f;
     Player->GetCharacterMovement()->MaxWalkSpeedCrouched *= 0.5f;
 
-    // 5초 후 저장해둔 원래 속도로 복구
     FTimerHandle ScreamEffectTimer;
     GetWorld()->GetTimerManager().SetTimer(ScreamEffectTimer, [Player, OriginalWalkSpeed, OriginalCrouchSpeed]()
         {
@@ -135,12 +132,12 @@ void ABoss_PoliceZombie::ApplyScreamEffect()
             }
         }, 5.0f, false);
 }
+
 float ABoss_PoliceZombie::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
     class AController* EventInstigator, AActor* DamageCauser)
 {
     if (CurrentState == EZombieState::Dead) return 0.0f;
 
-    // ✅ 첫 피격 → 프롤로그 시작
     if (!bPrologueDone)
     {
         bPrologueDone = true;
@@ -148,11 +145,9 @@ float ABoss_PoliceZombie::TakeDamage(float DamageAmount, struct FDamageEvent con
         return DamageAmount;
     }
 
-    // ✅ 프롤로그 진행 중 (첫 피격 이후 ~ StartCombat 전) 무적
     if (!bCombatStarted) return 0.0f;
 
     Health -= DamageAmount;
-
     UE_LOG(LogTemp, Warning, TEXT("보스 현재 체력: %f / %f"), Health, MaxHealth);
 
     if (Health <= 0.0f)
@@ -169,22 +164,20 @@ float ABoss_PoliceZombie::TakeDamage(float DamageAmount, struct FDamageEvent con
 
     return DamageAmount;
 }
+
 void ABoss_PoliceZombie::Die()
 {
-    // ✅ 페이즈 2 관련 타이머 전부 정리
     GetWorldTimerManager().ClearTimer(Phase2TimerHandle);
     GetWorldTimerManager().ClearTimer(ScreamTimerHandle);
     GetWorldTimerManager().ClearTimer(ExtraActionTimerHandle);
     GetWorldTimerManager().ClearTimer(GroggyTimerHandle);
 
-    // ✅ 이동 중지
     AAIController* AIC = Cast<AAIController>(GetController());
     if (AIC)
     {
         AIC->StopMovement();
     }
 
-    // ✅ Crawl 몽타주 중단
     if (CrawlMontage)
     {
         StopAnimMontage(CrawlMontage);
@@ -195,43 +188,41 @@ void ABoss_PoliceZombie::Die()
 
 void ABoss_PoliceZombie::OnPrologueTakeDamage()
 {
-    // Bite 중지
     StopAnimMontage(BiteMontage);
-    bIsAttacking = true; // 다른 동작 차단
+    bIsAttacking = true;
 
-    // 1. CriticalHit 몽타주 재생
     float CriticalHitLength = 0.0f;
     if (CriticalHitMontage)
     {
         CriticalHitLength = PlayAnimMontage(CriticalHitMontage);
     }
 
-    // 2. CriticalHit 종료 후 Idle 5초 (플레이어 바라보기)
     GetWorld()->GetTimerManager().SetTimer(ScreamTimerHandle, [this]()
         {
+            // Dead 상태면 프롤로그 체인 중단
+            if (CurrentState == EZombieState::Dead) return;
 
-
-            // 플레이어 실시간 바라보기 시작
             AAIController* AIC = Cast<AAIController>(GetController());
             if (AIC && PlayerCharacter)
             {
                 AIC->SetFocus(PlayerCharacter);
             }
-            // 새 Idle 몽타주 재생
+
             float IdleMontageLength = 0.0f;
-            if (Idle2Montage) // 새 Idle 몽타주
+            if (Idle2Montage)
             {
                 IdleMontageLength = PlayAnimMontage(Idle2Montage);
             }
-            // 5초 후 Bound 몽타주
+
             FTimerHandle IdleTimer;
             GetWorld()->GetTimerManager().SetTimer(IdleTimer, [this]()
                 {
-                    // 3. Bound 몽타주 재생
+                    // Dead 상태면 프롤로그 체인 중단
+                    if (CurrentState == EZombieState::Dead) return;
+
                     float BoundLength = 0.0f;
                     if (BoundMontage)
                     {
-                        // Bound 시작 시 Focus 해제
                         AAIController* AIC2 = Cast<AAIController>(GetController());
                         if (AIC2)
                         {
@@ -240,10 +231,11 @@ void ABoss_PoliceZombie::OnPrologueTakeDamage()
                         BoundLength = PlayAnimMontage(BoundMontage);
                     }
 
-                    // 4. Bound 종료 후 Screaming
                     FTimerHandle BoundTimer;
                     GetWorld()->GetTimerManager().SetTimer(BoundTimer, [this]()
                         {
+                            // Dead 상태면 프롤로그 체인 중단
+                            if (CurrentState == EZombieState::Dead) return;
 
                             AAIController* AIC = Cast<AAIController>(GetController());
                             if (AIC && PlayerCharacter)
@@ -251,7 +243,6 @@ void ABoss_PoliceZombie::OnPrologueTakeDamage()
                                 AIC->SetFocus(PlayerCharacter);
                             }
 
-                            // Screaming 몽타주
                             float ScreamLength = 0.0f;
                             if (ScreamMontage)
                             {
@@ -260,10 +251,11 @@ void ABoss_PoliceZombie::OnPrologueTakeDamage()
                                 ApplyScreamEffect();
                             }
 
-                            // Screaming 종료 후 전투 시작
                             FTimerHandle ScreamTimer;
                             GetWorld()->GetTimerManager().SetTimer(ScreamTimer, [this]()
                                 {
+                                    // Dead 상태면 전투 시작 차단
+                                    if (CurrentState == EZombieState::Dead) return;
                                     StartCombat();
                                 }, ScreamLength, false);
 
@@ -274,10 +266,12 @@ void ABoss_PoliceZombie::OnPrologueTakeDamage()
         }, CriticalHitLength, false);
 }
 
-
 void ABoss_PoliceZombie::StartCombat()
 {
-    bCombatStarted = true; // ✅ 여기서 무적 해제
+    // Dead 상태면 전투 시작 차단
+    if (CurrentState == EZombieState::Dead) return;
+
+    bCombatStarted = true;
     bIsScreaming = false;
     bIsAttacking = false;
     CurrentState = EZombieState::Idle;
@@ -291,17 +285,17 @@ void ABoss_PoliceZombie::StartCombat()
 
 void ABoss_PoliceZombie::ResetAttack()
 {
+    if (CurrentState == EZombieState::Dead) return;
+
     bIsAttacking = false;
 
     if (GetCharacterMovement())
     {
+        GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking); // ← 추가
         GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
     }
 
-    if (CurrentState != EZombieState::Dead)
-    {
-        CurrentState = EZombieState::Idle;
-    }
+    CurrentState = EZombieState::Idle;
 
     AAIController* AIC = Cast<AAIController>(GetController());
     if (AIC && AIC->GetBlackboardComponent())
@@ -310,89 +304,116 @@ void ABoss_PoliceZombie::ResetAttack()
     }
     if (AIC)
     {
-        AIC->ClearFocus(EAIFocusPriority::Gameplay); // ← 추가
+        AIC->ClearFocus(EAIFocusPriority::Gameplay);
     }
 }
-
 void ABoss_PoliceZombie::OnBellyHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
+    if (CurrentState == EZombieState::Dead) return;
     if (!OtherActor || OtherActor == this) return;
+
     BellyHitCount++;
     if (BellyHitCount >= BellyHitThreshold && !bPhaseTransitioned)
     {
         // 페이즈 전환 로직 (나중에 구현)
     }
 }
+
 void ABoss_PoliceZombie::OnLegHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
+    if (CurrentState == EZombieState::Dead) return;
     if (!OtherActor || OtherActor == this) return;
 
     LegHitCount++;
-
     if (LegHitCount >= LegHitThreshold)
     {
-        // 넘어짐 로직 (나중에 구현)
         LegHitCount = 0;
     }
 }
 void ABoss_PoliceZombie::PlayExtraActions(bool bDoJumpAttack, bool bDoScream, TFunction<void()> OnComplete)
 {
+    if (CurrentState == EZombieState::Dead) return;
+
     AAIController* AIC = Cast<AAIController>(GetController());
     if (AIC && PlayerCharacter)
     {
         AIC->SetFocus(PlayerCharacter);
     }
 
-    if (bDoJumpAttack && JumpAttackMontage)
-    {
-        bIsAttacking = true;
-        float JumpLength = PlayAnimMontage(JumpAttackMontage);
-
-        GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, bDoScream, OnComplete]()
-            {
-                bIsScreaming = false;
-                bIsAttacking = false;
-
-                if (bDoScream && ScreamMontage)
-                {
-                    bIsScreaming = true;
-                    bIsAttacking = true;
-                    float ScreamLength = PlayAnimMontage(ScreamMontage);
-                    ApplyScreamEffect();
-
-                    GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, OnComplete]()
-                        {
-                            bIsAttacking = false;
-                            OnComplete();
-                        }, ScreamLength, false);
-                }
-                else
-                {
-                    OnComplete();
-                }
-            }, JumpLength, false);
-    }
-    else if (bDoScream && ScreamMontage)
+    // ✅ 순서: Scream → JumpAttack
+    if (bDoScream && ScreamMontage)
     {
         bIsScreaming = true;
         bIsAttacking = true;
         float ScreamLength = PlayAnimMontage(ScreamMontage);
+        ApplyScreamEffect();
+
+        GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, bDoJumpAttack, OnComplete]()
+            {
+                if (CurrentState == EZombieState::Dead)
+                {
+                    OnComplete();
+                    return;
+                }
+
+                bIsScreaming = false;
+
+                // ✅ Scream 후 JumpAttack 실행
+                if (bDoJumpAttack && JumpAttackMontage)
+                {
+                    bIsAttacking = true;
+                    float JumpLength = PlayAnimMontage(JumpAttackMontage);
+
+                    GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, OnComplete]()
+                        {
+                            if (CurrentState == EZombieState::Dead)
+                            {
+                                OnComplete();
+                                return;
+                            }
+                            bIsAttacking = false;
+                            OnComplete();
+                        }, JumpLength, false);
+                }
+                else
+                {
+                    bIsAttacking = false;
+                    OnComplete();
+                }
+            }, ScreamLength, false);
+    }
+    else if (bDoJumpAttack && JumpAttackMontage)
+    {
+        // ✅ Scream 없이 JumpAttack만 실행
+        bIsAttacking = true;
+        float JumpLength = PlayAnimMontage(JumpAttackMontage);
 
         GetWorld()->GetTimerManager().SetTimer(ExtraActionTimerHandle, [this, OnComplete]()
             {
-                bIsScreaming = false;
+                if (CurrentState == EZombieState::Dead)
+                {
+                    OnComplete();
+                    return;
+                }
                 bIsAttacking = false;
                 OnComplete();
-            }, ScreamLength, false);
+            }, JumpLength, false);
+    }
+    else
+    {
+        OnComplete();
     }
 }
+
 void ABoss_PoliceZombie::StartPhase2()
 {
-    // BT 일시정지
+    // Dead 상태면 페이즈2 차단
+    if (CurrentState == EZombieState::Dead) return;
+
     AAIController* AIC = Cast<AAIController>(GetController());
     if (AIC)
     {
@@ -402,7 +423,6 @@ void ABoss_PoliceZombie::StartPhase2()
 
     bIsAttacking = true;
 
-    // Screaming 몽타주
     float ScreamLength = 0.0f;
     if (ScreamMontage)
     {
@@ -411,9 +431,11 @@ void ABoss_PoliceZombie::StartPhase2()
         ApplyScreamEffect();
     }
 
-    // Screaming 후 GetDown
     GetWorld()->GetTimerManager().SetTimer(Phase2TimerHandle, [this]()
         {
+            // Dead 상태면 페이즈2 체인 중단
+            if (CurrentState == EZombieState::Dead) return;
+
             bIsScreaming = false;
             float GetDownLength = 0.0f;
             if (DownMontage)
@@ -423,6 +445,8 @@ void ABoss_PoliceZombie::StartPhase2()
 
             GetWorld()->GetTimerManager().SetTimer(Phase2TimerHandle, [this]()
                 {
+                    // Dead 상태면 페이즈2 체인 중단
+                    if (CurrentState == EZombieState::Dead) return;
                     StartCrawlToBiteLocation();
                 }, GetDownLength, false);
 
@@ -431,12 +455,14 @@ void ABoss_PoliceZombie::StartPhase2()
 
 void ABoss_PoliceZombie::StartCrawlToBiteLocation()
 {
+    // Dead 상태면 크롤 차단
+    if (CurrentState == EZombieState::Dead) return;
+
     HitMontage = nullptr;
 
     AAIController* AIC = Cast<AAIController>(GetController());
     if (!AIC) return;
 
-    // Focus 해제 후 BiteLocation 방향으로 즉시 회전
     AIC->ClearFocus(EAIFocusPriority::Gameplay);
 
     FVector ToBiteLocation = (BiteLocation - GetActorLocation()).GetSafeNormal();
@@ -456,11 +482,21 @@ void ABoss_PoliceZombie::StartCrawlToBiteLocation()
 
     GetWorld()->GetTimerManager().SetTimer(Phase2TimerHandle, [this]()
         {
+            // Dead 상태면 크롤 체크 중단
+            if (CurrentState == EZombieState::Dead)
+            {
+                GetWorldTimerManager().ClearTimer(Phase2TimerHandle);
+                return;
+            }
             OnCrawlArrived();
         }, 0.5f, true);
 }
+
 void ABoss_PoliceZombie::OnCrawlArrived()
 {
+    // Dead 상태면 차단
+    if (CurrentState == EZombieState::Dead) return;
+
     float Distance = FVector::Dist(GetActorLocation(), BiteLocation);
     UE_LOG(LogTemp, Warning, TEXT("Crawl 거리 체크: %f"), Distance);
 
@@ -471,41 +507,48 @@ void ABoss_PoliceZombie::OnCrawlArrived()
         StartPhase2Bite();
     }
 }
+
 void ABoss_PoliceZombie::StartPhase2Bite()
 {
+    // Dead 상태면 차단
+    if (CurrentState == EZombieState::Dead) return;
+
     AAIController* AIC = Cast<AAIController>(GetController());
     if (AIC) AIC->StopMovement();
 
-    // Bite 몽타주 재생
     if (BiteMontage)
     {
         PlayAnimMontage(BiteMontage);
     }
 
-    // 10초 후 페이즈 2 종료
     GetWorld()->GetTimerManager().SetTimer(Phase2TimerHandle, [this]()
         {
+            // Dead 상태면 페이즈2 종료 차단
+            if (CurrentState == EZombieState::Dead) return;
             EndPhase2Bite();
         }, 10.0f, false);
 }
 
 void ABoss_PoliceZombie::EndPhase2Bite()
 {
-    // HP 50% 회복
+    // Dead 상태면 차단
+    if (CurrentState == EZombieState::Dead) return;
+
     Health = FMath::Clamp(Health + (MaxHealth * 0.5f), 0.0f, 100.0f);
     bPhase2Triggered = false;
     StopAnimMontage(BiteMontage);
 
-    // GetUp 몽타주
     float GetUpLength = 0.0f;
     if (GetUpMontage)
     {
         GetUpLength = PlayAnimMontage(GetUpMontage);
     }
 
-    // GetUp 후 Screaming → 전투 재개
     GetWorld()->GetTimerManager().SetTimer(Phase2TimerHandle, [this]()
         {
+            // Dead 상태면 페이즈2 체인 중단
+            if (CurrentState == EZombieState::Dead) return;
+
             float ScreamLength = 0.0f;
             if (ScreamMontage)
             {
@@ -516,6 +559,8 @@ void ABoss_PoliceZombie::EndPhase2Bite()
 
             GetWorld()->GetTimerManager().SetTimer(Phase2TimerHandle, [this]()
                 {
+                    // Dead 상태면 전투 재개 차단
+                    if (CurrentState == EZombieState::Dead) return;
                     StartCombat();
                 }, ScreamLength, false);
 
