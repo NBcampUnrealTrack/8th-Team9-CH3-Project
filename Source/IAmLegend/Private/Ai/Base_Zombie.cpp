@@ -36,7 +36,7 @@ ABase_Zombie::ABase_Zombie()
 	AttackSphere->SetupAttachment(GetMesh(), FName("RightHand"));
 
 	// 3. 반지름 조절 (좀비 주먹 크기 정도로 설정)
-	AttackSphere->SetSphereRadius(60.0f);
+	AttackSphere->SetSphereRadius(30.0f);
 	AttackSphere->SetHiddenInGame(true);
 
 	// 4. 처음부터 켜져 있으면 좀비 옆에만 가도 플레이어가 죽으니, 기본은 꺼둡니다.
@@ -198,19 +198,42 @@ void ABase_Zombie::PlayKnockdownMontage()
 	if (AIC && AIC->GetBrainComponent())
 		AIC->GetBrainComponent()->PauseLogic(TEXT("Knockdown"));
 
-	float MontageLength = PlayAnimMontage(KnockdownMontage);
+	float KnockdownLength = PlayAnimMontage(KnockdownMontage);
 
+	// 녹다운 끝나면 GetUp 재생
 	GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
 		{
 			if (CurrentState == EZombieState::Dead) return;
-			bIsAttacking = false;
-			CurrentState = EZombieState::Idle;
-			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 
-			AAIController* AIC2 = Cast<AAIController>(GetController());
-			if (AIC2 && AIC2->GetBrainComponent())
-				AIC2->GetBrainComponent()->ResumeLogic(TEXT("Knockdown"));
-		}, MontageLength, false);
+			if (GetUpMontage)
+			{
+				float GetUpLength = PlayAnimMontage(GetUpMontage);
+
+				// GetUp 끝나면 상태 복구
+				GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
+					{
+						if (CurrentState == EZombieState::Dead) return;
+						bIsAttacking = false;
+						CurrentState = EZombieState::Idle;
+						GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+						AAIController* AIC2 = Cast<AAIController>(GetController());
+						if (AIC2 && AIC2->GetBrainComponent())
+							AIC2->GetBrainComponent()->ResumeLogic(TEXT("Knockdown"));
+					}, GetUpLength, false);
+			}
+			else
+			{
+				// GetUpMontage 없으면 바로 복구
+				bIsAttacking = false;
+				CurrentState = EZombieState::Idle;
+				GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+				AAIController* AIC2 = Cast<AAIController>(GetController());
+				if (AIC2 && AIC2->GetBrainComponent())
+					AIC2->GetBrainComponent()->ResumeLogic(TEXT("Knockdown"));
+			}
+		}, KnockdownLength, false);
 }
 float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {

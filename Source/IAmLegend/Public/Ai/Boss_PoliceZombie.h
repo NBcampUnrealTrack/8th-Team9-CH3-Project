@@ -79,8 +79,6 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Animation")
     UAnimMontage* DownMontage;
 
-    UPROPERTY(EditAnywhere, Category = "Animation")
-    UAnimMontage* GetUpMontage;
 
     UPROPERTY(EditAnywhere, Category = "Animation")
     UAnimMontage* ScratchMontage;
