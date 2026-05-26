@@ -41,7 +41,6 @@ void ABoss_PoliceZombie::Tick(float DeltaTime)
 void ABoss_PoliceZombie::BeginPlay()
 {
     Super::BeginPlay();
-    GetMesh()->SetWorldScale3D(FVector(1.5f, 1.5f, 1.5f));
     BiteLocation = GetActorLocation();
 
     FTimerHandle FindPlayerTimer;
