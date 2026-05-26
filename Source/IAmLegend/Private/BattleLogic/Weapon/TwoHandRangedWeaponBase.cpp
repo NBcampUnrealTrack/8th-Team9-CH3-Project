@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Ai/Base_Zombie.h" // 이현준 추가
 #include "BattleLogic/Weapon/DataAssets/TwoHandRangedWeaponDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
@@ -107,6 +108,13 @@ void ATwoHandRangedWeaponBase::ProcessMeleeHits(const TArray<FHitResult>& HitRes
 		if (HitActor && !HitActors.Contains(HitActor))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
+
+			ABase_Zombie* Zombie = Cast<ABase_Zombie>(HitActor); // 이현준 좀비 밀치기 추가
+			if (Zombie)
+			{
+				Zombie->PlayKnockdownMontage();
+			}
+			// 이현준 좀비 밀치기 추가
 
 			// 몬스터 여부를 캐스팅 해야합니다.
 			if(ACharacter* HitCharacter = Cast<ACharacter>(HitActor))

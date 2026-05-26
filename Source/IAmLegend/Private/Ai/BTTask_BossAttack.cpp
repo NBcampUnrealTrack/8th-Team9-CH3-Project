@@ -12,8 +12,7 @@ UBTTask_BossAttack::UBTTask_BossAttack()
 
 EBTNodeResult::Type UBTTask_BossAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-
-    bExtraActionTriggered = false; // ← 추가
+    bExtraActionTriggered = false;
 
     AAIController* AIC = OwnerComp.GetAIOwner();
     if (!AIC) return EBTNodeResult::Failed;
@@ -24,6 +23,9 @@ EBTNodeResult::Type UBTTask_BossAttack::ExecuteTask(UBehaviorTreeComponent& Owne
 
     AActor* Target = Cast<AActor>(BB->GetValueAsObject(TEXT("TargetActor")));
     if (Target) AIC->SetFocus(Target);
+
+    // ✅ 이전 AttackCooldown 타이머 클리어
+    Boss->GetWorldTimerManager().ClearTimer(Boss->AttackTimerHandle);
 
     Boss->PlayAttackMontage();
 
@@ -42,8 +44,10 @@ void UBTTask_BossAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
     {
         bExtraActionTriggered = true;
 
-        bool bDoJumpAttack = FMath::RandBool();
-        bool bDoScream = FMath::RandBool();
+        // ✅ 둘 중 하나만 선택 (JumpAttack 또는 Scream 또는 없음)
+        bool bDoScream = (FMath::RandRange(0, 99) < 60);
+        bool bDoJumpAttack = (FMath::RandRange(0, 99) < 60);
+        // Random == 2 이면 둘 다 false → 추가 액션 없음
 
         if (!bDoJumpAttack && !bDoScream)
         {
@@ -52,11 +56,10 @@ void UBTTask_BossAttack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* Node
             return;
         }
 
-        // ? 버그2 수정: &OwnerComp 레퍼런스 캡처 → UBehaviorTreeComponent* 포인터로 교체
         UBehaviorTreeComponent* BTComp = &OwnerComp;
         Boss->PlayExtraActions(bDoJumpAttack, bDoScream, [this, BTComp, AIC]()
             {
-                if (!BTComp || !AIC) return;  // 유효성 체크 추가
+                if (!BTComp || !AIC) return;
                 AIC->ClearFocus(EAIFocusPriority::Gameplay);
                 FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
             });
