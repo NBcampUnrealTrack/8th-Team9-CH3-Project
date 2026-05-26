@@ -143,11 +143,18 @@ void ABase_Zombie::PlayAttackMontage()
 	bIsAttacking = true;
 	CurrentAttackInstance++;
 
-	// ✅ 공격 중 이동 차단
+	// ✅ 공격 전 플레이어 방향으로 회전
+	if (PlayerCharacter)
+	{
+		FVector ToPlayer = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+		FRotator LookRot = FRotationMatrix::MakeFromX(ToPlayer).Rotator();
+		LookRot.Pitch = 0.0f;
+		LookRot.Roll = 0.0f;
+		SetActorRotation(LookRot);
+	}
+
 	GetCharacterMovement()->StopMovementImmediately();
 	GetCharacterMovement()->DisableMovement();
-
-
 
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
 	if (AnimInst)
@@ -155,11 +162,9 @@ void ABase_Zombie::PlayAttackMontage()
 		AnimInst->Montage_Play(AttackMontage);
 	}
 
-	// 쿨타임 타이머 세팅
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABase_Zombie::ResetAttack,
 		AttackCooldown, false);
 }
-
 // 대기 소리를 다시 켜주는 새로운 함수
 void ABase_Zombie::ResumeIdleSound()
 {

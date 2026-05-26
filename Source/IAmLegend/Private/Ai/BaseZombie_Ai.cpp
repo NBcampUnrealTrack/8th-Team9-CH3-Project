@@ -4,6 +4,9 @@
 #include "BehaviorTree/BlackboardData.h"
 #include "Kismet/GameplayStatics.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "NavigationSystem.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 
 ABaseZombie_Ai::ABaseZombie_Ai()
@@ -13,8 +16,8 @@ ABaseZombie_Ai::ABaseZombie_Ai()
     AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComp"));
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 
-    SightConfig->SightRadius = 1500.0f;
-    SightConfig->LoseSightRadius = 2000.0f;
+    SightConfig->SightRadius = 1000.0f;
+    SightConfig->LoseSightRadius = 1300.0f;
     SightConfig->PeripheralVisionAngleDegrees = 60.0f;
     SightConfig->SetMaxAge(5.0f);
 
@@ -63,6 +66,13 @@ void ABaseZombie_Ai::OnTargetDetected(AActor* Actor, FAIStimulus Stimulus)
 
         if (Stimulus.WasSuccessfullySensed() && !PlayerChar->bIsStealth)
         {
+            // ✅ 타겟 발견 시 이동속도 복구
+            ABase_Zombie* Zombie = Cast<ABase_Zombie>(GetPawn());
+            if (Zombie)
+            {
+                Zombie->GetCharacterMovement()->MaxWalkSpeed = Zombie->DefaultMaxWalkSpeed;
+            }
+
             BlackboardComp->SetValueAsObject(TEXT("TargetActor"), Actor);
         }
         else if (PlayerChar->bIsStealth)

@@ -3,6 +3,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BrainComponent.h"
+#include "Components/SphereComponent.h"
 #include "Character/HanPlayerCharacter.h"
 
 ANurseZombie::ANurseZombie()
@@ -12,6 +13,7 @@ ANurseZombie::ANurseZombie()
     AttackRange = 200.0f;
 
     GetCharacterMovement()->MaxWalkSpeed = 150.0f;
+    AttackSphere->SetupAttachment(GetMesh(), FName("Head"));
 }
 
 void ANurseZombie::BeginPlay()

@@ -295,7 +295,10 @@ void ABoss_PoliceZombie::ResetAttack()
         GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
     }
 
-    CurrentState = EZombieState::Idle;
+    if (CurrentState != EZombieState::Dead)
+    {
+        CurrentState = EZombieState::Idle;
+    }
 
     AAIController* AIC = Cast<AAIController>(GetController());
     if (AIC && AIC->GetBlackboardComponent())

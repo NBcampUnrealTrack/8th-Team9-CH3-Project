@@ -14,7 +14,7 @@ class IAMLEGEND_API AStudentZombie : public APoliceZombie
 {
 	GENERATED_BODY()
 	
-
+	AStudentZombie();
 public:
 	virtual void PlayAttackMontage() override;
 	virtual void ResetAttack() override;
