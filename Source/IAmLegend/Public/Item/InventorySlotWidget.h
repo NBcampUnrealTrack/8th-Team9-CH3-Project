@@ -37,7 +37,7 @@ public:
 	
 	void ClearSlot();
 
-	// 아이템 정보 데이터 public으로 수정했습니다 - 김민성
+	// 아이템 정보 데이터
 	UPROPERTY(BlueprintReadOnly, Category = "Inventory Slot")
 	FItemSlot CurrentSlotData;
 	

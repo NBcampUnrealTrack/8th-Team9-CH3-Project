@@ -139,9 +139,7 @@ void UInventoryComponent::UseItem(int32 Index)
 		return;
 	}
 
-	// ==========================================
-	// [코드 추가] 무기 아이템인지 확인 후 장착 - 김민성
-	// ==========================================
+	// [코드 추가] 무기 아이템인지 확인 후 장착
 	if (UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(Slot.ItemData))
 	{
 		// 무기 장착 함수 호출
@@ -153,9 +151,7 @@ void UInventoryComponent::UseItem(int32 Index)
 		return;
 	}
 
-	// ==========================================
-	// [코드 추가] 부착물 아이템인지 확인 후 장착 - 차재현
-	// ==========================================
+	// 부착물 아이템인지 확인 후 장착
 	if (UAttachmentDataAsset* AttachmentData = Cast<UAttachmentDataAsset>(Slot.ItemData))
 	{
 		TMap<EWeaponSlot, AWeaponBase*>& WeaponSlots = PlayerChar->GetWeaponSlots();
@@ -431,7 +427,7 @@ void UInventoryComponent::DisplayUI(bool bShow)
 			{
 				InventoryWidget->RefreshInventory(Inv);
 
-				// 창 닫히고 키보드 포커스를 다시 인벤토리 창으로 강제 복구 - 김민성
+				// 창 닫히고 키보드 포커스를 다시 인벤토리 창으로 강제 복구
 				InventoryWidget->SetKeyboardFocus();
 			}
 			return; 

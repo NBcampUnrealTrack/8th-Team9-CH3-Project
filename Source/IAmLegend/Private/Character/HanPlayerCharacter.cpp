@@ -596,7 +596,6 @@ float AHanPlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Da
 
 void AHanPlayerCharacter::Die()
 {
-	// GameOver 화면 출력을 위해 코드 작성 했습니다 - 김민성
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (PC)
 	{
@@ -781,7 +780,7 @@ void AHanPlayerCharacter::ChangeWeapon(EWeaponSlot NewSlot)
 
 		EquippedWeapon = NewWeapon;
 		CurrentWeaponSlot = NewSlot;
-		// 한기담 - 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
+		// 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
 
 		CurrentAttack_1_Montage = EquippedWeapon->Attack_1_Montage;
 		CurrentAttack_2_Montage = EquippedWeapon->Attack_2_Montage;
@@ -838,7 +837,7 @@ void AHanPlayerCharacter::StartAim()
 		TargetFOV = DefaultFOV; // 줌 안 함
 	}
 	
-	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
+	// 투척 무기 조준시 궤적 표시를 추가
 	if(AThrowableWeaponBase* ThrowableWeapon = Cast<AThrowableWeaponBase>(EquippedWeapon))
 	{
 		ThrowableWeapon->EnableTrajectory(true); // 투척 무기라면 조준할 때 궤적 표시
@@ -855,7 +854,7 @@ void AHanPlayerCharacter::StopAim()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; // 조준을 풀었으니 원래 속도로
 
-	// 차재현 - 투척 무기 조준시 궤적 표시를 추가했습니다.
+	// 투척 무기 조준시 궤적 표시를 추가
 	if (AThrowableWeaponBase* ThrowableWeapon = Cast<AThrowableWeaponBase>(EquippedWeapon))
 	{
 		ThrowableWeapon->EnableTrajectory(false); // 투척 무기라면 조준을 풀 때 궤적 표시 끄기

@@ -46,7 +46,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Animation")
     TObjectPtr<UAnimMontage> Reload_Montage;
 
-	// 무기 UI 아이콘 - 김민성
+	// 무기 UI 아이콘
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon|Info")
 	TObjectPtr<UTexture2D> WeaponIcon;
 };
