@@ -39,6 +39,8 @@ public:
 
     UFUNCTION(BlueprintCallable)
     virtual void PlayAttackMontage();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    UAnimMontage* GetUpMontage;
 
     bool bIsAttacking = false; // 공격 중일 때 중복 공격을 막기 위한 변수입니다.
     // 공격 사거리 변수화 (좀비마다 다를 수 있음)
