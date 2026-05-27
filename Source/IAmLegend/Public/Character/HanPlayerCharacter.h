@@ -222,7 +222,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound") // 은신 중 사운드를 변경 - 실험용
 	class USoundMix* StealthSoundMix;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound") // 한기담 - 마스터 사운드의 자식 클래스로 넣으면?
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stealth|Sound") // 마스터 사운드의 자식 클래스
 	class USoundClass* GameWorldSoundClass;
 
 	UPROPERTY()  // 지속 사운드를 은신이 끝난 뒤에 같이 끄기 위해 기억해 둘 
@@ -273,11 +273,11 @@ public:
 	void PlayAttackMontage_2();
 	void PlayReloadMontage();
 
-	// 현재 무기, 탄약 개수를 알기위해 Getter 추가 - 김민성
+	// 현재 무기, 탄약 개수를 알기위해 Getter 추가
 	class AWeaponBase* GetEquippedWeapon() const { return EquippedWeapon; }
 	class UInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
-	// 무기 슬롯이 변경될 때마다 이벤트를 발생시키는 델리게이트 선언 - 차재현
+	// 무기 슬롯이 변경될 때마다 이벤트를 발생시키는 델리게이트 선언
 	FOnRangedWeaponEquipped OnRangedWeaponEquipped; 
 
 protected:

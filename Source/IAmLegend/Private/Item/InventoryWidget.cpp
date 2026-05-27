@@ -130,7 +130,6 @@ FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKey
 	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
-// ---코드 추가 [김민성]
 void UInventoryWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
