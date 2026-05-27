@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BattleLogic/WeaponBase.h"
+#include "BattleLogic/Attachment/AttachmentDataAsset.h"
 #include "RangedWeaponBase.generated.h"
 
 /**
@@ -14,7 +15,12 @@ class IAMLEGEND_API ARangedWeaponBase : public AWeaponBase
 {
 	GENERATED_BODY()
 
+	friend class URangedAttachmentComponent;	// frined 선언으로 부착물은 RangedWeaponBase의 protected 멤버에 접근 가능
+
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged|Attachment")
+	URangedAttachmentComponent* AttachmentComponent;	// 원거리 무기용 부착물 컴포넌트
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
 	float FireRate; // 발사 속도 (분당 발사 횟수)
 
@@ -53,7 +59,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ranged")
 	FName MuzzleSocketName; // 총구 소켓 이름
-	
+
+	UPROPERTY(EditAnywhere, Category = "Weapon|Ranged|Attachment")
+	TArray<EAttachmentSlot> AttachmentSlots; // 이 무기가 지원하는 부착물 슬롯
+
+	//----애니메이션----
+	UPROPERTY(EditAnywhere, Category = "Weapon|Ranged|Animation")
+	class UAnimSequence* FireAnimSequence;
+
+
 	bool bIsPressingAttack; // 공격 버튼이 눌려있는지 여부 (자동 발사 관리용)
 	float FireInterval;		// 발사 간격 (초) - FireRate를 기반으로 계산
 	float CoolDownTime;		// 발사 후 쿨다운 시간 (초) - FireRate를 기반으로 계산
@@ -71,6 +85,9 @@ protected:
 
 public:
 	ARangedWeaponBase();
+
+	// 김민성 - 총알 개수 확인을 위해 추가
+	int32 GetCurrentAmmo() const { return CurrentAmmo; }
 	
 	virtual void StartWeaponAttack() override;		// 기본 공격 (발사)
 	virtual void StopWeaponAttack() override;		// 기본 공격 종료 (발사 중지)
@@ -98,8 +115,11 @@ public:
 	virtual void ProcessMeleeHits(const TArray<FHitResult>& HitResults);	// 근접 공격 타격 판정 처리 (근접 공격 시마다 호출)
 	bool CanMeleeAttack() const;		// 근접 공격 가능한지 여부 체크
 
+	// 부착물 컴포넌트 Getters
+	URangedAttachmentComponent* GetRangedAttachmentComponent() const;
+
 	// 애니메이션 노티파이
-	virtual void AnimNotify_EndAttack_1();	// 일반 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)	
+	virtual void AnimNotify_EndAttack_1() override;	// 일반 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)	
 	//virtual void AnimNotify_EndAttack_2() override;	// 조준 공격 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
 	virtual void AnimNotify_EndReload() override;	// 재장전 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
 };

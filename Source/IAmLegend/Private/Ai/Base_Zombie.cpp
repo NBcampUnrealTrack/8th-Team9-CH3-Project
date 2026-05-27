@@ -12,6 +12,8 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/SphereComponent.h"
 #include "Character/HanPlayerCharacter.h"
+#include "BrainComponent.h"
+#include "Gamemode/MainGameStateBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -34,7 +36,7 @@ ABase_Zombie::ABase_Zombie()
 	AttackSphere->SetupAttachment(GetMesh(), FName("RightHand"));
 
 	// 3. 반지름 조절 (좀비 주먹 크기 정도로 설정)
-	AttackSphere->SetSphereRadius(90.0f);
+	AttackSphere->SetSphereRadius(30.0f);
 	AttackSphere->SetHiddenInGame(true);
 
 	// 4. 처음부터 켜져 있으면 좀비 옆에만 가도 플레이어가 죽으니, 기본은 꺼둡니다.
@@ -45,6 +47,15 @@ ABase_Zombie::ABase_Zombie()
 	//한기담 - 좀비의 카메라 콜리전을 ignore로 만들어서 카메라가 닿아도 가까워지지않고 뚫고 지나가게 만들었습니다.
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetCapsuleComponent()->SetCanEverAffectNavigation(false);
+	// 대신 아래로 네비 영향 주는 컴포넌트 따로 설정
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
+	GetMesh()->SetCanEverAffectNavigation(false);  // 이거 추가
+	GetCapsuleComponent()->bDynamicObstacle = false;           // 추가
+	AttackSphere->SetCanEverAffectNavigation(false);
+	GetCapsuleComponent()->SetCollisionProfileName(FName("Enemy"));
+	GetMesh()->SetCollisionProfileName(FName("Enemy"));
+
 }
 
 void ABase_Zombie::BeginPlay()
@@ -75,66 +86,85 @@ void ABase_Zombie::BeginPlay()
 	{
 		AttackSphere->OnComponentBeginOverlap.AddDynamic(this, &ABase_Zombie::OnAttackOverlapBegin);
 	}
+	if (IdleSoundComponent)
+	{
+		// 거리 감쇠 활성화
+		IdleSoundComponent->bAllowSpatialization = true;
+		IdleSoundComponent->bOverrideAttenuation = false; // 에셋의 Attenuation 사용
+	}
 }
 
+//void ABase_Zombie::Tick(float DeltaTime)
+//{
+//	Super::Tick(DeltaTime);
+//
+//	if (PlayerCharacter && !bIsAttacking)
+//	{
+//		// GetDistanceTo(두 캐릭터 캡슐 표면 사이의 최단 거리)
+//		float Distance = GetDistanceTo(PlayerCharacter);
+//		UE_LOG(LogTemp, Warning, TEXT("보스 거리: %f"), Distance);
+//		// AI가 AcceptanceRadius=30으로 다가오므로, 공격 범위는 50~80 정도가 적당합니다.
+//		// 좀비 애니메이션이 팔을 쭉 뻗는 형태라면 80~100도 괜찮습니다.
+//		if (Distance <= AttackRange) // 100.0f에서 조금 더 타이트하게 조정
+//		{
+//			UE_LOG(LogTemp, Warning, TEXT("공격 시도! Distance: %f, AttackRange: %f"), Distance, AttackRange);
+//			PlayAttackMontage();
+//		}
+//	}
+//}
 void ABase_Zombie::Tick(float DeltaTime)
 {
+	if (CurrentState == EZombieState::Dead) return; // ← 추가
+
 	Super::Tick(DeltaTime);
 
 	if (PlayerCharacter && !bIsAttacking)
 	{
-		// GetDistanceTo(두 캐릭터 캡슐 표면 사이의 최단 거리)
 		float Distance = GetDistanceTo(PlayerCharacter);
 
-		// AI가 AcceptanceRadius=30으로 다가오므로, 공격 범위는 50~80 정도가 적당합니다.
-		// 좀비 애니메이션이 팔을 쭉 뻗는 형태라면 80~100도 괜찮습니다.
-		if (Distance <= AttackRange) // 100.0f에서 조금 더 타이트하게 조정
+		if (Distance <= AttackRange)
 		{
-			PlayAttackMontage();
+			FVector ToPlayer = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+			FVector Forward = GetActorForwardVector();
+			float DotProduct = FVector::DotProduct(Forward, ToPlayer);
+
+			if (DotProduct > 0.0f)
+			{
+				PlayAttackMontage();
+			}
 		}
 	}
 }
-void ABase_Zombie::PlayAttackMontage() {
-	if (AttackMontage && !bIsAttacking) {
-		// 1. 공격 시작 시 대기 소리를 즉시 끕니다.
-		if (IdleSoundComponent) {
-			IdleSoundComponent->FadeOut(0.2f, 0.0f);
+void ABase_Zombie::PlayAttackMontage()
+{
+	if (CurrentState == EZombieState::Dead) return;
+	if (!AttackMontage || bIsAttacking) return;
 
-			// 혹시 이미 돌아가고 있을지 모를 '소리 켜기 타이머'를 취소합니다.
-			GetWorld()->GetTimerManager().ClearTimer(IdleSoundTimerHandle);
-		}
+	bIsAttacking = true;
+	CurrentAttackInstance++;
 
-		bIsAttacking = true;
-		CurrentState = EZombieState::Attacking;
-
-		// 1. 이동 멈추기 및 속도 0으로 설정
-		AAIController* AIC = Cast<AAIController>(GetController());
-		if (AIC)
-		{
-			AIC->StopMovement();
-		}
-		if (AIC && AIC->GetBlackboardComponent())
-		{
-			// 현재 상태를 블랙보드의 "CurrentState" 키에 전달 (Enum 값 전달)
-			AIC->GetBlackboardComponent()->SetValueAsEnum(TEXT("CurrentState"), (uint8)EZombieState::Attacking);
-		}
-		// CharacterMovement의 최대 속도를 0으로 만들어 물리적 이동을 차단합니다.
-		if (GetCharacterMovement())
-		{
-			GetCharacterMovement()->MaxWalkSpeed = 0.0f;
-		}
-
-		PlayAnimMontage(AttackMontage);
-
-		// 2. 공격 쿨타임 타이머 (공격 가능 상태 복구용)
-		GetWorld()->GetTimerManager().SetTimer(AttackTimerHandle, this, &ABase_Zombie::ResetAttack, AttackCooldown, false);
-
-		// 3. 쿨타임 * 2의 시간 뒤에 대기 소리를 다시 켜는 타이머 설정
-		float SoundDelay = AttackCooldown * 2.0f;
-		GetWorld()->GetTimerManager().SetTimer(IdleSoundTimerHandle, this, &ABase_Zombie::ResumeIdleSound, SoundDelay, false);
+	// ✅ 공격 전 플레이어 방향으로 회전
+	if (PlayerCharacter)
+	{
+		FVector ToPlayer = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+		FRotator LookRot = FRotationMatrix::MakeFromX(ToPlayer).Rotator();
+		LookRot.Pitch = 0.0f;
+		LookRot.Roll = 0.0f;
+		SetActorRotation(LookRot);
 	}
-}
 
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst)
+	{
+		AnimInst->Montage_Play(AttackMontage);
+	}
+
+	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABase_Zombie::ResetAttack,
+		AttackCooldown, false);
+}
 // 대기 소리를 다시 켜주는 새로운 함수
 void ABase_Zombie::ResumeIdleSound()
 {
@@ -143,48 +173,112 @@ void ABase_Zombie::ResumeIdleSound()
 		IdleSoundComponent->FadeIn(0.5f);
 	}
 }
-void ABase_Zombie::ResetAttack() {
+void ABase_Zombie::ResetAttack()
+{
+	if (CurrentState == EZombieState::Dead) return;
+
 	bIsAttacking = false;
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	bHasAppliedDamageThisAttack = false;
 
-	// 1. 속도 복구
-	if (GetCharacterMovement())
-	{
-		GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
-	}
 
-	// 2. C++ 상태 먼저 변경 (중요!)
-	if (CurrentState != EZombieState::Dead)
-	{
-		CurrentState = EZombieState::Idle;
-	}
-
-	// 3. 변경된 상태를 블랙보드에 반영
-	AAIController* AIC = Cast<AAIController>(GetController());
-	if (AIC && AIC->GetBlackboardComponent())
-	{
-		// 이제 C++의 CurrentState와 블랙보드의 값이 완벽히 일치합니다.
-		AIC->GetBlackboardComponent()->SetValueAsEnum(TEXT("CurrentState"), (uint8)CurrentState);
-	}
 }
+void ABase_Zombie::PlayKnockdownMontage()
+{
+	if (CurrentState == EZombieState::Dead) return;
+	if (!KnockdownMontage) return;
 
+	CurrentState = EZombieState::Knockdown;
+	bIsAttacking = true;
+
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+
+	AAIController* AIC = Cast<AAIController>(GetController());
+	if (AIC && AIC->GetBrainComponent())
+		AIC->GetBrainComponent()->PauseLogic(TEXT("Knockdown"));
+
+	float KnockdownLength = PlayAnimMontage(KnockdownMontage);
+
+	// 녹다운 끝나면 GetUp 재생
+	GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
+		{
+			if (CurrentState == EZombieState::Dead) return;
+
+			if (GetUpMontage)
+			{
+				float GetUpLength = PlayAnimMontage(GetUpMontage);
+
+				// GetUp 끝나면 상태 복구
+				GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
+					{
+						if (CurrentState == EZombieState::Dead) return;
+						bIsAttacking = false;
+						CurrentState = EZombieState::Idle;
+						GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+						AAIController* AIC2 = Cast<AAIController>(GetController());
+						if (AIC2 && AIC2->GetBrainComponent())
+							AIC2->GetBrainComponent()->ResumeLogic(TEXT("Knockdown"));
+					}, GetUpLength, false);
+			}
+			else
+			{
+				// GetUpMontage 없으면 바로 복구
+				bIsAttacking = false;
+				CurrentState = EZombieState::Idle;
+				GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+				AAIController* AIC2 = Cast<AAIController>(GetController());
+				if (AIC2 && AIC2->GetBrainComponent())
+					AIC2->GetBrainComponent()->ResumeLogic(TEXT("Knockdown"));
+			}
+		}, KnockdownLength, false);
+}
 float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
-	if (CurrentState == EZombieState::Dead) return 0.0f; // 죽은 좀비는 또 죽지 않게 예외 처리
+	if (CurrentState == EZombieState::Dead) return 0.0f;
 
-	Health -= DamageAmount; // 체력 차감
+	Health -= DamageAmount;
 
 	if (Health <= 0.0f)
 	{
-		Die(); // 체력 없으면 사망
+		Die();
 	}
 	else
 	{
-		// 공격 중이 아닐 때만 피격(Hit) 애니메이션을 보여줍니다. (공격 끊김 방지)
 		if (HitMontage && CurrentState != EZombieState::Attacking)
 		{
 			CurrentState = EZombieState::Hit;
-			PlayAnimMontage(HitMontage);
-			// Tip: 몽타주 종료 시 다시 Idle로 바꾸려면 OnMontageEnded 델리게이트를 쓰면 좋습니다.
+			float HitMontageLength = PlayAnimMontage(HitMontage);
+
+			bIsAttacking = true;
+
+			// ✅ Hit 중 이동 차단
+			GetCharacterMovement()->StopMovementImmediately();
+			GetCharacterMovement()->DisableMovement();
+
+			AAIController* AIC = Cast<AAIController>(GetController());
+			if (AIC)
+			{
+				AIC->StopMovement();
+				if (AIC->GetBrainComponent())
+					AIC->GetBrainComponent()->PauseLogic(TEXT("Hit"));
+			}
+
+			GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, [this]()
+				{
+					if (CurrentState == EZombieState::Dead) return;
+					bIsAttacking = false;
+					CurrentState = EZombieState::Idle;
+
+					// ✅ Hit 끝나면 이동 재개
+					GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+					AAIController* AIC2 = Cast<AAIController>(GetController());
+					if (AIC2 && AIC2->GetBrainComponent())
+						AIC2->GetBrainComponent()->ResumeLogic(TEXT("Hit"));
+				}, HitMontageLength, false);
 		}
 	}
 
@@ -193,46 +287,63 @@ float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 
 void ABase_Zombie::Die()
 {
-	if (CurrentState == EZombieState::Dead) return; // 중복 실행 방지
 	CurrentState = EZombieState::Dead;
 
-	// 1. 소리 제어
-	// 대기 소리 즉시 정지
-	if (IdleSoundComponent)
+	// ✅ 재생 중인 모든 몽타주 즉시 중단 → ABP State Machine이 Death State로 전환
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst)
 	{
-		IdleSoundComponent->Stop();
+		AnimInst->StopAllMontages(0.0f);
 	}
 
-	// 사망 소리 재생 (헤더에 USoundBase* DeathSound; 가 선언되어 있어야 함)
-	if (DeathSound)
-	{
-		// 액터가 사라져도 소리가 끝까지 나도록 PlaySoundAtLocation 사용
-		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
-	}
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
 
-	// 2. 타이머 정리 (공격 중 죽었을 때 소리가 다시 켜지는 것 방지)
+	GetCharacterMovement()->StopMovementImmediately();
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->SetComponentTickEnabled(false);
+
+	GetMesh()->SetSimulatePhysics(false);
+	GetMesh()->SetEnableGravity(false);
+
+	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
+	GetWorldTimerManager().ClearTimer(DeathFreezeTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(IdleSoundTimerHandle);
 	GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
 
-	// 3. 죽음 애니메이션 재생
-	if (DeathMontage)
-	{
-		PlayAnimMontage(DeathMontage);
-	}
+	if (IdleSoundComponent) IdleSoundComponent->Stop();
+	if (DeathSound)
+		UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
 
-	// 4. AI 중지 및 연결 해제
+	AttackSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	AAIController* AIController = Cast<AAIController>(GetController());
 	if (AIController)
 	{
 		AIController->StopMovement();
-		AIController->UnPossess();
+		if (AIController->GetBrainComponent())
+		{
+			AIController->GetBrainComponent()->StopLogic(TEXT("Dead"));
+		}
 	}
 
-	// 5. 충돌 제거 및 시체 삭제 예약
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SetLifeSpan(3.0f);
-}
+	DeathAnimLength = 3.0f;
 
+	GetWorld()->GetTimerManager().SetTimer(DeathTimerHandle, [this]()
+		{
+			SetActorHiddenInGame(true);
+			SetLifeSpan(0.1f);
+		}, DeathAnimLength + 0.5f, false);
+
+	AMainGameStateBase* GameState = Cast<AMainGameStateBase>(UGameplayStatics::GetGameState(GetWorld()));
+	if (GameState)
+	{
+		GameState->AddPlayerKillCount();
+	}
+}
 void ABase_Zombie::OnAttackOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)

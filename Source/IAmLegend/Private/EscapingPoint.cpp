@@ -5,6 +5,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "UI/MainHUD.h"
+#include "Ai/Boss_PoliceZombie.h"
+#include "EngineUtils.h"
 
 AEscapingPoint::AEscapingPoint()
 {
@@ -44,25 +46,24 @@ void AEscapingPoint::OnCollisionOverlap(
 	bool bFromSweep, 
 	const FHitResult& SweepResult)
 {
-
+	//플레이어 확인
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-	//플레이어 탈출 시도
 	if (OtherActor && OtherActor == PlayerPawn)
 	{
 		//탈출 대기 시간 타이머 작동 & 로그 타이머 작동
 		GetWorldTimerManager().SetTimer(EscapeTimer, this, &AEscapingPoint::PlayerEscaped, EscapeDuration, false);
 		GetWorldTimerManager().SetTimer(LogTimer, this, &AEscapingPoint::RunLogTimer, 0.1f, true);
-	}
-	
-	//탈출지점 UI 출력
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (PC)
-	{
-		AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-		if (HUD)
+		
+		//탈출지점 UI 출력
+		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+		if (PC)
 		{
-			HUD->ShowExtractionHUD();
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->ShowExtractionHUD();
 			
+			}
 		}
 	}
 }
@@ -74,24 +75,22 @@ void AEscapingPoint::OnCollisionEndOverlap(
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
+	//플레이어인지 확인
 	APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
 	if (OtherActor && OtherActor == PlayerPawn)
 	{
 		//탈출 타이머 초기화
 		GetWorldTimerManager().ClearTimer(EscapeTimer);
-	}
-	
-	//탈출지점 UI 출력
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (PC)
-	{
-		//AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
-		//if (HUD)
-		//{
-		//	UE_LOG(LogTemp, Warning, TEXT("탈출 지점 이탈"));
-		//	HUD->HideExtractionHUD();
-		//	
-		//}
+		//탈출지점 UI 제거
+		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+		if (PC)
+		{
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->HideExtractionHUD();
+			}
+		}
 	}
 	
 }
@@ -99,6 +98,50 @@ void AEscapingPoint::OnCollisionEndOverlap(
 //탈출 지점에 3초 버틸 시 호출
 void AEscapingPoint::PlayerEscaped()
 {
+
+	FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(GetWorld());
+	bool bIsBossStage = CurrentLevelName.Equals(TEXT("BossStage"));
+
+	bool bIsBossDead = false;
+	if (bIsBossStage)
+	{
+		bIsBossDead = true;
+		for (TActorIterator<ABoss_PoliceZombie> It(GetWorld()); It; ++It)
+		{
+			if (It->GetCurrentState() != EZombieState::Dead)
+			{
+				bIsBossDead = false;
+				break;
+			}
+		}
+	}
+
+	if (bIsBossStage && bIsBossDead)
+	{
+		APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+		if (PC)
+		{
+			APawn* PlayerPawn = PC->GetPawn();
+			if (PlayerPawn)
+			{
+				PlayerPawn->DisableInput(PC);
+			}
+
+			AMainHUD* HUD = Cast<AMainHUD>(PC->GetHUD());
+			if (HUD)
+			{
+				HUD->ShowHappyEndingHUD();
+
+				FInputModeUIOnly InputMode;
+
+				PC->SetInputMode(InputMode);
+				PC->bShowMouseCursor = true; // 필요 시 커서 표시 활성화
+
+				return;
+			}
+		}
+	}
+
 	AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if (GameMode) 
 	{
@@ -125,5 +168,14 @@ void AEscapingPoint::RunLogTimer()
 
 float AEscapingPoint::GetRemainingEscapingTime() const
 {
+	if (!GetWorldTimerManager().IsTimerActive(EscapeTimer))
+	{
+		return EscapeDuration;
+	}
 	return GetWorldTimerManager().GetTimerRemaining(EscapeTimer);
+}
+
+float AEscapingPoint::GetMaxEscapingDuration() const
+{
+	return EscapeDuration;
 }

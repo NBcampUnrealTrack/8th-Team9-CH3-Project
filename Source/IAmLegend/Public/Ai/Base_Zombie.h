@@ -36,11 +36,25 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "ZombieState")
     virtual void SetCurrentState(EZombieState NewState) { CurrentState = NewState; }
-protected:
+
+    UFUNCTION(BlueprintCallable)
+    virtual void PlayAttackMontage();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    UAnimMontage* GetUpMontage;
+
+    bool bIsAttacking = false; // 공격 중일 때 중복 공격을 막기 위한 변수입니다.
+    // 공격 사거리 변수화 (좀비마다 다를 수 있음)
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float AttackRange;
+
+    // [에디터 설정] 좀비의 체력
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stat")
+    float Health;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-
+    UPROPERTY(EditAnywhere, Category = "Animation")
+    float DeathAnimLength = 3.0f;
     // [에디터 설정] 각 상황에 맞는 애니메이션 몽타주 에셋을 넣어주세요.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
     class UAnimMontage* AttackMontage;
@@ -63,8 +77,7 @@ protected:
     class USoundBase* DeathSound;
 
 
-    bool bIsAttacking = false; // 공격 중일 때 중복 공격을 막기 위한 변수입니다.
-
+    
     // [에디터 설정] 공격 속도(간격)를 조절합니다. 4.0이면 4초마다 공격합니다.
     UPROPERTY(EditAnywhere, Category = "Combat")
     float AttackCooldown;
@@ -80,17 +93,16 @@ protected:
     // 소리 재개 타이머 핸들
     FTimerHandle IdleSoundTimerHandle;
     EZombieState CurrentState = EZombieState::Idle;
+    FTimerHandle DeathTimerHandle;
+    FTimerHandle HideTimerHandle;
+    FTimerHandle DeathFreezeTimerHandle;
+    FTimerHandle HitTimerHandle;
 
     // [에디터 설정] 좀비의 체력입니다.
-    UPROPERTY(EditAnywhere, Category = "Stat")
-    float Health;
+    // 복사해서 public로 복제했습니다 - 김민성
+    //UPROPERTY(EditAnywhere, Category = "Stat")
+    //float Health;
 
-    // 공격 사거리 변수화 (좀비마다 다를 수 있음)
-    UPROPERTY(EditAnywhere, Category = "Combat")
-    float AttackRange;
-
-    // 공격 애니메이션을 실행하는 함수입니다.
-    virtual void PlayAttackMontage();
 
     // 공격 후 쿨타임이 지나면 다시 공격 가능하게 해주는 함수입니다.
     virtual void ResetAttack();
@@ -104,7 +116,11 @@ protected:
     UFUNCTION(BlueprintCallable)
     virtual void DisableAttackCollision();
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+    UAnimMontage* KnockdownMontage;
 
+    UFUNCTION(BlueprintCallable)
+    void PlayKnockdownMontage();
     // 소리 재개 함수
     UFUNCTION()
     void ResumeIdleSound();
@@ -125,5 +141,5 @@ protected:
     float LastDamageTime = 0.0f;
 
     // 잠금 시간 (예: 2초 동안은 추가 데미지 무시)
-    const float DamageLockDuration = 2.0f;
+    const float DamageLockDuration = 0.3f;
 };

@@ -29,4 +29,6 @@ public:
 	void FinishReload() override;			// 재장전 완료 시 호출
 	void Fire() override;					// 발사
 
+	virtual void WeaponInitFromData() override;	// 데이터 에셋에서 초기화
+
 };

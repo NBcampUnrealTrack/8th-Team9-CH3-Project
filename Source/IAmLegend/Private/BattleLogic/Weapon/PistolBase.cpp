@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "BattleLogic/Weapon/DataAssets/PistolDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
@@ -24,32 +25,31 @@ APistolBase::APistolBase()
 	MeleeDamage = 15.f;	// 근접 공격 데미지
 	MeleeAttackRange = 100.f;	// 근접 공격 사거리
 
-	/* 근접 공격용 메시 컴포넌트는 현재 범위를 기준으로 트레이스하기에 필요하지 않아서 주석처리 해두었습니다.
-	DaggerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DaggerMesh"));
-	DaggerMesh->SetupAttachment(OwnerCharacter->GetMesh(), TEXT("Hand_L_Socket")); // 소켓 이름은 나중에 프로퍼티로 만들 예정
+	// 단검 메시 컴포넌트 초기화
+	DaggerMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("DaggerMesh"));
+	DaggerSocketName = "WeaponSocket_l"; // 단검 메시의 소켓 이름 설정
 
-	DaggerMesh->SetHiddenInGame(true);
+	//DaggerMesh->SetHiddenInGame(true);
 	DaggerMesh->SetComponentTickEnabled(false);
 	DaggerMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	*/
 }
 
 void APistolBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
+
 }
 
 // 단검의 찌르기 로직과 동일합니다.
 void APistolBase::MeleeAttackTrace()
 {
-	if (!OwnerCharacter) return; // 해당 부분에서 단검 메시 검사를 추가해야 합니다.
+	if (!OwnerCharacter || !DaggerMesh) return; // 해당 부분에서 단검 메시 검사를 추가해야 합니다.
 
 	// 범위 공격 벡터
 	FVector ForwardVector = OwnerCharacter->GetActorForwardVector();
 	FVector Start = OwnerCharacter->GetActorLocation() + ForwardVector; // 플레이어 앞쪽으로 시작 위치 설정
 	FVector End = Start + ForwardVector * MeleeAttackRange;
-
+	
 	/* 메시 기준 벡터
 	// 메시 기준 피격 판정을 한다면 헤더의 메시 컴포넌트를 활성화하고 아래의 코드를 사용하면 됩니다.
 	FVector Start = Mesh->GetSocketLocation(FName("Root"));
@@ -62,34 +62,15 @@ void APistolBase::MeleeAttackTrace()
 	Params.AddIgnoredActor(OwnerCharacter); // 플레이어는 충돌에서 제외
 	Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
 
-	/* 박스 형태의 트레이스
+	// 박스 형태의 트레이스
 	bool bHit = GetWorld()->SweepMultiByChannel(
 		HitResults,
 		Start,
 		End,
 		FQuat::Identity,
 		ATTACK_TRACE_CHANNEL,
-		FCollisionShape::MakeBox(StabBoxExtent),
+		FCollisionShape::MakeBox(MeleeAttackBoxExtent),
 		Params
-	);
-	*/
-
-	// 디버그 용
-	bool bHit = UKismetSystemLibrary::BoxTraceMulti(
-		GetWorld(),
-		Start,
-		End,
-		MeleeAttackBoxExtent,
-		OwnerCharacter->GetActorRotation(),
-		UEngineTypes::ConvertToTraceType(ATTACK_TRACE_CHANNEL),
-		false,
-		{ OwnerCharacter, this },
-		EDrawDebugTrace::ForDuration,
-		HitResults,
-		true,
-		FLinearColor::Red,
-		FLinearColor::Green,
-		1.0f
 	);
 
 	ProcessMeleeHits(HitResults); // 타격 결과 처리 (데미지 적용 등)
@@ -108,4 +89,36 @@ void APistolBase::ProcessMeleeHits(const TArray<FHitResult>& HitResults)
 			HitActors.Add(HitActor); // 이미 타격한 액터를 추가하여 중복 타격 방지
 		}
 	}
+}
+
+// --------------------------------------------------------
+// 데이터 에셋에서 초기화
+void APistolBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (UPistolDataAsset* PistolData = Cast<UPistolDataAsset>(ItemData))
+	{	
+		MeleeDamage = PistolData->MeleeDamage;
+		DaggerSocketName = PistolData->DaggerSocketName;
+
+		if (!PistolData->DaggerSkeletalMesh.IsNull())
+		{
+			USkeletalMesh* LoadedMesh = PistolData->DaggerSkeletalMesh.LoadSynchronous();
+			if (LoadedMesh)
+			{
+				DaggerMesh->SetSkeletalMesh(LoadedMesh);
+
+				if (OwnerCharacter)
+				{
+					FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+					DaggerMesh->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, DaggerSocketName);
+				}
+			}
+		}
+
+	}
+	
 }

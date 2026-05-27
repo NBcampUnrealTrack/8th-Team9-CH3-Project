@@ -21,4 +21,7 @@ protected:
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 
 	void AttachToHitActor(AActor* OtherActor, UPrimitiveComponent* OtherComp, const FHitResult& Hit);
+
+public:
+	virtual void InitProjectileFromData(class UThrowableWeaponDataAsset* ThrowableWeaponData) override;
 };

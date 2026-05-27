@@ -22,7 +22,7 @@ ABaseItemActor::ABaseItemActor()
 	InteractionWidget->SetupAttachment(RootComponent); // 루트에 붙임
     
 	// UI 위치 설정 (아이템 살짝 위)
-	InteractionWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f)); 
+	InteractionWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 10.0f)); 
 	
 	
 	//UI 모니터 정면을 향해 그려진다
@@ -40,7 +40,7 @@ ABaseItemActor::ABaseItemActor()
 	// EndOverlap도 연결해줘야 나갈 때 꺼집니다!
 	Collider->OnComponentEndOverlap.AddDynamic(this, &ABaseItemActor::OnEndOverlap); 
 	
-	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Item/WBP_interaction.WBP_interaction_C"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/Item/Blueprint/WBP_interaction.WBP_interaction_C"));
     
 	if (WidgetClassFinder.Succeeded())
 	{

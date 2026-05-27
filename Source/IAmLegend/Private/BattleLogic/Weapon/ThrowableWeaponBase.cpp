@@ -6,10 +6,11 @@
 #include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
 #include "BattleLogic/TrajectoryComponent.h"
+#include "BattleLogic/Weapon/DataAssets/ThrowableWeaponDataAsset.h"
 
 AThrowableWeaponBase::AThrowableWeaponBase()
 {
-	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	// 초기값 설정
 	WeaponType = EWeaponType::Granade; // 무기 타입 설정
 	TrajectoryComp = CreateDefaultSubobject<UTrajectoryComponent>(TEXT("TrajectoryComponent"));
 }
@@ -17,27 +18,16 @@ AThrowableWeaponBase::AThrowableWeaponBase()
 void AThrowableWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
 	
 	if(TrajectoryComp)
 	{
-		TrajectoryComp->InitializeTrajectory(ProjectileClass);
+		TrajectoryComp->InitializeTrajectory(ItemData);
 	}
 }
 
 void AThrowableWeaponBase::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-}
-
-void AThrowableWeaponBase::WeaponInitFromData()
-{
-	Super::WeaponInitFromData();
-	// WeaponDataAsset에서 추가로 초기화할 부분을 여기에 작성하면 됩니다.
-	if(UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(ItemData))
-	{
-		
-	}
 }
 
 void AThrowableWeaponBase::StartWeaponAttack()
@@ -55,13 +45,16 @@ void AThrowableWeaponBase::StartWeaponAttack()
 // 투척 공격
 void AThrowableWeaponBase::ThrowWeapon()
 {
-	if (!ProjectileClass || !OwnerCharacter) return;
+	if (!ProjectileClass || !OwnerCharacter || !SkeletalMesh) return;
 
-	// 칼날의 끝 위치에서 투사체를 생성
-	FVector SpawnLocation = Mesh->GetSocketLocation(FName("Tip"));
+	// 투척 애니메이션 재생
+	OwnerCharacter->PlayAttackMontage_2();
+
+	// 캐릭터의 오른손 위치에서 투사체 생성 (무기 소켓 위치 사용)
+	FVector SpawnLocation = OwnerCharacter->GetMesh()->GetSocketLocation(FName("WeaponSocket"));
 
 	// 플레이어의 시점에 따라 투사체의 초기 회전을 설정
-	FRotator SpawnRotation;							 // 주석이 깨져요 ㅠㅠ
+	FRotator SpawnRotation;							
 	if (OwnerCharacter)
 	{
 		SpawnRotation = OwnerCharacter->GetControlRotation();
@@ -72,18 +65,24 @@ void AThrowableWeaponBase::ThrowWeapon()
 	}
 
 	// 투사체 생성
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = OwnerCharacter;
-	SpawnParams.Instigator = OwnerCharacter->GetInstigator();
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	AWeaponProjectileBase* SpawnedProjectile = GetWorld()->SpawnActor<AWeaponProjectileBase>(
-		ProjectileClass,
-		SpawnLocation,
-		SpawnRotation,
-		SpawnParams
+	UThrowableWeaponDataAsset* ThrowableWeaponData = Cast<UThrowableWeaponDataAsset>(ItemData);
+	AWeaponProjectileBase* SpawnedProjectile = GetWorld()->SpawnActorDeferred<AWeaponProjectileBase>(
+		ThrowableWeaponData->ProjectileClass,                        
+		FTransform(SpawnRotation, SpawnLocation),                    
+		OwnerCharacter,                                             
+		OwnerCharacter->GetInstigator(),                            
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn            
 	);
-	OwnerCharacter->UnEquipWeapon(); // 투척 후 무기 해제
+
+	if (SpawnedProjectile)
+	{
+		SpawnedProjectile->InitProjectileFromData(ThrowableWeaponData);
+
+		SpawnedProjectile->FinishSpawning(FTransform(SpawnRotation, SpawnLocation));
+	}
+
+	
+	OwnerCharacter->UnEquipWeapon(WeaponSlot, true); // 투척 후 무기 제거
 }	
 
 void AThrowableWeaponBase::EnableTrajectory(bool bEnable)
@@ -91,5 +90,17 @@ void AThrowableWeaponBase::EnableTrajectory(bool bEnable)
 	if (TrajectoryComp)
 	{
 		TrajectoryComp->EnableTrajectory(bEnable);
+	}
+}
+
+void AThrowableWeaponBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (UThrowableWeaponDataAsset* ThrowableWeaponData = Cast<UThrowableWeaponDataAsset>(ItemData))
+	{
+		ProjectileClass = ThrowableWeaponData->ProjectileClass;
 	}
 }

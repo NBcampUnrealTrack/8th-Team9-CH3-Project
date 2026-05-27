@@ -6,12 +6,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Ai/Base_Zombie.h" // 이현준 추가
+#include "BattleLogic/Weapon/DataAssets/TwoHandRangedWeaponDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 ATwoHandRangedWeaponBase::ATwoHandRangedWeaponBase()
 {
-	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	// 기본 값 설정
 	WeaponType = EWeaponType::TwoHandedRanged; // 무기 타입 설정
 	LeftHandIKSocketName = "LeftHandIKSocket"; // 왼손 IK 소켓 이름 설정
 	MeleeAttackRange = 10.f;	// 근접 공격 사거리
@@ -21,63 +23,80 @@ ATwoHandRangedWeaponBase::ATwoHandRangedWeaponBase()
 void ATwoHandRangedWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
 }
 
 void ATwoHandRangedWeaponBase::MeleeAttackTrace()
 {
-	if (!OwnerCharacter || !Mesh) return;
+	if (!OwnerCharacter || !OwnerCharacter->GetMesh() || !SkeletalMesh) return;
+	
+	HitActors.Empty();
+	
+	FVector BaseStart = OwnerCharacter->GetMesh()->GetSocketLocation(FName("KickStart"));
+	FVector BaseEnd = OwnerCharacter->GetMesh()->GetSocketLocation(FName("KickEnd"));
 
-	// 찌르기 공격 판정 수행 (현재는 Tick에서 처리하지만, 추후에 공격 애니메이션이 적용되면 애니메이션 노티파이로 대체할 수 있습니다.)
-	// 범위 공격 벡터
 	FVector ForwardVector = OwnerCharacter->GetActorForwardVector();
-	float ForwardOffset = FVector::DotProduct(ForwardVector, OwnerCharacter->GetActorLocation() - Mesh->GetComponentLocation());
-	FVector Start = OwnerCharacter->GetActorLocation() + ForwardVector * ForwardOffset; // 무기의 위치에서 플레이어의 앞쪽으로 시작 위치 설정
-	FVector End = Start + ForwardVector * MeleeAttackRange; 
-
-	/* 메시 기준 벡터
-	// 메시 기준 피격 판정을 한다면 헤더의 메시 컴포넌트를 활성화하고 아래의 코드를 사용하면 됩니다.
-	FVector Start = Mesh->GetSocketLocation(FName("Root"));
-	FVector End = Mesh->GetSocketLocation(FName("Tip"));
-	*/
+	FVector Start = BaseStart + (ForwardVector * 30.f);
+	FVector End = BaseEnd + (ForwardVector * 70.f);
 
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerCharacter);
+	Params.AddIgnoredActor(this);
 
-	Params.AddIgnoredActor(OwnerCharacter); // 플레이어는 충돌에서 제외
-	Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
+	float KickThickness = 10.0f;
 
-	/* 박스 형태의 트레이스
 	bool bHit = GetWorld()->SweepMultiByChannel(
 		HitResults,
 		Start,
 		End,
 		FQuat::Identity,
 		ATTACK_TRACE_CHANNEL,
-		FCollisionShape::MakeBox(StabBoxExtent),
+		FCollisionShape::MakeSphere(KickThickness),
 		Params
 	);
-	*/
 
-	// 디버그 용
-	bool bHit = UKismetSystemLibrary::BoxTraceMulti(
-		GetWorld(),
+	if (bHit)
+	{
+		ProcessMeleeHits(HitResults);
+	}
+	/* 한기담 - 기존 방식 - 혹시 몰라 주석 처리 해두겠습니다.
+	if (!OwnerCharacter || !SkeletalMesh) return;
+
+	// 범위 공격 벡터
+	FVector ForwardVector = OwnerCharacter->GetActorForwardVector();
+	float ForwardOffset = FVector::DotProduct(ForwardVector, OwnerCharacter->GetActorLocation() - SkeletalMesh->GetComponentLocation());
+	
+	// 플레이어 몸 중심(Actor Location)에서 정면으로 50cm 앞을 시작점(배 앞 공간)으로 설정합니다.
+	//FVector Start = OwnerCharacter->GetActorLocation() + ForwardVector * ForwardOffset; // 무기의 위치에서 플레이어의 앞쪽으로 시작 위치 설정
+	FVector Start = OwnerCharacter->GetActorLocation() + ForwardVector * 50.f;
+	// 시작점에서 데이터 에셋에 등록된 사거리(MeleeAttackRange)만큼 앞쪽을 끝점으로 설정합니다.
+	FVector End = Start + ForwardVector * MeleeAttackRange; 
+	
+	/* 메시 기준 벡터
+	// 메시 기준 피격 판정을 한다면 헤더의 메시 컴포넌트를 활성화하고 아래의 코드를 사용하면 됩니다.
+	FVector Start = Mesh->GetSocketLocation(FName("Root")); 
+	FVector End = Mesh->GetSocketLocation(FName("Tip"));
+	*/
+	/*
+	TArray<FHitResult> HitResults;
+	FCollisionQueryParams Params;
+
+	Params.AddIgnoredActor(OwnerCharacter); // 플레이어는 충돌에서 제외
+	Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
+
+	// 박스 형태의 트레이스
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults,
 		Start,
 		End,
-		MeleeAttackBoxExtent,
-		OwnerCharacter->GetActorRotation(),
-		UEngineTypes::ConvertToTraceType(ATTACK_TRACE_CHANNEL),
-		false,
-		{ OwnerCharacter, this },
-		EDrawDebugTrace::ForDuration,
-		HitResults,
-		true,
-		FLinearColor::Red,
-		FLinearColor::Green,
-		1.0f
+		FQuat::Identity,
+		ATTACK_TRACE_CHANNEL,
+		FCollisionShape::MakeBox(MeleeAttackBoxExtent),
+		Params
 	);
 
 	ProcessMeleeHits(HitResults); // 타격 결과 처리 (데미지 적용 등)
+	*/
 }
 
 void ATwoHandRangedWeaponBase::ProcessMeleeHits(const TArray<FHitResult>& HitResults)
@@ -90,6 +109,13 @@ void ATwoHandRangedWeaponBase::ProcessMeleeHits(const TArray<FHitResult>& HitRes
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 
+			ABase_Zombie* Zombie = Cast<ABase_Zombie>(HitActor); // 이현준 좀비 밀치기 추가
+			if (Zombie)
+			{
+				Zombie->PlayKnockdownMontage();
+			}
+			// 이현준 좀비 밀치기 추가
+
 			// 몬스터 여부를 캐스팅 해야합니다.
 			if(ACharacter* HitCharacter = Cast<ACharacter>(HitActor))
 			{
@@ -100,5 +126,20 @@ void ATwoHandRangedWeaponBase::ProcessMeleeHits(const TArray<FHitResult>& HitRes
 			
 			HitActors.Add(HitActor); // 이미 타격한 액터를 추가하여 중복 타격 방지
 		}
+	}
+}
+
+// --------------------------------------------------------
+// 데이터 에셋에서 초기화
+void ATwoHandRangedWeaponBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+	
+	if (!ItemData) return;
+
+	if (UTwoHandRangedWeaponDataAsset* TwoHandRangedWeaponData = Cast<UTwoHandRangedWeaponDataAsset>(ItemData))
+	{
+		LeftHandIKSocketName = TwoHandRangedWeaponData->LeftHandIKSocketName;
+		PushForce = TwoHandRangedWeaponData->PushForce;
 	}
 }

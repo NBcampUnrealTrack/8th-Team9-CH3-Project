@@ -19,6 +19,10 @@ void UOptionUIWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	// 키 입력 포커스 설정
+	bIsFocusable = true;
+	SetKeyboardFocus();
+
 	InitializeSettings();
 
 	if (ApplyButton)
@@ -29,6 +33,11 @@ void UOptionUIWidget::NativeConstruct()
 
 	if (VolumeSlider)
 		VolumeSlider->OnValueChanged.AddDynamic(this, &UOptionUIWidget::OnVolumeChanged);
+
+	if (MasterSoundMix)
+	{
+		UGameplayStatics::PushSoundMixModifier(GetWorld(), MasterSoundMix);
+	}
 }
 
 void UOptionUIWidget::InitializeSettings()
@@ -113,8 +122,24 @@ void UOptionUIWidget::OnVolumeChanged(float Value)
 	// 실제 사운드 볼륨 조절
 	if (MasterSoundMix && MasterSoundClass)
 	{
+		// 안전장치 (볼륨 조절할 때도 믹스가 활성화되어 있도록 Push)
+		UGameplayStatics::PushSoundMixModifier(GetWorld(), MasterSoundMix);
+
+		// 믹스 클래스의 볼륨 덮어쓰기 (오버라이드)
 		UGameplayStatics::SetSoundMixClassOverride(GetWorld(), MasterSoundMix, MasterSoundClass, Value, 1.f, 1.f, true);
 	}
+}
+
+// esc 입력 시
+FReply UOptionUIWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.GetKey() == EKeys::Escape)
+	{
+		OnCloseClicked(); // 닫기 버튼을 누른 것과 동일하게 처리
+		return FReply::Handled();
+	}
+
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
 void UOptionUIWidget::OnCloseClicked()

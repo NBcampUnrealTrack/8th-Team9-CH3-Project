@@ -7,15 +7,18 @@
 #include "BattleLogic/Projectile/WeaponProjectileBase.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "BattleLogic/Weapon/DataAssets/MeleeWeaponDataAsset.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 AMeleeWeaponBase::AMeleeWeaponBase()
 {
-	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	// 기본 값 설정
 	WeaponType = EWeaponType::TwoHandedMelee; // 무기 타입 설정
-	SwingSpeed = 1.f; // 휘두르는 속도
+	WeaponSlot = EWeaponSlot::Melee; // 무기 슬롯 설정
 	AttackCooldown = .5f; // 공격 간격
+	AttackSpeedRate = 1.0f; // 공격 속도 배율 (기본값은 1.0)
+
 	bIsAttacking = false; // 공격 중인지 여부
 	bIsPressingAttack = false; // 공격 버튼이 눌려있는지 여부 (자동 공격 관리용)
 	bIsCooldown = false; // 공격 쿨다운 중인지 여부
@@ -36,7 +39,7 @@ void AMeleeWeaponBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!Mesh || !OwnerCharacter) return;
+	if (!SkeletalMesh || !OwnerCharacter) return;
 
 	if (bIsAttacking)
 	{
@@ -91,8 +94,8 @@ void AMeleeWeaponBase::StopWeaponAttack()
 
 void AMeleeWeaponBase::ExcuteAttack()
 {
-	// 공격이 시작될 때 공격 애니메이션 재생
-	OwnerCharacter->PlayAttackMontage_1();
+	// 공격이 시작될 때 공격 속도에 따라 공격 애니메이션 재생
+	OwnerCharacter->PlayAttackMontage_1(AttackSpeedRate);
 
 	// 공격이 시작될 때 타이머를 초기화
 	GetWorldTimerManager().ClearTimer(AttackIntervalTimerHandle);
@@ -104,8 +107,8 @@ void AMeleeWeaponBase::ExcuteAttack()
 void AMeleeWeaponBase::AttackTrace()
 {
 	// 날의 시작과 끝 위치
-	FVector Start = Mesh->GetSocketLocation(FName("Root"));
-	FVector End = Mesh->GetSocketLocation(FName("Tip"));
+	FVector Start = SkeletalMesh->GetSocketLocation(FName("Root"));
+	FVector End = SkeletalMesh->GetSocketLocation(FName("Tip"));
 
 	TArray<FHitResult> HitResults;
 	FCollisionQueryParams Params;
@@ -113,7 +116,8 @@ void AMeleeWeaponBase::AttackTrace()
 	Params.AddIgnoredActor(this);		// 자신은 충돌에서 제외
 
 	float WeaponThickness = 10.0f; // 칼날의 가상 두께
-	/*bool bHit = GetWorld()->SweepMultiByChannel(
+
+	bool bHit = GetWorld()->SweepMultiByChannel(
 		HitResults,
 		Start,
 		End,
@@ -121,23 +125,6 @@ void AMeleeWeaponBase::AttackTrace()
 		ATTACK_TRACE_CHANNEL,
 		FCollisionShape::MakeSphere(WeaponThickness),
 		Params
-	);*/
-
-	// 디버그 용
-	bool bHit = UKismetSystemLibrary::SphereTraceMulti(
-		GetWorld(),
-		Start,                          // 시작 위치
-		End,                            // 끝 위치
-		WeaponThickness,                // 구체 반지름
-		UEngineTypes::ConvertToTraceType(ATTACK_TRACE_CHANNEL), // 채널
-		false,                          // 복합 콜리전 사용 여부
-		{ OwnerCharacter, this },			// 충돌에서 제외할 액터 배열
-		EDrawDebugTrace::ForDuration,   // 디버그 형태 (None, ForOneFrame, ForDuration)
-		HitResults,                     // 결과 배열
-		true,                           // 자기 자신 무시 여부
-		FLinearColor::Red,              // 추적 선 색상
-		FLinearColor::Green,            // 히트 시 색상
-		1.0f                            // 디버그 선 유지 시간 (초)
 	);
 
 	ProcessHitResults(HitResults); // 타격 결과 처리 (데미지 적용 등)
@@ -167,26 +154,22 @@ void AMeleeWeaponBase::FinishCooldown()
 	}
 }
 
-
-void AMeleeWeaponBase::WeaponInitFromData()
-{
-	Super::WeaponInitFromData();
-
-	if (UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(ItemData))
-	{	
-		/* 현재 WeaponDataAsset에는 Damage만 작성되어 있어 SwingSpeed 초기화 부분은 작성하지 않았습니다.
-		 추후에 WeaponDataAsset에 SwingSpeed가 작성되면 아래 주석 부분을 참고하여 SwingSpeed 초기화 부분을 작성하면 됩니다.
-		if (WeaponData->SwingSpeed > 0.f)
-		{
-			SwingSpeed = WeaponData->SwingSpeed;
-		}
-		*/
-	}
-}
-
 void AMeleeWeaponBase::AnimNotify_EndAttack_1()
 {
 	Super::AnimNotify_EndAttack_1();
 	EndAttack(); // 공격 종료 처리
 	
+}
+
+void AMeleeWeaponBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (UMeleeWeaponDataAsset* MeleeWeaponData = Cast<UMeleeWeaponDataAsset>(ItemData))
+	{
+		AttackCooldown = MeleeWeaponData->AttackCooldown;
+		AttackSpeedRate = MeleeWeaponData->AttackSpeedRate;
+	}
 }

@@ -47,6 +47,10 @@ protected:
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidgetAnim), Transient)
 	class UWidgetAnimation* CreditTextHover;
 
+	// 스토리 UI
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<class UUserWidget> StoryUIClass;
+
 private:
 	// 버튼 클릭 및 호버 이벤트 함수
 	UFUNCTION()

@@ -31,7 +31,10 @@ protected:
 	float Bounciness;	// 튕김 계수 (0.0f ~ 1.0f, 0이면 튕기지 않고 1이면 완전히 튕깁니다)
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Bouncing")
-	float BounceVelocityThreshold;	// 튕김이 발생하는 최소 속도 (이 값보다 낮으면 튕기지 않고 멈춥니다)
+	float BounceVelocityThreshold;	// 튕김이 발생하는 최소 속도 (이 값보다 낮으면 튕기지 않고 멈춥니다)\
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	class UNiagaraSystem* ExplosionFX;
 
 	void OnConstruction(const FTransform& Transform) override;
 
@@ -40,4 +43,7 @@ protected:
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 
 	void Explode();	// 폭발 처리 (피해 적용, 이펙트 재생 등)
+
+public:
+	virtual void InitProjectileFromData(class UThrowableWeaponDataAsset* ThrowableWeaponData) override;
 };

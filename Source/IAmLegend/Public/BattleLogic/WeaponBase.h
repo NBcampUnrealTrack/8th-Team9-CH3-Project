@@ -21,6 +21,19 @@ enum class EWeaponType : uint8
 	TwoHandedMelee,	// 양손 근접 무기
 	OneHandedRanged,	// 한손 원거리 무기
 	TwoHandedRanged,	// 양손 원거리 무기
+
+	None
+};
+
+// 무기 슬롯
+UENUM(BlueprintType)
+enum class EWeaponSlot : uint8
+{
+	Melee       UMETA(DisplayName = "Melee"),   // 근접 무기 (1번)
+	Ranged       UMETA(DisplayName = "Ranged"), // 총 (2번)
+	Dagger      UMETA(DisplayName = "Dagger"),  // 단검 (3번)
+	Grenade     UMETA(DisplayName = "Grenade"), // 수류탄 (4번)
+	None
 };
 
 UCLASS()
@@ -29,6 +42,9 @@ class IAMLEGEND_API AWeaponBase : public AWeaponItemActor
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<USkeletalMeshComponent> SkeletalMesh;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	float Damage;
 	
@@ -40,6 +56,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	EWeaponType WeaponType;		// 무기 타입 (근접, 원거리, 투척 등)
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	EWeaponSlot WeaponSlot;		// 무기 슬롯 (근접, 원거리, 단검, 수류탄 등)
 
 	class AHanPlayerCharacter* OwnerCharacter;
 
@@ -57,6 +76,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	EWeaponType GetWeaponType() const;		// 무기 타입 반환 (근접, 원거리, 투척 등)
+
+	EWeaponSlot GetWeaponSlot() const;		// 무기 슬롯 반환 (근접, 원거리, 단검, 수류탄 등)
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void DestroyWeapon();			// 무기 파괴 (예: 투척 후)
@@ -80,4 +101,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon|Animation")
 	virtual void AnimNotify_EndReload();	// 재장전 애니메이션 종료 시 호출 (애니메이션 노티파이로 설정)
+
+	// 무기 UI 아이콘 - 김민성
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
+	class UTexture2D* WeaponIcon;
+	
+	// 인벤토리에서 데미지 관련해서 버프주는 아이템에 사용할 겟터 셋터 만들었습니다 - 김준수
+    float GetDamage() const { return Damage; } 
+    void SetDamage(float NewDamage) { Damage = NewDamage; }
 };

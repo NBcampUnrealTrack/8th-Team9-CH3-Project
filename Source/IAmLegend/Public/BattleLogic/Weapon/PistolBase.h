@@ -19,6 +19,11 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> DaggerMesh;	// 근접 공격용 메시
 	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon|Pistol|Melee")
+	TObjectPtr<USkeletalMeshComponent> DaggerMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Pistol|Melee")
+	FName DaggerSocketName; // 근접 공격 시작 위치 소켓 이름
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Pistol|Melee")
 	float MeleeDamage;	// 근접 공격 데미지
@@ -30,5 +35,7 @@ public:
 
 	void MeleeAttackTrace() override;	// 근접 공격 트레이스 계산 및 타격 판정
 	void ProcessMeleeHits(const TArray<FHitResult>& HitResults) override;	// 근접 공격 타격 처리
-	
+
+	virtual void WeaponInitFromData() override;	// 데이터 에셋에서 초기화
+
 };

@@ -28,5 +28,8 @@ protected:
 	float ImpactDamping;	// 충돌 시 속도 감쇠 계수 (0.0f ~ 1.0f, 0이면 완전히 멈추고 1이면 감쇠 없음)
 
 	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
+
+public:
+	virtual void InitProjectileFromData(class UThrowableWeaponDataAsset* ThrowableWeaponData) override;
 	
 };

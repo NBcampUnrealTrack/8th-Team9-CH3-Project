@@ -9,6 +9,10 @@
 #include "UI/GameOverWidget.h"
 #include "PlayerHealthWidget.h"
 #include "UI/CrosshairWidget.h"
+#include "UI/WeaponInstallationWidget.h"
+#include "UI/WeaponSlotWidget.h"
+#include "UI/StealthWidget.h"
+#include "UI/BossHealthWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 void AMainHUD::BeginPlay()
@@ -30,6 +34,22 @@ void AMainHUD::BeginPlay()
 	{
 		ShowPlayerHealthHUD();
 		ShowCrosshairHUD();
+		ShowWeaponHUD();
+		ShowWeaponSlotHUD();
+		ShowStealthHUD();
+
+		// 보스 레벨에서만 보스 체력바 표시
+		if (CurrentLevelName.Contains(TEXT("BossStage")))
+		{
+			if (BossHealthClass && !BossHealthWidget)
+			{
+				BossHealthWidget = CreateWidget<UBossHealthWidget>(GetWorld(), BossHealthClass);
+				if (BossHealthWidget)
+				{
+					BossHealthWidget->AddToViewport();
+				}
+			}
+		}
 
 		APlayerController* PC = GetOwningPlayerController();
 
@@ -246,5 +266,106 @@ void AMainHUD::HideCrosshairHUD()
 	{
 		CrosshairWidget->RemoveFromParent();
 		CrosshairWidget = nullptr;
+	}
+}
+
+// 무가 UI 함수
+void AMainHUD::ShowWeaponHUD()
+{
+	if (WeaponHUDClass && !WeaponHUDWidget)
+	{
+		WeaponHUDWidget = CreateWidget<UWeaponInstallationWidget>(GetWorld(), WeaponHUDClass);
+		if (WeaponHUDWidget)
+		{
+			WeaponHUDWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideWeaponHUD()
+{
+	if (WeaponHUDWidget)
+	{
+		WeaponHUDWidget->RemoveFromParent();
+		WeaponHUDWidget = nullptr;
+	}
+}
+
+// 무기 슬롯 UI 함수
+void AMainHUD::ShowWeaponSlotHUD()
+{
+	if (WeaponSlotClass && !WeaponSlotWidget)
+	{
+		WeaponSlotWidget = CreateWidget<UWeaponSlotWidget>(GetWorld(), WeaponSlotClass);
+		if (WeaponSlotWidget)
+		{
+			WeaponSlotWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideWeaponSlotHUD()
+{
+	if (WeaponSlotWidget)
+	{
+		WeaponSlotWidget->RemoveFromParent();
+		WeaponSlotWidget = nullptr;
+	}
+}
+
+// 은신 UI 함수
+void AMainHUD::ShowStealthHUD()
+{
+	if (StealthClass && !StealthWidget)
+	{
+		StealthWidget = CreateWidget<UStealthWidget>(GetWorld(), StealthClass);
+		if (StealthWidget)
+		{
+			StealthWidget->AddToViewport();
+		}
+	}
+}
+
+void AMainHUD::HideStealthHUD()
+{
+	if (StealthWidget)
+	{
+		StealthWidget->RemoveFromParent();
+		StealthWidget = nullptr;
+	}
+}
+
+// 엔딩 UI 함수
+void AMainHUD::ShowHappyEndingHUD()
+{
+	if (HappyEndingWidgetClass)
+	{
+		UUserWidget* HappyEnding = CreateWidget<UUserWidget>(GetOwningPlayerController(), HappyEndingWidgetClass);
+		if (HappyEnding)
+		{
+			HappyEnding->AddToViewport();
+		}
+	}
+}
+
+// 최종 결과 UI 함수
+void AMainHUD::ShowGameEndingHUD()
+{
+	if (GameEndingClass)
+	{
+		UUserWidget* GameEndingWidget = CreateWidget<UUserWidget>(GetWorld(), GameEndingClass);
+		if (GameEndingWidget)
+		{
+			GameEndingWidget->AddToViewport(100);
+
+			// 마우스 커서를 보이게 하고 게임 입력을 UI로 전환 및 일시 정지
+			APlayerController* PC = GetOwningPlayerController();
+			if (PC)
+			{
+				PC->bShowMouseCursor = true;
+				PC->SetInputMode(FInputModeUIOnly());
+				UGameplayStatics::SetGamePaused(GetWorld(), true);
+			}
+		}
 	}
 }

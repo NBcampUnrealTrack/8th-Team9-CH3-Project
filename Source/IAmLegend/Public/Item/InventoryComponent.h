@@ -48,9 +48,9 @@ public:
 	void ShowInventoryOnScreen();
 	
 	UFUNCTION()
-	void DisplayUI();
+	void DisplayUI(bool bshow);
 	
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Ammo")
 	int32 GetItemQuantity(UItemDataAsset* TargetItem);
 	
 	UFUNCTION()
@@ -89,12 +89,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 	
-	UPROPERTY()
-	TArray<FItemSlot> CurrentStageAcquiredItems;
+	//UPROPERTY()
+	//TArray<FItemSlot> CurrentStageAcquiredItems;
 	
 public:
-	UFUNCTION()
-	TArray<FItemSlot> GetItemList() const { return CurrentStageAcquiredItems; }
+	//UFUNCTION()
+	//TArray<FItemSlot> GetItemList() const { return CurrentStageAcquiredItems; }
 	
 	
 	virtual void BeginPlay() override;

@@ -13,6 +13,14 @@
 #include "UI/MainHUD.h"
 #include "BattleLogic/Weapon/ThrowableWeaponBase.h"
 #include "BattleLogic/Weapon/RangedWeaponBase.h"
+#include "WeaponDataAsset.h"
+#include "EngineUtils.h"                     
+#include "Ai/BaseZombie_Ai.h"                
+#include "BehaviorTree/BlackboardComponent.h" 
+#include "Components/AudioComponent.h"
+#include <Kismet/GameplayStatics.h>
+#include "BattleLogic/Attachment/AttachmentDataAsset.h"
+#include "BattleLogic/Attachment/RangedAttachmentComponent.h"
 
 AHanPlayerCharacter::AHanPlayerCharacter()
 {
@@ -61,15 +69,39 @@ AHanPlayerCharacter::AHanPlayerCharacter()
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
-	
+	// 무기 소켓 이름 캐싱
+	WeaponSocketName = TEXT("WeaponSocket");
+	RootSocketName = TEXT("RootSocket");
+
 }
 
 void AHanPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// 시작 시 무기 소환
-	if (WeaponClass) EquipWeapon();
+	if (SpringArmComponent) 
+	{
+		// 시작 시 저장할 스프링 암 컴포넌트의 기본 오프셋 (0, 50, 0)
+		DefaultSocketOffset = SpringArmComponent->SocketOffset; 
+		// 연출용 변수. 카메라가 도달해야하는 목표 위치. 일단은 기본 값으로 잡는다.
+		TargetSocketOffset = DefaultSocketOffset;
+	}
+
+	// 시작 시 무기 장착
+	for (const TPair<EWeaponSlot, UItemDataAsset*>& Elem : DefaultWeaponDataAssets)
+	{
+		UItemDataAsset* WeaponData = Elem.Value;
+		if (IsValid(WeaponData))
+		{
+			EquipWeapon(WeaponData);
+		}
+	}
+
+	// 기본 무기가 단검 슬롯에 있다면 단검으로 시작
+	if(WeaponSlots.Contains(EWeaponSlot::Dagger) && IsValid(WeaponSlots[EWeaponSlot::Dagger]))
+	{
+		ChangeWeapon(EWeaponSlot::Dagger);
+	}
 
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 	if (IsValid(PlayerController) == true)
@@ -78,6 +110,26 @@ void AHanPlayerCharacter::BeginPlay()
 		if (IsValid(Subsystem) == true)
 		{
 			Subsystem->AddMappingContext(PlayerCharacterInputMappingContext, 0);
+		}
+	}
+
+	// 카메라의 포스트 프로세스 머티리얼을 동적 인스턴스로 승격
+	if (CameraComponent)
+	{
+		// 카메라에 등록된 포스트 프로세스 머티리얼 배열(WeightedBlendables)을 가져옴.
+		TArray<FWeightedBlendable> Blendables = CameraComponent->PostProcessSettings.WeightedBlendables.Array;
+
+		if (Blendables.Num() > 0 && Blendables[0].Object)
+		{
+			// 등록된 0번째 머티리얼 에셋을 기반으로 동적 머티리얼(Dynamic)을 생성.
+			UMaterialInterface* BaseMat = Cast<UMaterialInterface>(Blendables[0].Object);
+			if (BaseMat)
+			{
+				PPStealthDynamicMat = UMaterialInstanceDynamic::Create(BaseMat, this);
+
+				// 생성된 동적 머티리얼을 카메라에 다시 꽂아줌
+				CameraComponent->PostProcessSettings.WeightedBlendables.Array[0].Object = PPStealthDynamicMat;
+			}
 		}
 	}
 }
@@ -90,7 +142,43 @@ void AHanPlayerCharacter::Tick(float DeltaTime)
 	if (CameraComponent)
 	{
 		CurrentFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, FOVInterpSpeed);
-		CameraComponent->SetFieldOfView(CurrentFOV);
+		// 기본 박동 오프셋은 0으로 초기화
+		float HeartBeatFOVOffset = 0.0f;
+
+		// 은신 카메라 연출을 위한 로직 
+		// TargetDitherAlpha가 0.1f라는 것은 현재 은신중이라는 뜻.
+		if (FMath::IsNearlyEqual(TargetDitherAlpha, 0.1f, 0.01f))
+		{
+			// 4 * x * (1 - x) 공식을 활용한 펄스 생성
+			float HeartBeatPulse = 4.0f * CurrentDitherAlpha * (1.0f - CurrentDitherAlpha);
+
+			// 펄스 값 범위 보정
+			HeartBeatPulse = FMath::Clamp(HeartBeatPulse - 0.3f, 0.0f, 1.0f);
+
+			// 카메라가 순간적으로 좁혀질 강도 설정
+			HeartBeatFOVOffset = HeartBeatPulse * -20.0f;
+		}
+
+		// 컴포넌트가 목표 지점을 향해 프레임마다 부드럽게 쫓아가게 만든다.
+		if (SpringArmComponent)
+		{
+			float InterpSpeed = FOVInterpSpeed;
+			
+			// 발차기 연출용 - 에디터에서 InterpSpeed를 높게 잡아줄수록 더 빠르게 목표지점으로 이동한다.
+			SpringArmComponent->SocketOffset = FMath::VInterpTo(SpringArmComponent->SocketOffset, TargetSocketOffset, DeltaTime, InterpSpeed);
+		
+			// 발차기 연출용 - 마우스 제어권을 잠시 잠구고, 카메라 각도를 왼쪽으로 스르륵 돌려준다. 
+			APlayerController* PC = Cast<APlayerController>(GetController());
+			if (PC && PC->IsLookInputIgnored()) // 마우스가 잠겨있는(발차기 중인) 동안에만 작동
+			{
+				FRotator CurrentRot = PC->GetControlRotation();
+				FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetControlRotation, DeltaTime, InterpSpeed);
+				PC->SetControlRotation(NewRot);
+			}
+		}
+
+		// 최종 FOV 적용 (기본 보간 FOV + 심장 박동 오프셋)
+		CameraComponent->SetFieldOfView(CurrentFOV + HeartBeatFOVOffset);
 	}
 
 	// 현재 속도 및 상태 체크
@@ -112,6 +200,54 @@ void AHanPlayerCharacter::Tick(float DeltaTime)
 		GetCharacterMovement()->bOrientRotationToMovement = !bShouldLookCamera && bIsRunning;
 
 		bLastRotationState = bShouldLookCamera;
+	}
+
+	// 은신 디더링 효과 천천히	 
+	CurrentDitherAlpha = FMath::FInterpTo(CurrentDitherAlpha, TargetDitherAlpha, DeltaTime, 5.0f);
+	
+	int MaterialCount = GetMesh()->GetNumMaterials();
+	for (int i = 0; i < MaterialCount; ++i)
+	{
+		UMaterialInstanceDynamic* DynamicMaterial = GetMesh()->CreateDynamicMaterialInstance(i);
+		if (DynamicMaterial)
+		{
+			DynamicMaterial->SetScalarParameterValue(FName("Alpha"), CurrentDitherAlpha);
+		}
+	}
+
+	if (EquippedWeapon)
+	{
+		TArray<UActorComponent*> WeaponComponents;
+		EquippedWeapon->GetComponents(WeaponComponents);
+
+		for (UActorComponent* Component : WeaponComponents)
+		{
+			UMeshComponent* MeshComp = Cast<UMeshComponent>(Component);
+			if (MeshComp)
+			{
+				int WeaponMatCount = MeshComp->GetNumMaterials();
+				for (int j = 0; j < WeaponMatCount; ++j)
+				{
+					UMaterialInstanceDynamic* WeaponDynamicMat = MeshComp->CreateDynamicMaterialInstance(j);
+					if (WeaponDynamicMat)
+					{
+						WeaponDynamicMat->SetScalarParameterValue(FName("Alpha"), CurrentDitherAlpha);
+					}
+				}
+			}
+		}
+	}
+
+	// 포스트 프로세스 머티리얼 파라미터 실시간 제어
+	if (PPStealthDynamicMat)
+	{
+		// CurrentDitherAlpha를 뒤집어서 흑백 강도로 사용.
+		// - 평상시 (CurrentDitherAlpha = 1.0) -> PP_Saturation = 0.0 (원래 컬러 화면)
+		// - 은신시 (CurrentDitherAlpha = 0.1) -> PP_Saturation = 0.9 (90% 흑백 회색조)
+		float TargetPPSaturation = 1.0f - CurrentDitherAlpha;
+
+		// 머티리얼에서 만든 파라미터 이름("PP_Saturation")에 값을 꽂아준다.
+		PPStealthDynamicMat->SetScalarParameterValue(FName("PP_Saturation"), TargetPPSaturation);
 	}
 }
 
@@ -135,7 +271,7 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			PlayerCharacterInputConfig->Move,
 			ETriggerEvent::Triggered,
 			this,
-			&AHanPlayerCharacter::InputMove 
+			&AHanPlayerCharacter::InputMove
 		);
 
 		EnhancedInputComponent->BindAction(
@@ -147,31 +283,31 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		// 달리기 입력 바인딩
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Sprint, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Sprint,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::InputSprintStart
 		);
 
 		EnhancedInputComponent->BindAction(
 			PlayerCharacterInputConfig->Sprint,
-			ETriggerEvent::Completed, 
-			this, 
+			ETriggerEvent::Completed,
+			this,
 			&AHanPlayerCharacter::InputSprintEnd
 		);
 
 		// 점프 입력 바인딩
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Jump, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Jump,
+			ETriggerEvent::Started,
+			this,
 			&ACharacter::Jump
 		);
-		
+
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Jump, 
-			ETriggerEvent::Completed, 
-			this, 
+			PlayerCharacterInputConfig->Jump,
+			ETriggerEvent::Completed,
+			this,
 			&ACharacter::StopJumping
 		);
 
@@ -179,7 +315,7 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			PlayerCharacterInputConfig->Crouch,
 			ETriggerEvent::Started,
 			this,
-			&AHanPlayerCharacter::InputCrouchToggle 
+			&AHanPlayerCharacter::InputCrouchToggle
 		);
 
 		// 공격 
@@ -199,46 +335,63 @@ void AHanPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 		// 조준 
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Aim, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Aim,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::StartAim
 		);
 
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Aim, 
-			ETriggerEvent::Completed, 
-			this, 
+			PlayerCharacterInputConfig->Aim,
+			ETriggerEvent::Completed,
+			this,
 			&AHanPlayerCharacter::StopAim
 		);
 
 		// 인벤토리, 상호작용
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Inven, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Inven,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::InventoryShow
 		);
 
 		EnhancedInputComponent->BindAction(
-			PlayerCharacterInputConfig->Interact, 
-			ETriggerEvent::Started, 
-			this, 
+			PlayerCharacterInputConfig->Interact,
+			ETriggerEvent::Started,
+			this,
 			&AHanPlayerCharacter::InputInteract
 		);
 
 		// 장전
 		EnhancedInputComponent->BindAction(
 			PlayerCharacterInputConfig->Reload,
-			ETriggerEvent::Started,              
+			ETriggerEvent::Started,
 			this,
-			&AHanPlayerCharacter::InputReload   
+			&AHanPlayerCharacter::InputReload
+		);
+
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->ChangeWeapon,
+			ETriggerEvent::Triggered,
+			this,
+			&AHanPlayerCharacter::InputChangeWeapon
+		);
+
+		// 은신
+		EnhancedInputComponent->BindAction(
+			PlayerCharacterInputConfig->Stealth,
+			ETriggerEvent::Started,
+			this,
+			&AHanPlayerCharacter::ToggleStealthMode
 		);
 	}
 }
 
 void AHanPlayerCharacter::InputMove(const FInputActionValue& InValue)
 {
+	if (bIsAttacking == true) return; //공격중이면 리턴
+
 	FVector2D MovementVector = InValue.Get<FVector2D>();
 
 	switch (CurrentViewMode)
@@ -370,7 +523,6 @@ void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
 	//  이미 앉아있는 상태라면 무조건 일어서기 시도
 	if (bIsCrouched)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Executing UnCrouch()!"));
 		UnCrouch();
 	}
 	// 서 있는 상태라면 '앉을 수 있는지' 확인 후 앉기
@@ -378,7 +530,6 @@ void AHanPlayerCharacter::InputCrouchToggle(const FInputActionValue& InValue)
 	{
 		if (CanCrouch() == true)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Executing Crouch()!"));
 			Crouch();
 		}
 		else
@@ -462,56 +613,190 @@ void AHanPlayerCharacter::Die()
 	GetMesh()->SetSimulatePhysics(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-	// 나중에 여기에 사망 애니메이션을 넣을수도 있을것같습니다! - 한기담
 	Destroy();
 }
 
-void AHanPlayerCharacter::EquipWeapon()
+void AHanPlayerCharacter::EquipWeapon(UItemDataAsset* NewWeaponData)
 {
-	if (EquippedWeapon) UnEquipWeapon();
-
-	if (WeaponClass)
+	if (!NewWeaponData)
 	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = GetInstigator();
+		return;
+	}
+	
+	UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(NewWeaponData);
+	TSubclassOf<AWeaponBase> NewWeaponClass = WeaponData->WeaponActorClass;
 
-		// 무기 생성
-		AWeaponBase* SpawnedWeapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, SpawnParams);
-		if (SpawnedWeapon)
+	if (!NewWeaponClass) return;
+
+	// 이미 해당 슬롯에 무기가 존재한다면 기존 무기를 제거
+	EWeaponSlot NewSlot = WeaponData->WeaponSlot;
+	if (WeaponSlots.Contains(NewSlot))
+	{
+		// 기존 무기는 인벤토리에 추가됩니다.
+		UnEquipWeapon(NewSlot, false);
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = GetInstigator();
+
+	// 무기 생성 (데이터 에셋을 등록하기 위해 지연 스폰을 사용)
+	AWeaponBase* SpawnedWeapon = GetWorld()->SpawnActorDeferred<AWeaponBase>(
+		NewWeaponClass,
+		FTransform::Identity,
+		this,
+		GetInstigator(),
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+	);
+
+	if (SpawnedWeapon)
+	{
+		// 생성된 무기에 데이터 에셋의 정보를 전달 및 초기화
+		SpawnedWeapon->ItemData = NewWeaponData;
+		SpawnedWeapon->WeaponInitFromData();
+		SpawnedWeapon->FinishSpawning(FTransform::Identity);
+
+		WeaponSlots.Add(NewSlot, SpawnedWeapon);
+
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+		SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, WeaponSocketName);
+
+		USkeletalMeshComponent* MeshComp = SpawnedWeapon->FindComponentByClass<USkeletalMeshComponent>();
+		if(MeshComp && MeshComp->DoesSocketExist(RootSocketName))
 		{
-			FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-			SpawnedWeapon->AttachToComponent(GetMesh(), AttachmentRules, FName("WeaponSocket"));
-			EquippedWeapon = SpawnedWeapon;
+			FTransform SocketTransform = MeshComp->GetSocketTransform(RootSocketName, RTS_Component);
+			FTransform InverseTransform = SocketTransform.Inverse();
+			MeshComp->SetRelativeTransform(InverseTransform);
+		}
 
-			//한기담 - 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
-			CurrentAttack_1_Montage = SpawnedWeapon->Attack_1_Montage;
-			CurrentAttack_2_Montage = SpawnedWeapon->Attack_2_Montage;
-			CurrentReloadMontage = SpawnedWeapon->Reload_Montage;
+		// 무기는 처음에 보이지 않게 설정
+		SpawnedWeapon->SetActorHiddenInGame(true);
+		SpawnedWeapon->SetActorEnableCollision(false);
+
+		// 무기 슬롯에 무기 장착 시, 인벤토리에서 아이템 삭제
+		if (InventoryComponent)
+		{
+			// (※ InventoryComponent에 구현된 아이템 제거 함수명에 맞춰 수정해 주세요. 예: RemoveItem)
+			InventoryComponent->RemoveItemQuantity(NewWeaponData, 1);
+		}
+
+		// 현재 장착된 무기가 없을 때만 새로 장착한 무기로 변경
+		if (CurrentWeaponSlot == EWeaponSlot::None)
+		{
+			ChangeWeapon(NewSlot);
+		}
+
+		if (NewSlot == EWeaponSlot::Ranged)
+		{
+			OnRangedWeaponEquipped.Broadcast(); // 원거리 무기 장착 시 이벤트 브로드캐스트
 		}
 	}
 }
 
-void AHanPlayerCharacter::UnEquipWeapon()
+void AHanPlayerCharacter::UnEquipWeapon(EWeaponSlot RemoveSlot, bool bDestroyWeapon)
 {
+	// 슬롯에 무기가 존재하지 않으면 리턴
+	if (!WeaponSlots.Contains(RemoveSlot))
+	{
+		return;
+	}
+
+	AWeaponBase* WeaponToRemove = WeaponSlots[RemoveSlot];
+
+	if(WeaponToRemove)
+	{
+		if (CurrentWeaponSlot == RemoveSlot)
+		{
+			CurrentWeaponSlot = EWeaponSlot::None;
+			EquippedWeapon = nullptr;
+
+			UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+			if (AnimInst)
+			{
+				CurrentAttack_1_Montage = nullptr;
+				CurrentAttack_2_Montage = nullptr;
+				CurrentReloadMontage = nullptr;
+			}
+		}
+
+		// 무기 해제 시 인벤토리에 아이템 데이터 추가
+		if (!bDestroyWeapon  && InventoryComponent) 
+		{
+			InventoryComponent->AddItem(WeaponToRemove->ItemData);
+
+			if (RemoveSlot == EWeaponSlot::Ranged)
+			{
+				// 원거리 무기일 경우 부착물도 인벤토리에 추가
+				if (ARangedWeaponBase* RangedWeapon = Cast<ARangedWeaponBase>(WeaponToRemove))
+				{
+					TMap<EAttachmentSlot, UAttachmentDataAsset*> Attachments = RangedWeapon->GetRangedAttachmentComponent()->GetCurrentAttachments();
+					for (const TPair<EAttachmentSlot, UAttachmentDataAsset*>& AttachmentPair : Attachments)
+					{
+						if (AttachmentPair.Value)
+						{
+							InventoryComponent->AddItem(AttachmentPair.Value);
+						}
+					}
+				}
+			}
+		}
+
+		WeaponToRemove->DestroyWeapon(); 
+		WeaponSlots.Remove(RemoveSlot);
+
+		// 기본 무기가 단검 슬롯에 있다면 단검으로 시작
+		if (WeaponSlots.Contains(EWeaponSlot::Dagger) && IsValid(WeaponSlots[EWeaponSlot::Dagger]))
+		{
+			ChangeWeapon(EWeaponSlot::Dagger);
+		}
+
+		// 무기 제거 시, 원거리 무기였다면 이벤트 브로드캐스트
+		if (RemoveSlot == EWeaponSlot::Ranged)
+		{
+			OnRangedWeaponEquipped.Broadcast();
+		}
+	}
+}
+
+void AHanPlayerCharacter::ChangeWeapon(EWeaponSlot NewSlot)
+{
+	// 이미 장착된 슬롯이거나 해당 슬롯에 무기가 없으면 리턴
+	if (CurrentWeaponSlot == NewSlot || !WeaponSlots.Contains(NewSlot)) 
+	{
+		return;
+	}
+
+	// 장착된 무기를 숨김
 	if (EquippedWeapon)
 	{
-		EquippedWeapon->DestroyWeapon(); 
-		EquippedWeapon = nullptr;
+		EquippedWeapon->SetActorHiddenInGame(true);
+		EquippedWeapon->SetActorEnableCollision(false);
+	}
+
+	// 새 무기를 장착
+	AWeaponBase* NewWeapon = WeaponSlots[NewSlot];
+	if(NewWeapon)
+	{
+		NewWeapon->SetActorHiddenInGame(false);
+
+		EquippedWeapon = NewWeapon;
+		CurrentWeaponSlot = NewSlot;
+		// 한기담 - 무기가 가진 몽타주 변수들을 캐릭터로 가져옵니다. 
+
+		CurrentAttack_1_Montage = EquippedWeapon->Attack_1_Montage;
+		CurrentAttack_2_Montage = EquippedWeapon->Attack_2_Montage;
+		CurrentReloadMontage = EquippedWeapon->Reload_Montage;
 	}
 }
 
 void AHanPlayerCharacter::StartAttack()
 {
+	if (GetCharacterMovement() && GetCharacterMovement()->IsFalling()) return; // 점프중이면 리턴
+	if (bIsCrouched) return; //앉아있는 상태면 리턴
+
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->StartWeaponAttack(); // 일반 공격
-	}
-
-	// bIsAiming이 false일 때만 자리에 멈추게 합니다.
-	if (bIsAiming == false)
-	{
-		if (GetCharacterMovement()) GetCharacterMovement()->StopMovementImmediately();
 	}
 }
 
@@ -528,21 +813,27 @@ void AHanPlayerCharacter::StopAttack()
 
 void AHanPlayerCharacter::StartAim() 
 { 
-	// 장전중일때는 조준 입력 무시
+	// 장점 중, 발차기 중일 때는 조준 입력 무시
 	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
-	if (AnimInst && AnimInst->IsSlotActive(FName("ReloadSlot"))){ return; }
-
+	if (AnimInst && (AnimInst->IsSlotActive(FName("ReloadSlot")) || AnimInst->IsSlotActive(FName("LeftMouseAttackSlot"))))
+	{
+		return;
+	}
+	
 	bIsAiming = true; 
+	FOVInterpSpeed = 10.0f; // 줌인 속도
 	TargetFOV = AimingFOV; 
 
 	bUseControllerRotationYaw = true;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->MaxWalkSpeed = CrouchWalkSpeed;
 	
-	// 임시로 만들어봄 - 단검일경우 카메라 확대는 안하도록
+	// 근접 무기일경우 조준 모드에서도 카메라 확대는 안하도록
 	if (EquippedWeapon == nullptr) return;
 	EWeaponType CurrentWeapon = EquippedWeapon->GetWeaponType();
-	if (CurrentWeapon == EWeaponType::Dagger || CurrentWeapon == EWeaponType::TwoHandedMelee)
+	if (CurrentWeapon == EWeaponType::Dagger 
+		|| CurrentWeapon == EWeaponType::TwoHandedMelee
+		|| CurrentWeapon == EWeaponType::OneHandedMelee)
 	{
 		TargetFOV = DefaultFOV; // 줌 안 함
 	}
@@ -557,6 +848,7 @@ void AHanPlayerCharacter::StartAim()
 void AHanPlayerCharacter::StopAim() 
 { 
 	bIsAiming = false; 
+	FOVInterpSpeed = 10.0f;
 	TargetFOV = DefaultFOV; 
 
 	// 조준 풀면 다시 입력 방향대로 자유롭게 몸을 돌린다.
@@ -568,6 +860,123 @@ void AHanPlayerCharacter::StopAim()
 	{
 		ThrowableWeapon->EnableTrajectory(false); // 투척 무기라면 조준을 풀 때 궤적 표시 끄기
 	}
+}
+
+void AHanPlayerCharacter::PlayKickZoomIn(float InFOV, FVector InOffset, float InSpeed)
+{
+	TargetFOV = InFOV; // ABP 이벤트 그래프에서 입력 받은 값으로 줌인.
+	FOVInterpSpeed = InSpeed;
+	if (SpringArmComponent)
+	{
+		// 마우스 회전값(Control Rotation)을 담당하는 플레이어 컨트롤러를 가져옴
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			PC->SetIgnoreLookInput(true);
+
+			// 캐릭터의 현재 정면 각도를 가져와서 저장
+			FRotator CharacterRot = GetActorRotation();
+			PC->SetControlRotation(CharacterRot);
+			DefaultControlRotation = CharacterRot; // 원래 보던 각도 기억
+
+			// 캐릭터 정면 기준, 카메라의 시선을 왼쪽으로 75도(Yaw: -75.f) 돌린다.
+			TargetControlRotation = CharacterRot;
+			TargetControlRotation.Yaw -= 75.0f; // 숫자를 키울수록 더 왼쪽을 쳐다 본다.
+		}
+
+		// 카메라가 캐릭터의 등 뒤에서 시작
+		FVector StartOffset = FVector(-100.0f, 50.0f, -50.0f);
+		SpringArmComponent->SocketOffset = StartOffset;
+
+		// 카메라가 최종 도달할 앞으로 전진하는 목표 위치. ABP 이벤트 그래프에서 설정 가능
+		TargetSocketOffset = InOffset;
+	}
+}
+
+void AHanPlayerCharacter::PlayKickZoomOut()
+{
+	TargetFOV = DefaultFOV; // 줌아웃은 디폴트 줌으로
+	if (SpringArmComponent)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		if (PC)
+		{
+			PC->SetIgnoreLookInput(false);					// 발차기 모션이 완전히 끝났으므로 마우스 권한 다시 복구
+			PC->SetControlRotation(DefaultControlRotation); // 카메라 각도를 원래 정면 각도로 강제 리셋
+		}
+
+		// 끝나는 순간 원래 세팅(0, 50, 0)으로 이동
+		TargetSocketOffset = DefaultSocketOffset;
+		SpringArmComponent->SocketOffset = DefaultSocketOffset;
+	}
+}
+
+void AHanPlayerCharacter::PlayDaggerZoomIn()
+{
+	TargetFOV = AimingFOV;
+}
+
+void AHanPlayerCharacter::PlayDaggerZoomOut()
+{
+	TargetFOV = DefaultFOV;
+}
+
+// 은신 스킬 관련 함수들
+void AHanPlayerCharacter::ToggleStealthMode()
+{
+	UE_LOG(LogTemp, Warning, TEXT("은신이 켜짐"));
+	if (bIsStealth == true) return; // 이미 은신 중이면 리턴
+	if (bIsStealthCooldown == true) return; // 은신이 풀려도 아직 쿨타임 도중이라면 리턴
+
+	bIsStealth = true;
+	TargetDitherAlpha = 0.1f; // 은신이 켜지면 캐릭터, 무기 메시 투명화(0.1) 목표 설정
+
+	// 은신 사운드 (처음 큰 박동, 후에 5초간 낮은 지속 박동)
+	if (FirstBigHeartbeatSound) { UGameplayStatics::PlaySound2D(GetWorld(), FirstBigHeartbeatSound, 2.0f, 1.0f, 0.0f); }
+	if (LoopingStealthSoundCue) { StealthAudioComp = UGameplayStatics::SpawnSound2D(GetWorld(), LoopingStealthSoundCue, 1.0f, 1.0f, 0.0f); }
+	// 인자: 월드, 믹스에셋, 적용될때 걸리는 시간(Delay) - 은신 모드 모든 사운드 변경용 - 실험용
+	if (StealthSoundMix){ UGameplayStatics::PushSoundMixModifier(GetWorld(), StealthSoundMix); }
+	
+	// 은신을 켰다면 주변 AI들의 타겟을 강제로 초기화해줍니다.
+	if (bIsStealth)
+	{
+		// 월드에 있는 모든 좀비 AI 컨트롤러를 찾아서 TargetActor를 비웁니다.
+		for (TActorIterator<ABaseZombie_Ai> It(GetWorld()); It; ++It)
+		{
+			ABaseZombie_Ai* ZombieAI = *It;
+			if (ZombieAI && ZombieAI->GetBlackboardComponent())
+			{
+				// 은신을 켰으므로 좀비들의 타겟에서 나를 지워버립니다.
+				ZombieAI->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), nullptr);
+			}
+		}
+	}
+
+	// 5초 뒤에 자동으로 은신을 꺼주는 'DisableStealthMode' 함수 예약.
+	GetWorldTimerManager().SetTimer(StealthTimerHandle, this, &AHanPlayerCharacter::DisableStealthMode, 5.0f, false);
+}
+
+void AHanPlayerCharacter::DisableStealthMode()
+{
+	bIsStealth = false;
+	TargetDitherAlpha = 1.0f; // 부드럽게 캐릭터와 무기 메시의 은신이 풀리기 시작 (Tick에서 InterpTo 처리)
+
+	// 0.5초에 걸쳐서 사운드가 사라짐
+	if (StealthAudioComp && StealthAudioComp->IsPlaying()) { StealthAudioComp->FadeOut(0.5f, 0.0f); }
+	// 활성화했던 사운드 믹스를 해제하여 소리를 원래대로 돌려놓음 - 실험용
+	if (StealthSoundMix) { UGameplayStatics::PopSoundMixModifier(GetWorld(), StealthSoundMix); }
+
+	UE_LOG(LogTemp, Warning, TEXT("은신이 꺼짐. 10초 쿨타임 적용"));
+	
+	// 은신이 풀림과 동시에 쿨타임 함수를 실행 해서 10초 동안은 다시 은신 모드로 들어가지 못하게 막음
+	bIsStealthCooldown = true;
+	GetWorldTimerManager().SetTimer(StealthCooldownTimerHandle, this, &AHanPlayerCharacter::ResetStealthCooldown, 10.0f, false);
+}
+
+void AHanPlayerCharacter::ResetStealthCooldown()
+{
+	bIsStealthCooldown = false; // 쿨타임 끝. 다시 은신 가능
+	UE_LOG(LogTemp, Warning, TEXT("다시 은신 사용 가능"));
 }
 
 // 조준 상태 반환 함수를 추가했습니다.
@@ -584,11 +993,50 @@ void AHanPlayerCharacter::InputReload(const FInputActionValue& Value)
 	}
 }
 
-void AHanPlayerCharacter::PlayAttackMontage_1()
+void AHanPlayerCharacter::InputChangeWeapon(const FInputActionValue& Value)
 {
+	if (GetMesh() && GetMesh()->GetAnimInstance() && GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
+	{
+		return;
+	}
+
+	float SlotIndex = Value.Get<float>();
+	EWeaponSlot TargetSlot = EWeaponSlot::None;
+
+	if (FMath::IsNearlyEqual(SlotIndex, 1.0f)) TargetSlot = EWeaponSlot::Melee;
+	else if (FMath::IsNearlyEqual(SlotIndex, 2.0f)) TargetSlot = EWeaponSlot::Ranged;
+	else if (FMath::IsNearlyEqual(SlotIndex, 3.0f)) TargetSlot = EWeaponSlot::Dagger;
+	else if (FMath::IsNearlyEqual(SlotIndex, 4.0f)) TargetSlot = EWeaponSlot::Grenade;
+	else return; // 유효하지 않은 입력이면 리턴
+
+	ChangeWeapon(TargetSlot);
+}
+
+
+void AHanPlayerCharacter::PlayAttackMontage_1(float InPlayRate)
+{
+	bIsAttacking = true;
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+
 	if(CurrentAttack_1_Montage)
 	{
-		PlayAnimMontage(CurrentAttack_1_Montage);
+		PlayAnimMontage(CurrentAttack_1_Montage, InPlayRate);
+	}
+
+	// 몽타주가 완전히 끝나는 프레임 타이밍에 센서를 OFF
+	UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+	if (AnimInst)
+	{
+		FOnMontageEnded MontageEndedDelegate;
+		MontageEndedDelegate.BindLambda([this](UAnimMontage* Montage, bool bInterrupted)
+			{
+				bIsAttacking = false; // 애니메이션 끝나면 다시 이동 가능하게끔
+			});
+		AnimInst->Montage_SetEndDelegate(MontageEndedDelegate, CurrentAttack_1_Montage);
 	}
 }
 
@@ -606,4 +1054,29 @@ void AHanPlayerCharacter::PlayReloadMontage()
 	{
 		PlayAnimMontage(CurrentReloadMontage);
 	}
+}
+
+void AHanPlayerCharacter::SetBaseWalkSpeed(float NewSpeed)
+{
+	BaseWalkSpeed = NewSpeed;
+    
+	// 언리얼 무브먼트 컴포넌트 실시간 속도 변경
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
+}
+
+// 은신 쿨타임 진행도 반환 함수
+float AHanPlayerCharacter::GetStealthCooldownRatio() const
+{
+	// 쿨타임 중 -> 진행도를 0.0 -> 1.0 으로 계산해서 반환
+	if (bIsStealthCooldown)
+	{
+		float Remaining = GetWorldTimerManager().GetTimerRemaining(StealthCooldownTimerHandle);
+		float Total = 10.0f; // 설정하신 쿨타임 10초
+		return FMath::Clamp(1.0f - (Remaining / Total), 0.0f, 1.0f);
+	}
+	// 쿨타임이 아니면 -> 꽉 찬 상태(1.0) 반환
+	return 1.0f;
 }

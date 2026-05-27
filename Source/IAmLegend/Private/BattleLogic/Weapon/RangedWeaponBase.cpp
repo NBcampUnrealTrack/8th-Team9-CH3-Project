@@ -5,13 +5,20 @@
 #include "WeaponDataAsset.h"
 #include "Character/HanPlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "Item/InventoryComponent.h"
+#include "Item/ItemDataAsset.h"
+#include "BattleLogic/Weapon/DataAssets/RangedWeaponDataAsset.h"
+#include "BattleLogic/Attachment/RangedAttachmentComponent.h"
 
 #define ATTACK_TRACE_CHANNEL ECC_GameTraceChannel1
 
 ARangedWeaponBase::ARangedWeaponBase()
 {
-	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
+	AttachmentComponent = CreateDefaultSubobject<URangedAttachmentComponent>(TEXT("AttachmentComponent"));
+
+	// 기본 값 설정
 	WeaponType = EWeaponType::TwoHandedRanged; // 무기 타입 설정
+	WeaponSlot = EWeaponSlot::Ranged; // 무기 슬롯 설정
 	Range = 10000.f;	// 사거리 10000
 	FireRate = 600.f;	// 분당 600발
 	MaxAmmo = 30;
@@ -20,20 +27,19 @@ ARangedWeaponBase::ARangedWeaponBase()
 	MaxSpreadAngle = 3.f;
 	SpreadPerShot = 0.4f;		// 탄 퍼짐과 회복 속도는 두 배 정도가 적당한 것 같습니다. 추후 UI에서 확인 하면서 조정하면 좋을 것 같습니다.
 	RecoverySpreadSpeed = 0.8f;	// 무기 별로 다르게 설정가능 합니다
-
 	MuzzleSocketName = "MuzzleSocket";
+	MeleeAttackCooldown = 1.0f;
+	MeleeAttackBoxExtent = FVector(1.f, 40.f, 90.f);
+	MeleeAttackRange = 100.f;
+
 	bIsReloading = false;
 	bIsCoolDown = false;
 	bIsPressingAttack = false;
 	bIsMeleeAttacking = false;
 
-	MeleeAttackCooldown = 1.0f;
-	MeleeAttackBoxExtent = FVector(1.f, 40.f, 90.f);
-	MeleeAttackRange = 100.f;
-
-	// BeginPlay에서 초기화하는 값들
+	// WeaponInitFromData()에서 다시 계산
 	FireInterval = 60.f / FireRate;
-	CoolDownTime = FireInterval - 0.01f; 
+	CoolDownTime = FireInterval - 0.015f; 
 	CurrentAmmo = MaxAmmo;
 	CurrentSpreadAngle = BaseSpreadAngle;
 	
@@ -42,12 +48,6 @@ ARangedWeaponBase::ARangedWeaponBase()
 void ARangedWeaponBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
-
-	FireInterval = 60.f / FireRate;			// 발사 간격 계산
-	CoolDownTime = FireInterval - 0.015f;	// 발사 후 쿨다운 시간 계산 (오토와 시간이 완전히 동일하면 타이머가 제대로 작동하지 않을 수 있으므로 약간의 여유를 둡니다.)
-	CurrentAmmo = MaxAmmo;					// 초기 탄약 수 설정
-	CurrentSpreadAngle = BaseSpreadAngle;	// 초기 퍼짐 각도 설정
 	
 }
 
@@ -55,25 +55,13 @@ void ARangedWeaponBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (!Mesh || !OwnerCharacter) return;
+	if (!SkeletalMesh || !OwnerCharacter) return;
 
 	if (bIsMeleeAttacking)
 	{
 		MeleeAttackTrace(); // 근접 공격 판정 수행
 	}
 }
-
-void ARangedWeaponBase::WeaponInitFromData()
-{
-	Super::WeaponInitFromData();
-
-	// WeaponDataAsset에서 추가로 초기화할 부분을 여기에 작성하면 됩니다.
-	if(UWeaponDataAsset* WeaponData = Cast<UWeaponDataAsset>(ItemData))
-	{
-		
-	}
-}
-
 
 void ARangedWeaponBase::StartWeaponAttack()
 {
@@ -122,8 +110,22 @@ void ARangedWeaponBase::Reload()
 
 	if (!OwnerCharacter || bIsReloading || CurrentAmmo >= MaxAmmo) return; // 이미 재장전 중이거나 탄약이 가득 차 있으면 무시
 
-	OwnerCharacter->PlayAnimMontage(Reload_Montage);
+	// 인벤토리에서 총알 가져와서 사용하기 - 김민성
+	int32 TotalAmmo = 0;
+	TArray<FItemSlot>& Inventory = OwnerCharacter->GetInventoryComponent()->GetActualInventory();
+	for (const FItemSlot& Slot : Inventory)
+	{
+		if (Slot.ItemData && Slot.ItemData->Category == EItemCategory::Ammo)
+		{
+			TotalAmmo += Slot.Quantity;
+		}
+	}
 
+	// 총알 = 0일 시 장전 취소 - 김민성
+	if (TotalAmmo <= 0) return;
+
+	// 재장전 애니메이션 재생
+	OwnerCharacter->PlayReloadMontage();
 	bIsReloading = true;
 
 	UE_LOG(LogTemp, Log, TEXT("Started reloading weapon: %s"), *GetName());
@@ -131,8 +133,44 @@ void ARangedWeaponBase::Reload()
 
 void ARangedWeaponBase::FinishReload()
 {
-	CurrentAmmo = MaxAmmo; // 탄약 수 초기화
+	if (!OwnerCharacter) return;
+	// ------코드 추가 [김민성]-----------
+	// 채워야 할 총알 개수 계산 및 인벤토리에서 실제 차감
+	int32 AmmoNeeded = MaxAmmo - CurrentAmmo;
+	int32 AmmoToReload = 0;
+
+	TArray<FItemSlot>& Inventory = OwnerCharacter->GetInventoryComponent()->GetActualInventory();
+
+	// 인벤토리 뒤에서부터 검색하여 총알 차감
+	for (int32 i = Inventory.Num() - 1; i >= 0; i--)
+	{
+		if (Inventory[i].ItemData && Inventory[i].ItemData->Category == EItemCategory::Ammo)
+		{
+			// 슬롯에 있는 총알이 필요량보다 많을 때
+			if (Inventory[i].Quantity > AmmoNeeded)
+			{
+				Inventory[i].Quantity -= AmmoNeeded;
+				AmmoToReload += AmmoNeeded;
+				AmmoNeeded = 0;
+				break;
+			}
+			// 슬롯에 있는 총알이 부족하거나 딱 맞을 때 (남은거 다 긁어모으고 슬롯 삭제)
+			else
+			{
+				AmmoToReload += Inventory[i].Quantity;
+				AmmoNeeded -= Inventory[i].Quantity;
+				Inventory.RemoveAt(i);
+			}
+		}
+	}
+
+	// 가방에서 꺼내온 총알 수만큼만 탄창에 추가
+	CurrentAmmo += AmmoToReload;
 	bIsReloading = false;
+	// -----------------
+
+	// CurrentAmmo = MaxAmmo; // 탄약 수 초기화
+	// bIsReloading = false;
 
 	UE_LOG(LogTemp, Log, TEXT("Finished reloading weapon: %s, Current Ammo: %d"), *GetName(), CurrentAmmo);
 }
@@ -164,16 +202,19 @@ void ARangedWeaponBase::HandleFire()
 
 void ARangedWeaponBase::Fire()
 {
-	// 테스트로 무기에서 발사 시 애니메이션 몽타주 재생하는 부분을 추가해봤습니다. 
-	// 추후에 캐릭터에서 발사 시 애니메이션 재생하는 것으로 변경할 예정입니다.
+	if (!OwnerCharacter || !SkeletalMesh) return;
+
+	// 무기에서 발사 시 애니메이션 몽타주 재생
 	OwnerCharacter->PlayAttackMontage_2();
+	if(FireAnimSequence && SkeletalMesh)
+	{
+		SkeletalMesh->PlayAnimation(FireAnimSequence, false);
+	}
 
 	CurrentAmmo--;
 	bIsCoolDown = true;
 	GetWorldTimerManager().SetTimer(CoolDownTimerHandle, this, &ARangedWeaponBase::FinishCooldown, CoolDownTime, false);
 
-	if (!OwnerCharacter) return;
-	
 	// 탄 발사 시 트레이스 계산
 	FVector Start, End;
 	CalculateTrace(Start, End);
@@ -194,10 +235,6 @@ void ARangedWeaponBase::Fire()
 
 	// 탄 퍼짐 회복 타이머 시작
 	GetWorldTimerManager().SetTimer(SpreadRecoveryTimerHandle, this, &ARangedWeaponBase::RecoverSpread, 0.01f, true);
-
-	// 디버그 라인
-	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.0f, 0, 1.0f);
-	UE_LOG(LogTemp, Log, TEXT("Fired weapon: %s, Current Ammo: %d, Current Spread: %f"), *GetName(), CurrentAmmo, CurrentSpreadAngle);
 }
 
 void ARangedWeaponBase::ApplyRecoil()
@@ -247,12 +284,39 @@ void ARangedWeaponBase::RecoverSpread()
 
 void ARangedWeaponBase::CalculateTrace(FVector& Start, FVector& End)
 {
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter || !OwnerCharacter->GetController()) return;
+	APlayerController* PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+
+	if (!PlayerController) return;
+
+	FVector CameraLocation;
+	FRotator CameraRotation;
+
+	PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
+	FVector CameraEnd = CameraLocation + (CameraRotation.Vector() * Range);
+
+	FHitResult ScreenTraceHit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(OwnerCharacter); 
+	Params.AddIgnoredActor(this);           
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		ScreenTraceHit,
+		CameraLocation,
+		CameraEnd,
+		ECC_Visibility,
+		Params
+	);
+	FVector TargetPoint = bHit ? ScreenTraceHit.ImpactPoint : CameraEnd;
+
 	FRotator Rotation;
 	OwnerCharacter->GetActorEyesViewPoint(Start, Rotation);
+	
+	// 목적지 계산
+	FVector DirectionToTarget = (TargetPoint - Start).GetSafeNormal();
 
 	// 탄 퍼짐 계산
-	FVector Spread = FMath::VRandCone(Rotation.Vector(), FMath::DegreesToRadians(CurrentSpreadAngle));
+	FVector Spread = FMath::VRandCone(DirectionToTarget, FMath::DegreesToRadians(CurrentSpreadAngle));
 
 	// Range는 AWeaponBase에서 상속받은 사거리입니다. 현재는 블루프린트 내에서 값을 수정해서 사용하고 있습니다.
 	End = Start + Spread * Range;
@@ -340,4 +404,42 @@ void ARangedWeaponBase::AnimNotify_EndReload()
 {
 	Super::AnimNotify_EndReload();
 	FinishReload();
+}
+
+// --------------------------------------------------------
+// 데이터 에셋에서 초기화
+void ARangedWeaponBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (!ItemData) return;
+
+	if (URangedWeaponDataAsset* RangedWeaponData = Cast<URangedWeaponDataAsset>(ItemData))
+	{
+		FireRate = RangedWeaponData->FireRate;
+		MaxAmmo = RangedWeaponData->MaxAmmo;
+		RecoilAmount = RangedWeaponData->RecoilAmount;
+		SpreadPerShot = RangedWeaponData->SpreadPerShot;
+		BaseSpreadAngle = RangedWeaponData->BaseSpreadAngle;
+		MaxSpreadAngle = RangedWeaponData->MaxSpreadAngle;
+		RecoverySpreadSpeed = RangedWeaponData->RecoverySpreadSpeed;
+		MeleeAttackCooldown = RangedWeaponData->MeleeAttackCooldown;
+		MeleeAttackBoxExtent = RangedWeaponData->MeleeAttackBoxExtent;
+		MeleeAttackRange = RangedWeaponData->MeleeAttackRange;
+		MuzzleSocketName = RangedWeaponData->MuzzleSocketName;
+		FireAnimSequence = RangedWeaponData->FireAnimSequence;
+		AttachmentSlots = RangedWeaponData->AttachmentSlots;
+
+		// 데이터 에셋에서 불러온 값으로 발사 간격과 쿨다운 시간 계산
+		FireInterval = 60.f / FireRate;
+		CoolDownTime = FireInterval - 0.015f;
+		CurrentAmmo = MaxAmmo;
+		CurrentSpreadAngle = BaseSpreadAngle;
+		
+	}
+}
+
+URangedAttachmentComponent* ARangedWeaponBase::GetRangedAttachmentComponent() const
+{
+	return AttachmentComponent;
 }

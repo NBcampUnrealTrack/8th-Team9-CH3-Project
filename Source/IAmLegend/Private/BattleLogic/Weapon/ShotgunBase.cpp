@@ -4,13 +4,15 @@
 #include "BattleLogic/Weapon/ShotgunBase.h"
 #include "WeaponDataAsset.h"
 #include "Character/HanPlayerCharacter.h"
+#include "Item/InventoryComponent.h"
+#include "Item/ItemDataAsset.h"
 #include "Kismet/GameplayStatics.h"
+#include "BattleLogic/Weapon/DataAssets/ShotgunDataAsset.h"
 
 AShotgunBase::AShotgunBase()
 {
 	// 초기값 설정 (추후에 WeaponDataAsset에서 초기화 하는 것으로 변경 예정입니다.)
 	WeaponType = EWeaponType::Shotgun; // 무기 타입 설정
-	Range = 10000.f;	// 사거리 10000
 	FireRate = 75.f;	// 분당 75발, 0.8초마다 발사
 	MaxAmmo = 5;
 	RecoilAmount = 0.1f;	// 현재 반동은 자동으로 회복되지 않으므로 고민을 좀 해봐야 할 것 같습니다.
@@ -26,7 +28,6 @@ AShotgunBase::AShotgunBase()
 void AShotgunBase::BeginPlay()
 {
 	Super::BeginPlay();
-	WeaponInitFromData();
 }
 
 void AShotgunBase::StartWeaponAttack()
@@ -42,22 +43,63 @@ void AShotgunBase::StartWeaponAttack()
 
 void AShotgunBase::FinishReload()
 {
-	CurrentAmmo = FMath::Min(CurrentAmmo + AmmoPerReload, MaxAmmo);	// 탄약 추가
+	// ------코드 추가 [김민성]-----------
+	if (!OwnerCharacter) return;
+
+	// 인벤토리에서 1발(AmmoPerReload)만 빼오기 
+	int32 AmmoToReload = 0;
+	TArray<FItemSlot>& Inventory = OwnerCharacter->GetInventoryComponent()->GetActualInventory();
+
+	for (int32 i = Inventory.Num() - 1; i >= 0; i--)
+	{
+		if (Inventory[i].ItemData && Inventory[i].ItemData->Category == EItemCategory::Ammo)
+		{
+			if (Inventory[i].Quantity >= AmmoPerReload)
+			{
+				Inventory[i].Quantity -= AmmoPerReload;
+				AmmoToReload = AmmoPerReload;
+				break;
+			}
+			else
+			{
+				AmmoToReload = Inventory[i].Quantity;
+				Inventory.RemoveAt(i);
+				break;
+			}
+		}
+	}
+
+	CurrentAmmo += AmmoToReload; // 탄약 추가
 	UE_LOG(LogTemp, Warning, TEXT("Shotgun Reloading... Current Ammo: %d / %d"), CurrentAmmo, MaxAmmo);
 
-	// 장전 완료
-	if (CurrentAmmo >= MaxAmmo)
+	UAnimInstance* OwnerAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (!OwnerAnimInstance) return;
+
+	UAnimMontage* CurrentMontage = OwnerAnimInstance->GetCurrentActiveMontage();
+	if (!CurrentMontage) return;
+
+	if (CurrentAmmo < MaxAmmo && AmmoToReload > 0)
 	{
-		bIsReloading = false; // 재장전 완료
-		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Current Ammo: %d"), CurrentAmmo);
+		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("Loop"), CurrentMontage);
+		UE_LOG(LogTemp, Log, TEXT("Keep Reloading... Next: Loop"));
+	}
+	else // 탄창이 꽉 찼거나 가방에 더 이상 여분 총알이 없으면 장전 강제 종료
+	{
+		OwnerAnimInstance->Montage_SetNextSection(FName("Loop"), FName("End"), CurrentMontage);
+		bIsReloading = false;
+		UE_LOG(LogTemp, Warning, TEXT("Shotgun Reload complete. Next: End"));
 	}
 }
 
 void AShotgunBase::Fire()
 {
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter || !SkeletalMesh) return;
 
 	OwnerCharacter->PlayAnimMontage(Attack_2_Montage);
+	if (FireAnimSequence && SkeletalMesh)
+	{
+		SkeletalMesh->PlayAnimation(FireAnimSequence, false);
+	}
 
 	CurrentAmmo--;
 	bIsCoolDown = true;
@@ -79,9 +121,6 @@ void AShotgunBase::Fire()
 		{
 			ProcessHit(HitResult);
 		}
-
-		// 디버그 라인
-		DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 1.0f, 0, 1.0f);
 	}
 
 	// 발사 후 반동과 탄 퍼짐 증가 적용
@@ -90,6 +129,17 @@ void AShotgunBase::Fire()
 
 	// 탄 퍼짐 회복 타이머 시작
 	GetWorldTimerManager().SetTimer(SpreadRecoveryTimerHandle, this, &ARangedWeaponBase::RecoverSpread, 0.01f, true);
+}
 
-	UE_LOG(LogTemp, Warning, TEXT("Fired weapon: %s, Current Ammo: %d, Current Spread: %f"), *GetName(), CurrentAmmo, CurrentSpreadAngle);
+// --------------------------------------------------------
+// 데이터 에셋에서 초기화
+void AShotgunBase::WeaponInitFromData()
+{
+	Super::WeaponInitFromData();
+
+	if (UShotgunDataAsset* ShotgunData = Cast<UShotgunDataAsset>(ItemData))
+	{
+		PelletsPerShot = ShotgunData->PelletsPerShot;
+		AmmoPerReload = ShotgunData->AmmoPerReload;
+	}
 }

@@ -2,10 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "InteractableInterface.h"
 #include "CraftingVolumeActor.generated.h"
 
 UCLASS()
-class IAMLEGEND_API ACraftingVolumeActor : public AActor
+class IAMLEGEND_API ACraftingVolumeActor : public AActor, public IInteractableInterface
 {
 	GENERATED_BODY()
     
@@ -35,4 +36,11 @@ public:
 
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
+	
+	// --- 상호작용 인터페이스 순수 가상 함수 오버라이드 ---
+	virtual void Interact(ACharacter* Player) override;
+	virtual FString InteractionText() const override;
+	virtual void OnPlayerEntered(ACharacter* Player) override;
+	virtual void OnPlayerExited(ACharacter* Player) override;
 };

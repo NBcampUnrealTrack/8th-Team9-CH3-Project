@@ -64,10 +64,19 @@ void UTitleUIWidget::OnStartButtonClicked()
 	FTimerHandle TimerHandle;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this]()
 		{
-			AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
-			if (GameMode)
+			// AMainGameModeBase* GameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(this));
+			// if (GameMode)
+			// {
+			// 	GameMode->StartGame();
+			// }
+			if (StoryUIClass)
 			{
-				GameMode->StartGame();
+				UUserWidget* StoryWidget = CreateWidget<UUserWidget>(GetWorld(), StoryUIClass);
+				if (StoryWidget)
+				{
+					StoryWidget->AddToViewport(); // 만화 화면 띄우기
+					this->RemoveFromParent();     // 타이틀 화면 지우기
+				}
 			}
 		}), 1.0f, false); // 애니메이션 길이에 맞게 1.0f 세팅
 }
