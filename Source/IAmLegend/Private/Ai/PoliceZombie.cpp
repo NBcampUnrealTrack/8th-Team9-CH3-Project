@@ -10,6 +10,9 @@ APoliceZombie::APoliceZombie()
     Health = 100.0f; // 좀비 체력 현재 100
     AttackRange = 150.0f; // 좀비와 플레이어간의 거리 약 15CM거리에 들어서면 공격모션을 취합니다
     GetCharacterMovement()->MaxWalkSpeed = 500.0f;
+    bUseControllerRotationYaw = false;
+    GetCharacterMovement()->bOrientRotationToMovement = false;
+
 }
 
 void APoliceZombie::BeginPlay()
@@ -21,8 +24,24 @@ void APoliceZombie::BeginPlay()
 
 void APoliceZombie::Tick(float DeltaTime)
 {
-    Super::Tick(DeltaTime);
+    if (CurrentState == EZombieState::Dead) return;
 
+    ACharacter::Tick(DeltaTime); // Super::Tick 대신 ACharacter::Tick으로 Base_Zombie Tick 로직 스킵
+
+    if (PlayerCharacter && !bIsAttacking)
+    {
+        FVector ToPlayer = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+        FRotator LookRot = FRotationMatrix::MakeFromX(ToPlayer).Rotator();
+        LookRot.Pitch = 0.0f;
+        LookRot.Roll = 0.0f;
+        SetActorRotation(FMath::RInterpTo(GetActorRotation(), LookRot, DeltaTime, 10.0f));
+
+        float Distance = GetDistanceTo(PlayerCharacter);
+        if (Distance <= AttackRange)
+        {
+            PlayAttackMontage();
+        }
+    }
 }
 void APoliceZombie::Die()
 {

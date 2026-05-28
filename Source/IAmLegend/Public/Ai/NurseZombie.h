@@ -13,6 +13,9 @@ public:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
 
+    // ✅ 물어뜯기 공격 - 방향 회전 없는 버전으로 오버라이드
+    virtual void PlayAttackMontage() override;
+
     UFUNCTION(BlueprintCallable, Category = "Animation")
     virtual void PlayScreamMontage();
 
@@ -23,10 +26,13 @@ public:
 
     virtual void Die() override;
 
+    // 스크림 몽타주
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
     class UAnimMontage* ScreamMontage;
 
-    FTimerHandle ScreamEndTimerHandle;
+    // ✅ 공격 후 추격 재개용 리셋 함수
+    void NurseResetAttack();
+
     UFUNCTION()
     void OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
@@ -41,6 +47,7 @@ public:
 
     FTimerHandle ScreamSlowTimerHandle;
     FTimerHandle ScreamSlowTickHandle;
+    FTimerHandle ScreamEndTimerHandle;
     FTimerHandle HitResumeTimerHandle;
 
     void ApplyScreamSlow();
