@@ -13,7 +13,10 @@ ANurseZombie::ANurseZombie()
     AttackRange = 200.0f;
 
     GetCharacterMovement()->MaxWalkSpeed = 150.0f;
+
+    // ✅ 머리 소켓으로 공격 판정 (물어뜯기)
     AttackSphere->SetupAttachment(GetMesh(), FName("Head"));
+
 }
 
 void ANurseZombie::BeginPlay()
@@ -31,12 +34,54 @@ void ANurseZombie::Tick(float DeltaTime)
 {
     if (CurrentState == EZombieState::Dead) return;
 
+    // ✅ Super::Tick은 항상 호출 (이동/물리 처리에 필요)
     Super::Tick(DeltaTime);
 
+    // ✅ Screaming/Hit 상태에선 공격 시도만 막음
     if (CurrentState == EZombieState::Screaming ||
-        CurrentState == EZombieState::Dead)
+        CurrentState == EZombieState::Hit)
     {
         return;
+    }
+
+    // 공격 범위 체크는 Base_Zombie::Tick이 이미 했으므로 추가 처리 불필요
+}
+void ANurseZombie::PlayAttackMontage()
+{
+    if (CurrentState == EZombieState::Dead) return;
+    if (!AttackMontage || bIsAttacking) return;
+
+    // ✅ 공격 시 플레이어 방향 회전 안 함 (물어뜯기 형태)
+    bIsAttacking = true;
+    CurrentAttackInstance++;
+
+    GetCharacterMovement()->StopMovementImmediately();
+    GetCharacterMovement()->DisableMovement();
+
+    UAnimInstance* AnimInst = GetMesh()->GetAnimInstance();
+    if (AnimInst)
+    {
+        AnimInst->Montage_Play(AttackMontage);
+    }
+
+    GetWorldTimerManager().SetTimer(AttackTimerHandle, this,
+        &ANurseZombie::NurseResetAttack, AttackCooldown, false);
+}
+
+void ANurseZombie::NurseResetAttack()
+{
+    if (CurrentState == EZombieState::Dead) return;
+
+    bIsAttacking = false;
+    bHasAppliedDamageThisAttack = false;
+    GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+    GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
+
+    // ✅ 공격 후 즉시 BT 재개하여 추격 재시작
+    AAIController* AIC = Cast<AAIController>(GetController());
+    if (AIC && AIC->GetBrainComponent())
+    {
+        AIC->GetBrainComponent()->ResumeLogic(TEXT("Attack"));
     }
 }
 
@@ -52,11 +97,11 @@ void ANurseZombie::PlayScreamMontage()
         if (AIC)
         {
             AIC->StopMovement();
-            AIC->GetBrainComponent()->PauseLogic(TEXT("Screaming"));
+            if (AIC->GetBrainComponent())
+                AIC->GetBrainComponent()->PauseLogic(TEXT("Screaming"));
         }
 
         GetCharacterMovement()->MaxWalkSpeed = 0.0f;
-
         PlayAnimMontage(ScreamMontage);
 
         GetWorld()->GetTimerManager().SetTimer(ScreamSlowTickHandle, [this]()
@@ -69,8 +114,7 @@ void ANurseZombie::PlayScreamMontage()
 void ANurseZombie::ApplyScreamSlow()
 {
     if (CurrentState == EZombieState::Dead) return;
-    if (!IsValid(this)) return;
-    if (!PlayerCharacter) return;
+    if (!IsValid(this) || !PlayerCharacter) return;
 
     float Distance = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
     if (Distance > ScreamRadius) return;
@@ -102,12 +146,10 @@ void ANurseZombie::RestorePlayerSpeed()
 void ANurseZombie::OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
     if (Montage != ScreamMontage) return;
-    if (CurrentState == EZombieState::Dead) return; // ✅ 추가
+    if (CurrentState == EZombieState::Dead) return;
     if (CurrentState != EZombieState::Screaming) return;
 
     GetWorld()->GetTimerManager().ClearTimer(ScreamSlowTickHandle);
-
-    GetCharacterMovement()->MaxWalkSpeed = 0.0f;
 
     AAIController* AIC = Cast<AAIController>(GetController());
 
@@ -119,6 +161,7 @@ void ANurseZombie::OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted
     }
     else
     {
+        // ✅ Scream 종료 후 TargetActor 세팅 → BT가 추격 시작
         if (AIC && AIC->GetBlackboardComponent())
             AIC->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), PlayerCharacter);
         SetCurrentState(EZombieState::Idle);
@@ -126,7 +169,7 @@ void ANurseZombie::OnScreamMontageEnded(UAnimMontage* Montage, bool bInterrupted
 
     GetWorld()->GetTimerManager().SetTimer(ScreamEndTimerHandle, [this]()
         {
-            if (CurrentState == EZombieState::Dead) return; // ✅ 추가
+            if (CurrentState == EZombieState::Dead) return;
             GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
             AAIController* AIC2 = Cast<AAIController>(GetController());
             if (AIC2 && AIC2->GetBrainComponent())
@@ -139,53 +182,28 @@ float ANurseZombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 {
     if (CurrentState == EZombieState::Dead) return 0.0f;
 
+    // ✅ Screaming 중이면 중단만 하고 상태를 Idle로 복구
+    // Super 호출 전에 처리해야 Hit 상태로 정상 진입됨
     if (CurrentState == EZombieState::Screaming)
     {
         GetWorld()->GetTimerManager().ClearTimer(ScreamSlowTickHandle);
         StopAnimMontage(ScreamMontage);
-
-        AAIController* AIC = Cast<AAIController>(GetController());
-        if (AIC && AIC->GetBrainComponent())
-            AIC->GetBrainComponent()->ResumeLogic(TEXT("Screaming"));
-
         GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
+        SetCurrentState(EZombieState::Idle); // ✅ Idle로 바꿔줘야 Super에서 Hit 처리
 
-        if (AIC && AIC->GetBlackboardComponent())
-            AIC->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), PlayerCharacter);
-
-        SetCurrentState(EZombieState::Idle);
-    }
-
-    float Result = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-    if (CurrentState == EZombieState::Dead) return Result;
-
-    if (CurrentState == EZombieState::Hit)
-    {
         AAIController* AIC = Cast<AAIController>(GetController());
         if (AIC)
         {
-            AIC->StopMovement();
-            AIC->GetBrainComponent()->PauseLogic(TEXT("Hit"));
+            if (AIC->GetBrainComponent())
+                AIC->GetBrainComponent()->ResumeLogic(TEXT("Screaming"));
+            if (AIC->GetBlackboardComponent())
+                AIC->GetBlackboardComponent()->SetValueAsObject(TEXT("TargetActor"), PlayerCharacter);
         }
-        GetCharacterMovement()->MaxWalkSpeed = 0.0f;
-
-        float HitLength = 0.0f;
-        if (HitMontage)
-            HitLength = HitMontage->GetPlayLength();
-
-        GetWorld()->GetTimerManager().SetTimer(HitResumeTimerHandle, [this]()
-            {
-                if (CurrentState == EZombieState::Dead) return; // ✅ 추가
-                GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
-                AAIController* AIC2 = Cast<AAIController>(GetController());
-                if (AIC2 && AIC2->GetBrainComponent())
-                    AIC2->GetBrainComponent()->ResumeLogic(TEXT("Hit"));
-            }, HitLength, false);
     }
 
-    return Result;
+    // ✅ 나머지는 Base_Zombie와 완전히 동일하게 처리
+    return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
-
 void ANurseZombie::Die()
 {
     if (CurrentState == EZombieState::Dead) return;

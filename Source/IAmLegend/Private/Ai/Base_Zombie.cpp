@@ -56,6 +56,7 @@ ABase_Zombie::ABase_Zombie()
 	GetCapsuleComponent()->SetCollisionProfileName(FName("Enemy"));
 	GetMesh()->SetCollisionProfileName(FName("Enemy"));
 
+
 }
 
 void ABase_Zombie::BeginPlay()
@@ -258,6 +259,7 @@ float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 			GetCharacterMovement()->StopMovementImmediately();
 			GetCharacterMovement()->DisableMovement();
 
+
 			AAIController* AIC = Cast<AAIController>(GetController());
 			if (AIC)
 			{
@@ -274,6 +276,7 @@ float ABase_Zombie::TakeDamage(float DamageAmount, struct FDamageEvent const& Da
 
 					// ✅ Hit 끝나면 이동 재개
 					GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+					GetCharacterMovement()->MaxWalkSpeed = DefaultMaxWalkSpeed;
 
 					AAIController* AIC2 = Cast<AAIController>(GetController());
 					if (AIC2 && AIC2->GetBrainComponent())
