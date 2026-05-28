@@ -16,6 +16,9 @@ AStudentZombie::AStudentZombie()
     {
         AttackSphere->SetupAttachment(GetMesh(), FName("Head"));
     }
+    bUseControllerRotationYaw = false;
+    GetCharacterMovement()->bOrientRotationToMovement = false;
+
 }
 
 void AStudentZombie::PlayAttackMontage()
