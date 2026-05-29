@@ -12,6 +12,7 @@ URangedAttachmentComponent::URangedAttachmentComponent()
 	OwnerWeapon = nullptr;
 	WeaponData = nullptr;
 	WeaponMesh = nullptr;
+
 }
 
 
@@ -28,6 +29,21 @@ void URangedAttachmentComponent::BeginPlay()
 	if (!OwnerWeapon->SkeletalMesh) return;
 	WeaponMesh = OwnerWeapon->SkeletalMesh;
 
+	for (uint8 SlotIndex = 0; SlotIndex < static_cast<uint8>(EAttachmentSlot::None); ++SlotIndex)
+	{
+		EAttachmentSlot CurrentSlot = static_cast<EAttachmentSlot>(SlotIndex);
+
+		UStaticMeshComponent* DynamicSlotComp = NewObject<UStaticMeshComponent>(OwnerWeapon);
+		if (DynamicSlotComp)
+		{
+			DynamicSlotComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			DynamicSlotComp->SetStaticMesh(nullptr); // 초기 상태는 외형 없음
+			DynamicSlotComp->SetVisibility(false);   // 기본 숨김 처리
+
+			DynamicSlotComp->RegisterComponent();
+			AttachmentMeshComponents.Add(CurrentSlot, DynamicSlotComp);
+		}
+	}
 }
 
 void URangedAttachmentComponent::RefreshWeaponStats()
@@ -67,13 +83,14 @@ bool URangedAttachmentComponent::IsCanEquipAttachment(UAttachmentDataAsset* Atta
 {
 	if (!OwnerWeapon || !WeaponData || !AttachmentData) return false;
 
-	// 무기 타입과 부착물 타입이 일치하는지 확인
+	// 무기 타입이 일치하는지 확인
 	if (!AttachmentData->WeaponTypes.Contains(WeaponData->WeaponType))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attachment type does not match weapon type!"));
 		return false;
 	}
 
+	// 해당 부착물 타입이 이 무기에서 지원되는지 확인
 	if(!AttachmentSlots.Contains(AttachmentData->AttachmentSlot))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Weapon does not have the required socket for this attachment!"));
@@ -92,7 +109,7 @@ bool URangedAttachmentComponent::EquipAttachment(UAttachmentDataAsset* Attachmen
 
 	EAttachmentSlot CurrentSlot = AttachmentData->AttachmentSlot;
 	CurrentAttachments.Add(CurrentSlot, AttachmentData);	// 새로운 부착물 장착
-	//UpdateAttachmentMesh(CurrentSlot);						// 부착물 메쉬 업데이트
+	UpdateAttachmentMesh(CurrentSlot);						// 부착물 메쉬 업데이트
 	RefreshWeaponStats();									// 장착 후 무기 스탯 갱신
 
 	OnAttachmentChanged.Broadcast(this);					// 부착물 변경 후 델리게이트 브로드캐스트
@@ -111,45 +128,40 @@ UAttachmentDataAsset* URangedAttachmentComponent::UnequipAttachment(EAttachmentS
 
 	UAttachmentDataAsset* RemovedAttachment = CurrentAttachments[AttachmentSlot];
 	CurrentAttachments.Remove(AttachmentSlot);	// 부착물 해제
-	//UpdateAttachmentMesh(AttachmentSlot);		// 부착물 메쉬 업데이트
+	UpdateAttachmentMesh(AttachmentSlot);		// 부착물 메쉬 업데이트
 	RefreshWeaponStats();						// 해제 후 무기 스탯 갱신
 
 	OnAttachmentChanged.Broadcast(this);		// 부착물 변경 후 델리게이트 브로드캐스트
 	return RemovedAttachment;
 }
 
-// 메시를 추가하는 함수는 구현되었지만, 부착물의 메시가 마땅치 않아
-// 현재는 메시 업데이트 부분은 주석 처리해두었습니다.
 void URangedAttachmentComponent::UpdateAttachmentMesh(EAttachmentSlot AttachmentSlot)
 {
 	if (!OwnerWeapon || !WeaponMesh) return;
 
-	// 이미 부착물 메시가 있던 경우, 먼저 기존 메시 컴포넌트를 제거
-	if (AttachmentMeshComponents.Contains(AttachmentSlot))
-	{
-		if (UStaticMeshComponent* OldMeshComp = AttachmentMeshComponents[AttachmentSlot])
-		{
-			OldMeshComp->DestroyComponent();
-		}
-		AttachmentMeshComponents.Remove(AttachmentSlot);
-	}
+	UStaticMeshComponent* TargetMeshComp = AttachmentMeshComponents.Contains(AttachmentSlot) ? AttachmentMeshComponents[AttachmentSlot] : nullptr;
+	if (!TargetMeshComp) return;
 
-	// 현재 슬롯에 장착된 부착물이 없으면, 메시를 업데이트 하지 않음
+	TargetMeshComp->SetStaticMesh(nullptr);
+	TargetMeshComp->SetVisibility(false);
+
+	// 현재 슬롯에 장착된 부착물이 없으면 리턴
 	if (!CurrentAttachments.Contains(AttachmentSlot)) return;
 	
-	// 현재 슬롯에 장착된 부착물의 데이터를 가져옴
+	// 현재 장착된 부착물 데이터 추출
 	UAttachmentDataAsset* AttachmentData = CurrentAttachments[AttachmentSlot];
 	if (!AttachmentData || !AttachmentData->ItemMesh) return;
+	
+	// 부착물이 장착될 소켓이 무기에 존재하는지 확인
+	if (!WeaponMesh->DoesSocketExist(AttachmentData->SocketName)) return;
 
-	// 새로운 메시를 무기의 소켓에 부착
-	UStaticMeshComponent* NewMeshComp = NewObject<UStaticMeshComponent>(OwnerWeapon);
-	if (NewMeshComp)
-	{
-		NewMeshComp->SetStaticMesh(AttachmentData->ItemMesh);
-		NewMeshComp->SetupAttachment(WeaponMesh, AttachmentData->SocketName);
-		NewMeshComp->RegisterComponent();
-		AttachmentMeshComponents.Add(AttachmentSlot, NewMeshComp);
-	}
+	TargetMeshComp->SetStaticMesh(AttachmentData->ItemMesh);
+	TargetMeshComp->AttachToComponent(
+		WeaponMesh,
+		FAttachmentTransformRules::KeepRelativeTransform,
+		AttachmentData->SocketName
+	);
+	TargetMeshComp->SetVisibility(true);
 }
 
 TMap<EAttachmentSlot, UAttachmentDataAsset*>& URangedAttachmentComponent::GetCurrentAttachments() const
